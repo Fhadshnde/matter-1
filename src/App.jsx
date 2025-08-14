@@ -6,6 +6,8 @@ import Categories from './pages/Categories'
 import Navbar from './components/Navbar/Navbar'
 import Login from './pages/Login'
 import Offers from './pages/offers'
+import SubSections from './pages/SubSections'
+import Suppliers from './pages/suppliers'
 
 const App = () => {
   return (
@@ -18,6 +20,11 @@ const App = () => {
         <Route path='/categories' element={<Categories />} />
         <Route path='/login' element={<Login />} />
         <Route path='/offers' element={<Offers />} />
+
+        <Route path='/subsections' element={<SubSections />} />
+        <Route path='/suppliers' element={<Suppliers />} />
+        
+        {/* Catch-all route for undefined paths */}
         <Route path='*' element={<h1>mwdwdjwedjwd</h1>} />
 
       </Routes>
