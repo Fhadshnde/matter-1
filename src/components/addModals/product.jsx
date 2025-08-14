@@ -234,7 +234,8 @@ const AddProductModal = () => {
       alert('تم إضافة المنتج بنجاح!');
       closeModal();
       
-      window.location.reload(); 
+      // ⬅️ إطلاق حدث مخصص لإخبار المكونات الأخرى
+      window.dispatchEvent(new Event('productAdded'));
       
     } catch (error) {
       console.error('Failed to add product:', error);
@@ -736,4 +737,4 @@ const AddProductModal = () => {
   );
 };
 
-export default AddProductModal;
+export default AddProductModal; 

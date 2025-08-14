@@ -16,7 +16,6 @@ const ProductsManagement = () => {
     }
   });
 
-  // جلب المنتجات مع pagination والبحث
   const fetchProducts = async () => {
     try {
       const response = await fetch(`https://products-api.cbc-apps.net/products?search=${searchProduct}&limit=10&page=${currentPage}`);
@@ -49,12 +48,14 @@ const ProductsManagement = () => {
     }
   };
 
-  // تحميل البيانات عند التغيير في البحث أو الصفحة
   useEffect(() => {
     fetchProducts();
+    window.addEventListener('productUpdated', fetchProducts);
+    return () => {
+      window.removeEventListener('productUpdated', fetchProducts);
+    };
   }, [searchProduct, currentPage]);
 
-  // صفحات التصفح (pagination)
   const visiblePages = useMemo(() => {
     if (!pagination) return [];
     const total = pagination.totalPages;
@@ -74,49 +75,30 @@ const ProductsManagement = () => {
     return pages;
   }, [pagination, currentPage]);
 
-  // إضافة منتج (تابع يفتح المودال)
-  const handleAddProduct = async (newProductData) => {
-    try {
-      await fetch("https://products-api.cbc-apps.net/products", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProductData),
-      });
-      setCurrentPage(1);
-      fetchProducts();
-    } catch (error) {
-      console.error("Error adding product:", error);
-    }
-  };
-
-  // حذف منتج
   const handleDeleteProduct = async (id) => {
     try {
       await fetch(`https://products-api.cbc-apps.net/products/${id}`, {
         method: 'DELETE',
       });
-      fetchProducts();
+      window.dispatchEvent(new Event('productUpdated'));
     } catch (error) {
       console.error("Error deleting product:", error);
     }
   };
 
-  // تعديل منتج (يربط مع مودال التعديل)
   const handleEditSuccess = () => {
-    fetchProducts();
+    window.dispatchEvent(new Event('productUpdated'));
   };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      {/* Header */}
       <div className="bg-[#1A1A1A]/80 border-b border-white/5 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Products Management</h1>
-          <AddProductModal onSubmit={handleAddProduct} />
+          <AddProductModal />
         </div>
       </div>
 
-      {/* Stats Overview */}
       <div dir="rtl" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 pt-3 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="stat-mini bg-[#1A1A1A] border border-white/5 rounded-lg p-4 flex items-center justify-between">
           <div>
@@ -124,7 +106,6 @@ const ProductsManagement = () => {
             <p className="text-2xl font-bold text-white">{statistics.products.total}</p>
           </div>
           <div className="w-12 h-12 bg-gradient-to-br from-[#5E54F2]/20 to-[#7C3AED]/20 rounded-lg flex items-center justify-center">
-            {/* أيقونة */}
             <svg className="w-6 h-6 text-[#5E54F2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
             </svg>
@@ -137,7 +118,6 @@ const ProductsManagement = () => {
             <p className="text-2xl font-bold text-[#F97316]">{statistics.products.lowStockProducts}</p>
           </div>
           <div className="w-12 h-12 bg-gradient-to-br from-[#F97316]/20 to-[#EA580C]/20 rounded-lg flex items-center justify-center">
-            {/* أيقونة */}
             <svg className="w-6 h-6 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
             </svg>
@@ -150,7 +130,6 @@ const ProductsManagement = () => {
             <p className="text-2xl font-bold text-red-500">{statistics.products.outOfStockProducts}</p>
           </div>
           <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-lg flex items-center justify-center">
-            {/* أيقونة */}
             <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -158,7 +137,6 @@ const ProductsManagement = () => {
         </div>
       </div>
 
-      {/* Search */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-3">
         <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-4">
           <div className="relative md:grid md:grid-cols-4 gap-4">
@@ -176,15 +154,12 @@ const ProductsManagement = () => {
         </div>
       </div>
 
-      {/* Products Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map(product => (
           <div key={product.id} className="product-card relative bg-[#1A1A1A] rounded-xl border border-white/5 overflow-hidden hover:border-[#5E54F2]/50 transition-all duration-300 ease-in-out">
-            {/* Delete button */}
             <div className="absolute right-4 top-4 w-6 h-6 cursor-pointer hover:-translate-y-[2px] hover:scale-110 transition-transform duration-200 rounded-lg text-red-500">
               <DeleteProductModal id={product.id} onDelete={() => handleDeleteProduct(product.id)} />
             </div>
-            {/* Edit button */}
             <div className="absolute left-4 top-4 w-6 h-6 cursor-pointer hover:-translate-y-[2px] hover:scale-110 transition-transform duration-200 rounded-lg text-gray-500">
               <EditProductModal productId={product.id} onEditSuccess={handleEditSuccess} />
             </div>
@@ -208,13 +183,13 @@ const ProductsManagement = () => {
               <div className="flex items-center justify-between mb-3 my-3">
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-white">{product.price}</span>
-                    <span className="text-sm text-[#94A3B8]">IQD</span>
+                    <span className="text-3xl text-white ">
+                      {product.originalPrice != null ? product.originalPrice.toLocaleString() + " IQD" : "N/A"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-[#94A3B8] line-through">{product.originalPrice} IQD</span>
-                    <span className="px-2 py-0.5 text-xs font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] rounded-md">
-                      -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                    <span className="text-3xl text-white ">
+                      {product.wholesalePrice != null ? product.wholesalePrice.toLocaleString() + " IQD" : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -232,7 +207,6 @@ const ProductsManagement = () => {
         ))}
       </div>
 
-      {/* Pagination */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-between">
         {pagination && (
           <p className="text-sm text-[#94A3B8]">
