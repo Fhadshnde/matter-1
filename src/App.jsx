@@ -7,7 +7,7 @@ import Navbar from './components/Navbar/Navbar'
 import Login from './pages/Login'
 import Offers from './pages/Offers'
 import SubSections from './pages/SubSections'
-import Suppliers from './pages/suppliers'
+import Suppliers from './pages/Suppliers'
 
 const App = () => {
   return (
