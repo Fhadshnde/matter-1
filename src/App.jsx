@@ -5,7 +5,7 @@ import Products from './pages/Products'
 import Categories from './pages/Categories'
 import Navbar from './components/Navbar/Navbar'
 import Login from './pages/Login'
-import Offers from './pages/offers'
+import Offers from './pages/Offers'
 import SubSections from './pages/SubSections'
 import Suppliers from './pages/suppliers'
 
