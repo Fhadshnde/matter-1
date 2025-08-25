@@ -11,6 +11,7 @@ export default function Navbar() {
     { name: "الاقسام", to: "/categories", current: false },
     { name: "الاقسام الثانوية", to: "/subSections", current: false },
     { name: "العروض", to: "/offers", current: false },
+    { name: "الخصومات", to: "/discounts", current: false },
 
   ]);
 

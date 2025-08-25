@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Offers from './pages/Offers'
 import SubSections from './pages/SubSections'
 import Suppliers from './pages/Suppliers'
+import Discounts from './pages/Discounts'
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path='/categories' element={<Categories />} />
         <Route path='/login' element={<Login />} />
         <Route path='/offers' element={<Offers />} />
+        <Route path='/discounts' element={<Discounts />} />
 
         <Route path='/subsections' element={<SubSections />} />
         <Route path='/suppliers' element={<Suppliers />} />
