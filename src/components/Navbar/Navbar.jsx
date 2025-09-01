@@ -1,121 +1,135 @@
-import { useState, useEffect } from "react";
-import { Disclosure } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { NavLink, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import {
+  Bell,
+  Search,
+  ChevronDown,
+  LayoutDashboard,
+  BarChart2,
+  Package,
+  ShoppingCart,
+  Store,
+  Wallet,
+  Tag,
+  Truck,
+  History,
+  ClipboardList,
+  Inbox,
+  Plus,
+  Globe
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function Navbar() {
-  const location = useLocation();
-  const [navigation, setNavigation] = useState([
-    { name: "الرئيسية", to: "/", current: false },
-    { name: "المنتجات", to: "/products", current: false },
-    { name: "الاقسام", to: "/categories", current: false },
-    { name: "الاقسام الثانوية", to: "/subSections", current: false },
-    { name: "العروض", to: "/offers", current: false },
-    { name: "الخصومات", to: "/discounts", current: false },
+const Navbar = () => {
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const toggleProfileMenu = () => setIsProfileMenuOpen(!isProfileMenuOpen);
 
-  ]);
-
-  // تحديث حالة current بناءً على المسار
-  useEffect(() => {
-    setNavigation((nav) =>
-      nav.map((item) => ({
-        ...item,
-        current: item.to === location.pathname,
-      }))
-    );
-  }, [location.pathname]);
+  const menuItems = [
+    { path: "/", icon: <LayoutDashboard className="w-4 h-4" />, text: "نظرة عامة" },
+    { path: "/analytics", icon: <BarChart2 className="w-4 h-4" />, text: "التحليلات" },
+    { path: "/products", icon: <Package className="w-4 h-4" />, text: "المنتجات" },
+    { path: "/orders", icon: <ShoppingCart className="w-4 h-4" />, text: "الطلبات" },
+    { path: "/merchants", icon: <Store className="w-4 h-4" />, text: "التجار" },
+    { path: "/customers", icon: <Globe className="w-4 h-4" />, text: "الزبائن" },
+    { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
+    { path: "/offers-dashboard", icon: <Tag className="w-4 h-4" />, text: "العروض والخصومات" },
+    { path: "/notifications", icon: <Bell className="w-4 h-4" />, text: "التنبيهات" },
+    // { path: "/shipping", icon: <Truck className="w-4 h-4" />, text: "الشحن والتوصيل" },
+    // { path: "/history", icon: <History className="w-4 h-4" />, text: "تاريخ" },
+    { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
+  ];
 
   return (
-    <Disclosure as="nav" className="bg-[#1A1A1A] backdrop-blur-md z-50" dir="rtl">
-      {({ open }) => (
-        <>
-          <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div className="relative flex h-16 items-center justify-between">
-              <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                {/* Mobile menu button */}
-                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-none focus:ring-inset">
-                  <span className="sr-only">فتح القائمة الرئيسية</span>
-                  {open ? (
-                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                  )}
-                </Disclosure.Button>
-              </div>
-              <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-                <div className="flex shrink-0 items-center">
-                  <img
-                    className="h-8 w-auto"
-                    src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                    alt="Your Company"
-                  />
+    <div className="bg-white shadow-sm border-b border-gray-200" dir="rtl">
+      {/* الصف العلوي */}
+      <div className="flex items-center justify-between px-6 py-3">
+        {/* الجانب الأيمن - الشعار */}
+        <div>
+          <div className="bg-blue-600 text-white px-4 py-2 rounded-md font-bold text-lg tracking-wider">
+            CBC
+          </div>
+        </div>
+
+        {/* الوسط - البحث وزر الإنشاء */}
+        <div className="flex items-center gap-4 flex-1 max-w-2xl mx-8">
+          <button className="flex items-center gap-2 bg-red-500 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-colors whitespace-nowrap">
+            <Plus className="w-4 h-4" />
+            <span>إنشاء سريع</span>
+          </button>
+
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="إبحث عن طلبات، منتجات، تجار، زبائن..."
+              className="w-full pr-10 pl-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+            />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+
+        {/* الجانب الأيسر - معلومات المستخدم + الجرس + اللغة */}
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <button
+              onClick={toggleProfileMenu}
+              className="flex items-center gap-2 focus:outline-none"
+            >
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isProfileMenuOpen ? "rotate-180" : "rotate-0"}`} />
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-800">محمد صالح</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-yellow-500">👋</span>
+                  <span className="text-xs text-gray-500">أهلاً</span>
                 </div>
-                <div className="hidden sm:mr-6 sm:block">
-                  <div className="flex space-x-4">
-                    {navigation.map((item) => (
-                      <NavLink
-                        key={item.name}
-                        to={item.to}
-                        className={({ isActive }) =>
-                          isActive
-                            ? "rounded-md px-3 py-2 text-sm font-medium transition-all duration-300 ease-in-out bg-gradient-to-br from-[#5E54F2] to-[#7C3AED] text-white shadow-[0_4px_15px_rgba(94,84,242,0.4)] scale-110 nav-activate"
-                            : "rounded-md px-3 py-2 text-sm font-medium transition-all duration-300 ease-in-out text-[#94a3b8] hover:bg-gray-700 hover:text-white active:scale-75 transform hover:-translate-y-[2px] transition-transform duration-200"
-                        }
-                        aria-current={item.current ? "page" : undefined}
-                      >
-                        {item.name}
-                      </NavLink>
-                    ))}
-                  </div>
-                </div>
               </div>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                {/* زر تسجيل الخروج */}
-                <NavLink
-                  to="/login"
-                  className="relative rounded-full text-[#DC3545] text-3xl hover:text-red-800 hover:scale-125"
-                  aria-label="Logout"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="30"
-                    height="30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M10 8V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-2" />
-                    <path d="M15 12H3l3-3m0 6l-3-3" />
-                  </svg>
-                </NavLink>
+              <div className="relative">
+                <img
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 object-cover"
+                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                  alt="User Avatar"
+                />
+                <span className="absolute -bottom-0.5 -left-0.5 block w-3.5 h-3.5 bg-green-400 rounded-full ring-2 ring-white"></span>
               </div>
-            </div>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">الملف الشخصي</Link>
+                <Link to="/profile-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">إعدادات الحساب</Link>
+                <hr className="my-1" />
+                <Link to="/logout" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">تسجيل الخروج</Link>
+              </div>
+            )}
           </div>
 
-          <Disclosure.Panel className="sm:hidden" style={{ direction: "ltr" }}>
-            <div className="space-y-1 px-2 pt-2 pb-3">
-              {navigation.map((item) => (
-                <Disclosure.Button
-                  key={item.name}
-                  as="a"
-                  href={item.to}
-                  className={
-                    item.current
-                      ? "bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
-                  }
-                  aria-current={item.current ? "page" : undefined}
-                >
-                  {item.name}
-                </Disclosure.Button>
-              ))}
+          <Link to="/notifications-page">
+            <div className="relative">
+              <Inbox className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700" />
+              <span className="absolute -top-1 -right-1 block w-2 h-2 bg-red-500 rounded-full"></span>
             </div>
-          </Disclosure.Panel>
-        </>
-      )}
-    </Disclosure>
+          </Link>
+
+          <div className="flex items-center gap-1 cursor-pointer hover:text-gray-700">
+            <Globe className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-600 font-medium">EN</span>
+          </div>
+        </div>
+      </div>
+
+      {/* الصف السفلي - قائمة التنقل */}
+      <div className="flex items-center gap-1 px-6 py-2 overflow-x-auto scrollbar-hide bg-gray-50/50">
+        {menuItems.map((item, index) => (
+          <Link
+            key={index}
+            to={item.path}
+            className="flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-red-500 hover:bg-white rounded-lg transition-all duration-200 whitespace-nowrap text-sm font-medium"
+          >
+            {item.icon}
+            <span>{item.text}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+export default Navbar;
