@@ -360,7 +360,7 @@ const App = () => {
         />
         <KPICard
           icon={ShoppingBagIcon}
-          title="المنتجات المجهزة"
+          title="المنتجات المهجورة"
           value="320"
           unit="سلة"
           change="2"

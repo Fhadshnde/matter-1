@@ -1,17 +1,53 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { FaChevronDown, FaStore, FaChartBar, FaFilePdf } from 'react-icons/fa';
-import { MdInfoOutline } from 'react-icons/md';
-import { RiCloseFill } from 'react-icons/ri';
-import { BsThreeDots } from 'react-icons/bs';
 
+const MerchantsModal = ({ onClose, merchants }) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">تفاصيل إجمالي المبيعات حسب التاجر</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 text-right">
+              <tr>
+                <th className="p-3 font-semibold text-gray-500">اسم التاجر</th>
+                <th className="p-3 font-semibold text-gray-500">إجمالي المبيعات</th>
+                <th className="p-3 font-semibold text-gray-500">عدد الطلبات</th>
+                <th className="p-3 font-semibold text-gray-500">صافي الأرباح</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200 text-right">
+              {merchants.map((merchant, index) => (
+                <tr key={index}>
+                  <td className="p-3 text-xs text-gray-700">{merchant.name}</td>
+                  <td className="p-3 text-xs text-gray-700">{merchant.totalSales}</td>
+                  <td className="p-3 text-xs text-gray-700">{merchant.totalOrders}</td>
+                  <td className="p-3 text-xs text-gray-700">{merchant.netProfit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={onClose} className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">إغلاق</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 const statsCards = [
   { title: 'متوسط حاصل الأرباح', value: '20%', icon: 'bag' },
   { title: 'حصة التطبيق', value: '70,000 د.ك', icon: 'mobile' },
   { title: 'حصة التاجر', value: '280,000 د.ك', icon: 'store' },
   { title: 'إجمالي المبيعات', value: '350,000 د.ك', icon: 'package' },
 ];
-
 const productsData = [
   { name: 'تيشيرت رجالي', wholesalePrice: '2.500 د.ك', retailPrice: '4.000 د.ك', discount: '0.000 د.ك', difference: '1.500 د.ك', appShare: '0.600 د.ك', merchantShare: '3.400 د.ك', ratio: '15%', category: 'الملابس', seller: 'متجر فيت ستور', referenceBarcode: 'PRD-4589', salesCount: 47, rating: 3.5, netProfit: '159.800 د.ك' },
   { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر جديد', referenceBarcode: 'PRD-4590', salesCount: 12, rating: 4.0, netProfit: '120.000 د.ك' },
@@ -22,7 +58,13 @@ const productsData = [
   { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر فاشون', referenceBarcode: 'PRD-4595', salesCount: 65, rating: 4.5, netProfit: '250.000 د.ك' },
   { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر الموضة', referenceBarcode: 'PRD-4596', salesCount: 72, rating: 4.0, netProfit: '300.000 د.ك' },
 ];
-
+const merchantsData = [
+  { name: 'متجر فيت ستور', totalSales: '150,000 د.ك', totalOrders: '3,000', netProfit: '50,000 د.ك' },
+  { name: 'متجر جديد', totalSales: '80,000 د.ك', totalOrders: '1,500', netProfit: '25,000 د.ك' },
+  { name: 'محل الدفء', totalSales: '60,000 د.ك', totalOrders: '1,200', netProfit: '20,000 د.ك' },
+  { name: 'متجر الأحذية', totalSales: '40,000 د.ك', totalOrders: '800', netProfit: '15,000 د.ك' },
+  { name: 'متجر رياضي', totalSales: '20,000 د.ك', totalOrders: '400', netProfit: '8,000 د.ك' },
+];
 const sharedProfitChartData = [
   { name: 'يناير', appShare: 7500, merchantShare: 14000 },
   { name: 'فبراير', appShare: 6000, merchantShare: 10000 },
@@ -33,7 +75,6 @@ const sharedProfitChartData = [
   { name: 'يوليو', appShare: 9000, merchantShare: 18000 },
   { name: 'اغسطس', appShare: 10000, merchantShare: 15000 },
 ];
-
 const profitGrowthChartData = [
   { name: 'يناير', appProfit: 1050, merchantProfit: 1750 },
   { name: 'فبراير', appProfit: 1100, merchantProfit: 1800 },
@@ -48,12 +89,10 @@ const profitGrowthChartData = [
   { name: 'نوفمبر', appProfit: 900, merchantProfit: 1200 },
   { name: 'ديسمبر', appProfit: 1000, merchantProfit: 1500 },
 ];
-
 const CustomSharedTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const merchantValue = payload.find(p => p.dataKey === 'merchantShare').value;
     const appValue = payload.find(p => p.dataKey === 'appShare').value;
-
     return (
       <div className="bg-gray-800 text-white p-3 rounded-md text-right border border-white font-sans">
         <p className="font-bold text-sm">{label}</p>
@@ -68,7 +107,6 @@ const CustomSharedTooltip = ({ active, payload, label }) => {
   }
   return null;
 };
-
 const CustomProfitTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -79,38 +117,40 @@ const CustomProfitTooltip = ({ active, payload, label }) => {
   }
   return null;
 };
-
 const ChartContainer = ({ title, data, chartType }) => {
-  const [timeframe, setTimeframe] = useState('شهر');
-
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const getProfitYAxisTicks = () => {
     return [50, 100, 250, 650, 800, 1000, 5000];
   };
-
   const getSharedYAxisTicks = () => {
     return [0, 5000, 10000, 15000, 20000];
   };
-
   const yAxisTickFormatter = (value) => {
     if (chartType === 'sharedProfit') {
       return value.toLocaleString();
     }
-
     if (value >= 1000) {
       return `${(value / 1000)}m`;
     }
     return `${value}k`;
   };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
+      <div className='flex items-center justify-between mb-4 space-x-4 rtl:space-x-reverse'>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <button className={`px-3 py-1 text-sm rounded-full ${timeframe === 'يوم' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'}`} onClick={() => setTimeframe('يوم')}>يوم</button>
-          <button className={`px-3 py-1 text-sm rounded-full ${timeframe === 'أسبوع' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'}`} onClick={() => setTimeframe('أسبوع')}>أسبوع</button>
-          <button className={`px-3 py-1 text-sm rounded-full ${timeframe === 'شهر' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'}`} onClick={() => setTimeframe('شهر')}>شهر</button>
+      </div>
+      <div className="flex items-center mb-4 space-x-4 rtl:space-x-reverse">
+        <div className="relative">
+          <label htmlFor="start-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">من تاريخ</label>
+          <input type="date" id="start-date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
         </div>
+        <div className="relative">
+          <label htmlFor="end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
+          <input type="date" id="end-date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
+        </div>
+      </div>
       </div>
       <div className="flex-grow h-80" style={{ direction: 'ltr' }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -173,22 +213,38 @@ const ChartContainer = ({ title, data, chartType }) => {
     </div>
   );
 };
-
-const StatCard = ({ title, value, icon }) => {
+const StatCard = ({ title, value, icon, onClick }) => {
   const icons = {
-    'bag': <div className="bg-gray-100 p-3 rounded-xl"><FaChartBar className="text-red-500 text-2xl" /></div>,
-    'mobile': <div className="bg-gray-100 p-3 rounded-xl"><FaStore className="text-red-500 text-2xl" /></div>,
-    'store': <div className="bg-gray-100 p-3 rounded-xl"><FaChartBar className="text-red-500 text-2xl" /></div>,
-    'package': <div className="bg-gray-100 p-3 rounded-xl"><FaStore className="text-red-500 text-2xl" /></div>,
+    'bag': <div className="bg-gray-100 p-3 rounded-xl">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+        <path d="M11 5.111v2.5a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0zM12 2a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5A.75.75 0 0012 2zM12 18.25a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM12 21a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM8.75 5.111v2.5a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0zM8.75 2a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM8.75 18.25a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM8.75 21a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM15.25 5.111v2.5a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0zM15.25 2a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM15.25 18.25a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM15.25 21a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" />
+      </svg>
+    </div>,
+    'mobile': <div className="bg-gray-100 p-3 rounded-xl">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+        <path fillRule="evenodd" d="M18.75 2.25H5.25A2.25 2.25 0 003 4.5v15a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 19.5v-15a2.25 2.25 0 00-2.25-2.25zM18.75 4.5v15H5.25a.75.75 0 01-.75-.75V5.25a.75.75 0 01.75-.75h13.5zM12 18.75a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+      </svg>
+    </div>,
+    'store': <div className="bg-gray-100 p-3 rounded-xl">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+        <path fillRule="evenodd" d="M3.75 4.5a.75.75 0 01.75-.75h13.5a.75.75 0 01.75.75v15a.75.75 0 01-1.5 0V6.25a.75.75 0 00-.75-.75h-2.5a.75.75 0 00-.75.75v13.25a.75.75 0 01-1.5 0V6.25a.75.75 0 00-.75-.75h-2.5a.75.75 0 00-.75.75v13.25a.75.75 0 01-1.5 0V6.25a.75.75 0 00-.75-.75h-2.5a.75.75 0 00-.75.75v13.25a.75.75 0 01-1.5 0V4.5z" clipRule="evenodd" />
+      </svg>
+    </div>,
+    'package': <div className="bg-gray-100 p-3 rounded-xl">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+        <path fillRule="evenodd" d="M12 2.25a.75.75 0 01.75.75v18a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM6 5.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75zM6 8.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75zM6 11.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75zM6 14.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75zM6 17.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75zM6 20.25a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+      </svg>
+    </div>,
   };
-
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right">
+    <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right cursor-pointer" onClick={onClick}>
       <div className="flex flex-col">
         <span className="text-gray-400 text-xs mb-1">{title}</span>
         <p className="text-xl font-bold mb-1">{value}</p>
         <span className="text-xs text-green-500 flex items-center">
-          <FaChevronDown className="transform rotate-180 text-green-500 ml-1" />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 transform rotate-180 text-green-500 ml-1">
+            <path fillRule="evenodd" d="M10 3.75a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75zM6.75 7a.75.75 0 01.75.75v7.5a.75.75 0 01-1.5 0v-7.5a.75.75 0 01.75-.75zM13.25 7a.75.75 0 01.75.75v7.5a.75.75 0 01-1.5 0v-7.5a.75.75 0 01.75-.75z" clipRule="evenodd" />
+          </svg>
           8%
           <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
         </span>
@@ -197,27 +253,25 @@ const StatCard = ({ title, value, icon }) => {
     </div>
   );
 };
-
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
 );
-
 const Td = ({ children }) => (
   <td className="p-3 text-xs text-gray-700">{children}</td>
 );
-
 const ProductModal = ({ product, onClose }) => {
   if (!product) return null;
   const ratingStars = product.rating ? Math.floor(product.rating) : 0;
   const hasHalfStar = product.rating ? product.rating % 1 !== 0 : false;
-
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white p-4 rounded-lg shadow-xl max-w-sm w-full">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">تفاصيل المنتج</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <RiCloseFill size={24} />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+            </svg>
           </button>
         </div>
         <div className="space-y-2 text-sm">
@@ -257,10 +311,6 @@ const ProductModal = ({ product, onClose }) => {
             <span className="font-medium text-gray-800">{product.retailPrice}</span>
           </div>
           <div className="flex justify-between items-center pb-1">
-            <span className="font-semibold text-gray-500">الخصم</span>
-            <span className="font-medium text-gray-800">{product.discount}</span>
-          </div>
-          <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">الفرق</span>
             <span className="font-medium text-gray-800">{product.difference}</span>
           </div>
@@ -288,28 +338,38 @@ const ProductModal = ({ product, onClose }) => {
     </div>
   );
 };
-
 const MoreOptionsModal = ({ onClose, onShowDetails, onDownloadReport }) => {
   return (
     <div className="absolute top-8 right-0 bg-white p-2 rounded-lg shadow-lg border border-gray-200 z-10" dir="rtl">
       <ul className="text-sm text-gray-700">
         <li className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onShowDetails}>
-          <span className="ml-2"><MdInfoOutline size={18} /></span>
+          <span className="ml-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v5.25a.75.75 0 001.5 0V9zM12 16.5a.75.75 0 100 1.5.75.75 0 000-1.5z" clipRule="evenodd" />
+            </svg>
+          </span>
           عرض التفاصيل
         </li>
         <li className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onDownloadReport}>
-          <span className="ml-2"><FaFilePdf size={18} /></span>
+          <span className="ml-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M9 1.5H5.625c-1.036 0-1.875.84-1.875 1.875V15.75c0 1.036.84 1.875 1.875 1.875h4.5a.75.75 0 010 1.5h-4.5A3.375 3.375 0 012.25 15.75V3.375C2.25 2.339 3.09 1.5 4.125 1.5H9a.75.75 0 010 1.5zM15 1.5h3.375c1.036 0 1.875.84 1.875 1.875v12.375c0 1.036-.84 1.875-1.875 1.875h-4.5a.75.75 0 010-1.5h4.5c.276 0 .5-.224.5-.5V3.375a.5.5 0 00-.5-.5h-3.375a.75.75 0 010-1.5zM12 21a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5h-2.25a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+            </svg>
+          </span>
           تحميل التقرير
         </li>
         <li className="flex items-center p-2 text-red-500 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onClose}>
-          <span className="ml-2"><RiCloseFill size={18} /></span>
+          <span className="ml-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+            </svg>
+          </span>
           اغلاق
         </li>
       </ul>
     </div>
   );
 };
-
 const ExportReportModal = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
@@ -317,7 +377,9 @@ const ExportReportModal = ({ onClose }) => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">تصدير التقرير</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <RiCloseFill size={24} />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+            </svg>
           </button>
         </div>
         <div className="mb-4">
@@ -337,26 +399,21 @@ const ExportReportModal = ({ onClose }) => {
     </div>
   );
 };
-
 const ProductTable = () => {
   const [activeProduct, setActiveProduct] = useState(null);
   const [showMoreMenu, setShowMoreMenu] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
-
   const handleMoreClick = (product, index) => {
     setActiveProduct(product);
     setShowMoreMenu(showMoreMenu === index ? null : index);
   };
-
   const handleShowDetails = () => {
     setShowMoreMenu(null);
   };
-
   const handleDownloadReport = () => {
     setShowMoreMenu(null);
     setShowExportModal(true);
   };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-lg font-bold text-gray-800 mb-4">كل المنتجات</h3>
@@ -367,7 +424,6 @@ const ProductTable = () => {
               <Th>المنتج</Th>
               <Th>سعر الجملة</Th>
               <Th>سعر المفرد</Th>
-              <Th>الخصم</Th>
               <Th>الفرق</Th>
               <Th>حصة التطبيق</Th>
               <Th>حصة التاجر</Th>
@@ -381,7 +437,6 @@ const ProductTable = () => {
                 <Td>{product.name}</Td>
                 <Td>{product.wholesalePrice}</Td>
                 <Td>{product.retailPrice}</Td>
-                <Td>{product.discount}</Td>
                 <Td>{product.difference}</Td>
                 <Td>{product.appShare}</Td>
                 <Td>{product.merchantShare}</Td>
@@ -389,7 +444,9 @@ const ProductTable = () => {
                 <Td>
                   <div className="relative">
                     <button className="text-gray-500 hover:text-gray-700" onClick={() => handleMoreClick(product, index)}>
-                      <BsThreeDots className="text-xl" />
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                        <path fillRule="evenodd" d="M4.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clipRule="evenodd" />
+                      </svg>
                     </button>
                     {showMoreMenu === index && (
                       <MoreOptionsModal
@@ -428,23 +485,26 @@ const ProductTable = () => {
     </div>
   );
 };
-
 const Dashboard = () => {
+  const [showMerchantsModal, setShowMerchantsModal] = useState(false);
+  const handleTotalSalesClick = () => {
+    setShowMerchantsModal(true);
+  };
   return (
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">لوحة التحكم</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statsCards.map((card, index) => (
-          <StatCard key={index} {...card} />
+          <StatCard key={index} {...card} onClick={card.title === 'إجمالي المبيعات' ? handleTotalSalesClick : null} />
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 justify-between lg:grid-cols-2 gap-6 mb-6">
         <ChartContainer title="مقارنة حصة التطبيق والتاجر" data={sharedProfitChartData} chartType="sharedProfit" />
         <ChartContainer title="تطور أرباح التطبيق" data={profitGrowthChartData} chartType="profitGrowth" />
       </div>
       <ProductTable />
+      {showMerchantsModal && <MerchantsModal merchants={merchantsData} onClose={() => setShowMerchantsModal(false)} />}
     </div>
   );
 };
-
 export default Dashboard;
