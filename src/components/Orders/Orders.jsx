@@ -121,7 +121,7 @@ const merchantDetailsData = [
   { merchant: 'متجر مهند', totalSales: 'د.ك 500,000', orders: 1500, profit: 'د.ك 150,000' },
   { merchant: 'متجر حازم عبود', totalSales: 'د.ك 350,000', orders: 900, profit: 'د.ك 100,000' },
   { merchant: 'متجر بيداء', totalSales: 'د.ك 250,000', orders: 750, profit: 'د.ك 75,000' },
-  { merchant: 'متجر محمد', totalSales: 'د.ك 150,000', orders: 500, profit: 'د.ك 40,000' },
+  { merchant: 'متجر محمد', totalSales: 'د.ك 150,000', orders: 500, profit: 'د.ك 40,0.0' },
 ];
 
 const ordersByMerchantData = [
@@ -189,7 +189,7 @@ const Dropdown = ({ options, selected, onSelect, placeholder, className }) => {
     <div className={`relative ${className}`} dir="rtl">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-ful l px-4 py-2 text-sm font-semibold text-gray-700 bg-white border rounded-lg flex items-center justify-between transition ${isOpen ? 'border-red-500' : 'border-gray-300'}`}
+        className={`w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-white border rounded-lg flex items-center justify-between transition ${isOpen ? 'border-red-500' : 'border-gray-300'}`}
       >
         <span>{selected || placeholder}</span>
         <FaChevronDown className={`transform transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
@@ -335,6 +335,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 const GenericModal = ({ isOpen, onClose, title, data }) => {
   if (!isOpen) return null;
 
+  const hasProducts = data.some(item => item.products && Array.isArray(item.products));
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl mx-auto text-right mt-20" dir="rtl">
@@ -350,7 +352,7 @@ const GenericModal = ({ isOpen, onClose, title, data }) => {
               <tr>
                 <Th>رقم الطلب</Th>
                 <Th>العميل</Th>
-                <Th>المنتجات</Th>
+                {hasProducts && <Th>المنتجات</Th>}
                 <Th>الإجمالي</Th>
                 <Th>التاريخ</Th>
                 <Th>الحالة</Th>
@@ -361,16 +363,18 @@ const GenericModal = ({ isOpen, onClose, title, data }) => {
                 <tr key={index}>
                   <Td>#{item.orderNumber}</Td>
                   <Td>{item.customerName}</Td>
-                  <Td>
-                    <ul className="list-none space-y-1">
-                      {item.products.map((product, pIndex) => (
-                        <li key={pIndex} className="flex items-center">
-                          <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
-                          <span className="text-gray-700">{product}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Td>
+                  {hasProducts && (
+                    <Td>
+                      <ul className="list-none space-y-1">
+                        {item.products && item.products.map((product, pIndex) => (
+                          <li key={pIndex} className="flex items-center">
+                            <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
+                            <span className="text-gray-700">{product}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Td>
+                  )}
                   <Td>{item.total}</Td>
                   <Td>{item.date}</Td>
                   <Td>
@@ -465,7 +469,7 @@ const OrdersPage = () => {
         break;
       case 'sales':
         title = 'إجمالي المبيعات';
-        data = merchantDetailsData;
+        data = salesData;
         break;
       default:
         return;
@@ -486,7 +490,8 @@ const OrdersPage = () => {
       return <OrderDetailsModal isOpen={isModalOpen} onClose={closeModal} order={selectedOrder} />;
     }
     if (modalData.length > 0) {
-      if (modalTitle.includes('إجمالي الطلبات')) {
+      const isMerchantStatModal = modalData[0].hasOwnProperty('receivedOrders');
+      if (isMerchantStatModal) {
         return <TotalOrdersByMerchantModal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} data={modalData} />;
       }
       return <GenericModal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} data={modalData} />;

@@ -512,18 +512,7 @@ const UserDetailsPage = ({ user, onClose }) => {
                 <FaRegCalendarDays />
               </div>
             </div>
-            <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
-              <div className="flex flex-col">
-                <div className="flex items-center space-x-1.5 rtl:space-x-reverse mb-1">
-                  <span className="text-gray-400 text-xs">أحمد عبد الله</span>
-                  <BsThreeDots className="text-gray-400 text-base" />
-                </div>
-                <p className="text-xl font-semibold mb-1">+964770000000</p>
-              </div>
-              <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
-                <BsPerson />
-              </div>
-            </div>
+
           </div>
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-5 flex items-center justify-between border-b border-gray-200">
