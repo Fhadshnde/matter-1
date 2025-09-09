@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaChevronDown, FaStore, FaChartBar, FaUserTie, FaUsers, FaUserPlus, FaKey, FaTrash } from 'react-icons/fa';
 import { BsThreeDots, BsEyeSlash, BsEye } from 'react-icons/bs';
 import { RiCloseFill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 
 const statsCards = [
   { title: 'عدد الموظفين', value: '350,000', icon: 'users' },
@@ -171,12 +172,13 @@ const SettingsNav = ({ activePage }) => {
   return (
     <div className="flex items-center space-x-4 rtl:space-x-reverse mb-6" dir="rtl">
       <div className="bg-white p-2 rounded-xl shadow-md flex items-center space-x-2 rtl:space-x-reverse">
-        <a href="/settings" className={`${linkClass} ${activePage === 'employees' ? activeClass : inactiveClass}`}>
+        {/* استبدال a بـ Link */}
+        <Link to="/settings" className={`${linkClass} ${activePage === 'employees' ? activeClass : inactiveClass}`}>
           إعدادات الموظفين
-        </a>
-        <a href="/powers" className={`${linkClass} ${activePage === 'general' ? activeClass : inactiveClass}`}>
+        </Link>
+        <Link to="/powers" className={`${linkClass} ${activePage === 'general' ? activeClass : inactiveClass}`}>
           إعدادات عامة
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -1,106 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUser, FaUserTimes, FaUsers, FaSearch, FaEllipsisH, FaAngleUp, FaEye, FaEdit, FaStore, FaRegComment, FaTrashAlt, FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
-
-const employeesData = [
-  {
-    id: 1,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 2,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 3,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 4,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 5,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 6,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 7,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-  {
-    id: 8,
-    name: 'سامي يوسف',
-    email: 'sami123@gmail.com',
-    phone: '966555102030',
-    merchant: 'يوسكو',
-    role: 'مدير متجر',
-    status: 'نشط',
-    rating: 4,
-    ordersHandled: 4500,
-    notes: 'الموظف متفاني في عمله',
-  },
-];
 
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
@@ -151,7 +52,7 @@ const EmployeeDetailsModal = ({ employee, onClose }) => (
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
-            <input type="text" value={employee.name} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
+            <input type="text" value={employee.fullName} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">الجوال</label>
@@ -160,10 +61,6 @@ const EmployeeDetailsModal = ({ employee, onClose }) => (
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">البريد</label>
             <input type="text" value={employee.email} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700 mb-1">التاجر التابع له</label>
-            <input type="text" value={employee.merchant} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">الصلاحية</label>
@@ -175,25 +72,6 @@ const EmployeeDetailsModal = ({ employee, onClose }) => (
               <StatusBadge status={employee.status} />
             </div>
           </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700 mb-1">التقييم</label>
-            <div className="px-4 py-2 bg-gray-100 rounded-lg text-sm flex items-center justify-center">
-              <StarRating rating={employee.rating} />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700 mb-1">الطلبات التي تعامل معها</label>
-            <input type="text" value={employee.ordersHandled} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-1">ملاحظات إدارية</label>
-          <textarea
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100"
-            rows="4"
-            value={employee.notes}
-            readOnly
-          ></textarea>
         </div>
       </div>
       <div className="p-4 border-t flex justify-end gap-3">
@@ -210,7 +88,7 @@ const EmployeeDetailsModal = ({ employee, onClose }) => (
 
 const EditEmployeeModal = ({ employee, onClose }) => {
   const [formData, setFormData] = useState({
-    name: employee.name,
+    name: employee.fullName,
     email: employee.email,
     phone: employee.phone,
   });
@@ -362,7 +240,7 @@ const AddNoteModal = ({ onClose }) => (
   </div>
 );
 
-const CloseAccountModal = ({ onClose }) => (
+const CloseAccountModal = ({ onClose, onConfirm }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
     <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm text-center">
       <div className="p-4 flex justify-end">
@@ -385,7 +263,7 @@ const CloseAccountModal = ({ onClose }) => (
         <button onClick={onClose} className="px-6 py-2 text-gray-700 font-medium">
           الغاء
         </button>
-        <button className="bg-red-500 text-white px-6 py-2 rounded-lg font-medium">
+        <button onClick={onConfirm} className="bg-red-500 text-white px-6 py-2 rounded-lg font-medium">
           إغلاق
         </button>
       </div>
@@ -393,11 +271,166 @@ const CloseAccountModal = ({ onClose }) => (
   </div>
 );
 
+const AddEmployeeModal = ({ onClose, onAdd }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'moderator'
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      alert("كلمة المرور وتأكيد كلمة المرور غير متطابقتين.");
+      return;
+    }
+    await onAdd(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">إضافة موظف جديد</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">رقم الجوال</label>
+            <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">البريد الإلكتروني</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">كلمة المرور</label>
+            <input type="password" name="password" value={formData.password} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">تأكيد كلمة المرور</label>
+            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الصلاحية</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+              <option value="moderator">محرر</option>
+            </select>
+          </div>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+          </button>
+          <button onClick={handleSubmit} className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+            إضافة
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ChangePasswordModal = ({ onClose, onConfirm, employee }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSubmit = () => {
+    if (newPassword !== confirmPassword) {
+      alert("كلمة المرور الجديدة وتأكيدها غير متطابقتين.");
+      return;
+    }
+    onConfirm(employee.staffId, newPassword, confirmPassword);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">تغيير كلمة المرور</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">تأكيد كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+          </button>
+          <button onClick={handleSubmit} className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+            حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const EmployeeManagement = () => {
+  const [employeesData, setEmployeesData] = useState([]);
+  const [cardsData, setCardsData] = useState({});
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [statusFilter, setStatusFilter] = useState('الكل');
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const baseUrl = 'https://products-api.cbc-apps.net';
+  const token = localStorage.getItem('userToken');
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff?page=1&limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setEmployeesData(data.staff);
+      setCardsData(data.cards);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch employees:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   const handleDropdownToggle = (id) => {
     setActiveDropdown(activeDropdown === id ? null : id);
@@ -417,6 +450,77 @@ const EmployeeManagement = () => {
   const handleCloseModal = () => {
     setActiveModal(null);
     setSelectedEmployee(null);
+  };
+
+  const handleAddEmployee = async (newEmployeeData) => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newEmployeeData.name,
+          phone: newEmployeeData.phone,
+          password: newEmployeeData.password,
+          confirmPassword: newEmployeeData.confirmPassword,
+          role: newEmployeeData.role
+        })
+      });
+      if (response.ok) {
+        fetchEmployees();
+      } else {
+        console.error("Failed to add employee");
+      }
+    } catch (error) {
+      console.error("Failed to add employee:", error);
+    }
+  };
+
+  const handleChangePassword = async (staffId, newPassword, confirmPassword) => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${staffId}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          newPassword: newPassword,
+          confirmPassword: confirmPassword
+        })
+      });
+      if (response.ok) {
+        alert("تم تغيير كلمة المرور بنجاح");
+        handleCloseModal();
+      } else {
+        console.error("Failed to change password");
+      }
+    } catch (error) {
+      console.error("Failed to change password:", error);
+    }
+  };
+
+  const handleDeleteEmployee = async () => {
+    if (!selectedEmployee) return;
+
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${selectedEmployee.staffId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        fetchEmployees();
+        handleCloseModal();
+      } else {
+        console.error("Failed to delete employee");
+      }
+    } catch (error) {
+      console.error("Failed to delete employee:", error);
+    }
   };
 
   const filteredEmployees = statusFilter === 'الكل'
@@ -448,28 +552,28 @@ const EmployeeManagement = () => {
           <FaUserTimes className="text-red-500 text-3xl ml-3" />
           <div>
             <p className="text-sm text-gray-500">موظفين تم تعليقهم</p>
-            <p className="text-xl font-bold">12 موظفًا</p>
+            <p className="text-xl font-bold">{cardsData.bannedAccounts} موظفًا</p>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
           <FaUsers className="text-orange-500 text-3xl ml-3" />
           <div>
             <p className="text-sm text-gray-500">صلاحيات محدودة</p>
-            <p className="text-xl font-bold">50 موظفًا</p>
+            <p className="text-xl font-bold">{cardsData.differentRoles} موظفًا</p>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
           <FaUsers className="text-green-500 text-3xl ml-3" />
           <div>
             <p className="text-sm text-gray-500">نشطين حالياً</p>
-            <p className="text-xl font-bold">150 موظفًا</p>
+            <p className="text-xl font-bold">{employeesData.filter(emp => emp.status === 'نشط').length} موظفًا</p>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
           <FaUsers className="text-blue-500 text-3xl ml-3" />
           <div>
             <p className="text-sm text-gray-500">اجمالي الموظفين</p>
-            <p className="text-xl font-bold">450 موظفًا</p>
+            <p className="text-xl font-bold">{cardsData.totalStaff} موظفًا</p>
           </div>
         </div>
       </div>
@@ -520,6 +624,13 @@ const EmployeeManagement = () => {
             </div>
           )}
         </div>
+        <button
+          onClick={() => handleOpenModal('addEmployee')}
+          className="w-full md:w-auto bg-red-500 text-white rounded-lg py-2 px-4 text-sm flex items-center justify-center md:justify-start"
+        >
+          <FaUsers className="ml-2" />
+          إضافة موظف
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -531,28 +642,26 @@ const EmployeeManagement = () => {
                 <Th>البريد</Th>
                 <Th>رقم الجوال</Th>
                 <Th>الصلاحية</Th>
-                <Th>التاجر التابع</Th>
                 <Th>الحالة</Th>
                 <Th>الإجراءات</Th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-right">
               {filteredEmployees.map((employee) => (
-                <tr key={employee.id}>
-                  <Td>{employee.name}</Td>
+                <tr key={employee.staffId}>
+                  <Td>{employee.fullName}</Td>
                   <Td>{employee.email}</Td>
                   <Td>{employee.phone}</Td>
                   <Td>{employee.role}</Td>
-                  <Td>{employee.merchant}</Td>
                   <Td><StatusBadge status={employee.status} /></Td>
                   <Td className="relative">
                     <button
                       className="text-gray-500 hover:text-gray-800"
-                      onClick={() => handleDropdownToggle(employee.id)}
+                      onClick={() => handleDropdownToggle(employee.staffId)}
                     >
                       <FaEllipsisH />
                     </button>
-                    {activeDropdown === employee.id && (
+                    {activeDropdown === employee.staffId && (
                       <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                         <button onClick={() => handleOpenModal('details', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEye className="ml-2" /> عرض التفاصيل
@@ -566,10 +675,13 @@ const EmployeeManagement = () => {
                         <button onClick={() => handleOpenModal('toggleStatus')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaStore className="ml-2" /> تعليق أو تفعيل
                         </button>
+                        <button onClick={() => handleOpenModal('changePassword', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaEdit className="ml-2" /> تغيير كلمة المرور
+                        </button>
                         <button onClick={() => handleOpenModal('addNote')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaRegComment className="ml-2" /> إضافة ملاحظة إدارية
                         </button>
-                        <button onClick={() => handleOpenModal('closeAccount')} className="flex items-center w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                        <button onClick={() => handleOpenModal('closeAccount', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                           <FaTrashAlt className="ml-2" /> إغلاق
                         </button>
                       </div>
@@ -606,7 +718,9 @@ const EmployeeManagement = () => {
       {activeModal === 'permissions' && <EditPermissionsModal onClose={handleCloseModal} />}
       {activeModal === 'toggleStatus' && <ToggleStatusModal onClose={handleCloseModal} />}
       {activeModal === 'addNote' && <AddNoteModal onClose={handleCloseModal} />}
-      {activeModal === 'closeAccount' && <CloseAccountModal onClose={handleCloseModal} />}
+      {activeModal === 'closeAccount' && selectedEmployee && <CloseAccountModal onClose={handleCloseModal} onConfirm={handleDeleteEmployee} />}
+      {activeModal === 'addEmployee' && <AddEmployeeModal onClose={handleCloseModal} onAdd={handleAddEmployee} />}
+      {activeModal === 'changePassword' && selectedEmployee && <ChangePasswordModal onClose={handleCloseModal} onConfirm={handleChangePassword} employee={selectedEmployee} />}
     </div>
   );
 };

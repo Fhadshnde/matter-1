@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const MerchantsModal = ({ onClose, merchants }) => {
@@ -42,53 +42,6 @@ const MerchantsModal = ({ onClose, merchants }) => {
     </div>
   );
 };
-const statsCards = [
-  { title: 'متوسط حاصل الأرباح', value: '20%', icon: 'bag' },
-  { title: 'حصة التطبيق', value: '70,000 د.ك', icon: 'mobile' },
-  { title: 'حصة التاجر', value: '280,000 د.ك', icon: 'store' },
-  { title: 'إجمالي المبيعات', value: '350,000 د.ك', icon: 'package' },
-];
-const productsData = [
-  { name: 'تيشيرت رجالي', wholesalePrice: '2.500 د.ك', retailPrice: '4.000 د.ك', discount: '0.000 د.ك', difference: '1.500 د.ك', appShare: '0.600 د.ك', merchantShare: '3.400 د.ك', ratio: '15%', category: 'الملابس', seller: 'متجر فيت ستور', referenceBarcode: 'PRD-4589', salesCount: 47, rating: 3.5, netProfit: '159.800 د.ك' },
-  { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر جديد', referenceBarcode: 'PRD-4590', salesCount: 12, rating: 4.0, netProfit: '120.000 د.ك' },
-  { name: 'جاكيت شتوي', wholesalePrice: '12,000 د.ك', retailPrice: '18,000 د.ك', discount: '1,000 د.ك', difference: '5,000 د.ك', appShare: '1,000 د.ك', merchantShare: '4,000 د.ك', ratio: '20%', category: 'ملابس شتوية', seller: 'محل الدفء', referenceBarcode: 'PRD-4591', salesCount: 8, rating: 5.0, netProfit: '150.000 د.ك' },
-  { name: 'حذاء رياضي', wholesalePrice: '25,000 د.ك', retailPrice: '40,000 د.ك', discount: '5,000 د.ك', difference: '10,000 د.ك', appShare: '2,000 د.ك', merchantShare: '8,000 د.ك', ratio: '20%', category: 'أحذية', seller: 'متجر الأحذية', referenceBarcode: 'PRD-4592', salesCount: 25, rating: 4.5, netProfit: '200.000 د.ك' },
-  { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر رياضي', referenceBarcode: 'PRD-4593', salesCount: 30, rating: 4.0, netProfit: '180.000 د.ك' },
-  { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر كلاسيك', referenceBarcode: 'PRD-4594', salesCount: 50, rating: 3.0, netProfit: '220.000 د.ك' },
-  { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر فاشون', referenceBarcode: 'PRD-4595', salesCount: 65, rating: 4.5, netProfit: '250.000 د.ك' },
-  { name: 'بنطال رياضي', wholesalePrice: '4,000 د.ك', retailPrice: '6,500 د.ك', discount: '0.500 د.ك', difference: '2,000 د.ك', appShare: '1,300 د.ك', merchantShare: '5,200 د.ك', ratio: '20%', category: 'الملابس', seller: 'متجر الموضة', referenceBarcode: 'PRD-4596', salesCount: 72, rating: 4.0, netProfit: '300.000 د.ك' },
-];
-const merchantsData = [
-  { name: 'متجر فيت ستور', totalSales: '150,000 د.ك', totalOrders: '3,000', netProfit: '50,000 د.ك' },
-  { name: 'متجر جديد', totalSales: '80,000 د.ك', totalOrders: '1,500', netProfit: '25,000 د.ك' },
-  { name: 'محل الدفء', totalSales: '60,000 د.ك', totalOrders: '1,200', netProfit: '20,000 د.ك' },
-  { name: 'متجر الأحذية', totalSales: '40,000 د.ك', totalOrders: '800', netProfit: '15,000 د.ك' },
-  { name: 'متجر رياضي', totalSales: '20,000 د.ك', totalOrders: '400', netProfit: '8,000 د.ك' },
-];
-const sharedProfitChartData = [
-  { name: 'يناير', appShare: 7500, merchantShare: 14000 },
-  { name: 'فبراير', appShare: 6000, merchantShare: 10000 },
-  { name: 'مارس', appShare: 8500, merchantShare: 13000 },
-  { name: 'أبريل', appShare: 9200, merchantShare: 12500 },
-  { name: 'مايو', appShare: 9200, merchantShare: 15000 },
-  { name: 'يونيو', appShare: 8000, merchantShare: 12000 },
-  { name: 'يوليو', appShare: 9000, merchantShare: 18000 },
-  { name: 'اغسطس', appShare: 10000, merchantShare: 15000 },
-];
-const profitGrowthChartData = [
-  { name: 'يناير', appProfit: 1050, merchantProfit: 1750 },
-  { name: 'فبراير', appProfit: 1100, merchantProfit: 1800 },
-  { name: 'مارس', appProfit: 950, merchantProfit: 1500 },
-  { name: 'أبريل', appProfit: 800, merchantProfit: 1200 },
-  { name: 'مايو', appProfit: 700, merchantProfit: 1050 },
-  { name: 'يونيو', appProfit: 650, merchantProfit: 900 },
-  { name: 'يوليو', appProfit: 750, merchantProfit: 1000 },
-  { name: 'أغسطس', appProfit: 800, merchantProfit: 1300 },
-  { name: 'سبتمبر', appProfit: 920, merchantProfit: 1400 },
-  { name: 'أكتوبر', appProfit: 850, merchantProfit: 1100 },
-  { name: 'نوفمبر', appProfit: 900, merchantProfit: 1200 },
-  { name: 'ديسمبر', appProfit: 1000, merchantProfit: 1500 },
-];
 const CustomSharedTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const merchantValue = payload.find(p => p.dataKey === 'merchantShare').value;
@@ -97,10 +50,10 @@ const CustomSharedTooltip = ({ active, payload, label }) => {
       <div className="bg-gray-800 text-white p-3 rounded-md text-right border border-white font-sans">
         <p className="font-bold text-sm">{label}</p>
         <p className="text-sm">
-          <span style={{ color: '#EF4444' }}>●</span> {`التاجر: ${merchantValue.toLocaleString()} د.ك +1.8% مقارنة قياس`}
+          <span style={{ color: '#EF4444' }}>●</span> {`التاجر: ${merchantValue.toLocaleString()} د.ع`}
         </p>
         <p className="text-sm">
-          <span style={{ color: '#22C55E' }}>●</span> {`التطبيق: ${appValue.toLocaleString()} د.ك +2.2% مقارنة قياس`}
+          <span style={{ color: '#22C55E' }}>●</span> {`التطبيق: ${appValue.toLocaleString()} د.ع`}
         </p>
       </div>
     );
@@ -111,7 +64,7 @@ const CustomProfitTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-800 text-white p-3 rounded-md text-center border border-white font-sans">
-        <p className="font-bold text-sm">{`القيمة: ${payload[0].value.toLocaleString()}K`}</p>
+        <p className="font-bold text-sm">{`القيمة: ${payload[0].value.toLocaleString()}`}</p>
       </div>
     );
   }
@@ -120,46 +73,33 @@ const CustomProfitTooltip = ({ active, payload, label }) => {
 const ChartContainer = ({ title, data, chartType }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const getProfitYAxisTicks = () => {
-    return [50, 100, 250, 650, 800, 1000, 5000];
-  };
-  const getSharedYAxisTicks = () => {
-    return [0, 5000, 10000, 15000, 20000];
-  };
   const yAxisTickFormatter = (value) => {
-    if (chartType === 'sharedProfit') {
-      return value.toLocaleString();
-    }
-    if (value >= 1000) {
-      return `${(value / 1000)}m`;
-    }
-    return `${value}k`;
+    return value.toLocaleString();
   };
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
       <div className='flex items-center justify-between mb-4 space-x-4 rtl:space-x-reverse'>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-      </div>
-      <div className="flex items-center mb-4 space-x-4 rtl:space-x-reverse">
-        <div className="relative">
-          <label htmlFor="start-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">من تاريخ</label>
-          <input type="date" id="start-date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
         </div>
-        <div className="relative">
-          <label htmlFor="end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
-          <input type="date" id="end-date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
+        <div className="flex items-center mb-4 space-x-4 rtl:space-x-reverse">
+          <div className="relative">
+            <label htmlFor="start-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">من تاريخ</label>
+            <input type="date" id="start-date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
+          </div>
+          <div className="relative">
+            <label htmlFor="end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
+            <input type="date" id="end-date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
+          </div>
         </div>
-      </div>
       </div>
       <div className="flex-grow h-80" style={{ direction: 'ltr' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <XAxis dataKey="name" reversed={true} axisLine={false} tickLine={false} style={{ direction: 'rtl', fontFamily: 'Cairo' }} />
+            <XAxis dataKey="month" reversed={true} axisLine={false} tickLine={false} style={{ direction: 'rtl', fontFamily: 'Cairo' }} />
             <YAxis
               axisLine={false}
               tickLine={false}
-              ticks={chartType === 'sharedProfit' ? getSharedYAxisTicks() : getProfitYAxisTicks()}
               tickFormatter={yAxisTickFormatter}
               tick={{ fill: '#6B7280' }}
             />
@@ -197,14 +137,19 @@ const ChartContainer = ({ title, data, chartType }) => {
                     <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="colorMerchant" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F97316" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
-                  </linearGradient>
                 </defs>
                 <Area type="monotone" dataKey="appProfit" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorApp)" dot={false} />
-                <Area type="monotone" dataKey="merchantProfit" stroke="#F97316" strokeWidth={2} fillOpacity={1} fill="url(#colorMerchant)" dot={false} />
                 <Tooltip content={<CustomProfitTooltip />} />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ direction: 'rtl', marginTop: '20px' }}
+                  payload={[
+                    { value: 'أرباح التطبيق', type: 'circle', id: 'appProfit', color: '#EF4444' }
+                  ]}
+                />
               </>
             )}
           </AreaChart>
@@ -261,8 +206,8 @@ const Td = ({ children }) => (
 );
 const ProductModal = ({ product, onClose }) => {
   if (!product) return null;
-  const ratingStars = product.rating ? Math.floor(product.rating) : 0;
-  const hasHalfStar = product.rating ? product.rating % 1 !== 0 : false;
+  const ratingStars = product.customerRating ? Math.floor(product.customerRating) : 0;
+  const hasHalfStar = product.customerRating ? product.customerRating % 1 !== 0 : false;
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white p-4 rounded-lg shadow-xl max-w-sm w-full">
@@ -277,23 +222,23 @@ const ProductModal = ({ product, onClose }) => {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">اسم المنتج</span>
-            <span className="font-medium text-gray-800">{product.name}</span>
+            <span className="font-medium text-gray-800">{product.productName}</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">التصنيف</span>
-            <span className="font-medium text-gray-800">{product.category}</span>
+            <span className="font-medium text-gray-800">{product.categoryName}</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">التاجر</span>
-            <span className="font-medium text-gray-800">{product.seller}</span>
+            <span className="font-medium text-gray-800">{product.merchantName}</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">الكود المرجعي</span>
-            <span className="font-medium text-gray-800">{product.referenceBarcode}</span>
+            <span className="font-medium text-gray-800">{product.productId}</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">عدد المرات المباعة</span>
-            <span className="font-medium text-gray-800">{product.salesCount} عملية</span>
+            <span className="font-medium text-gray-800">{product.timesSold} عملية</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">تقييم الزبائن</span>
@@ -304,31 +249,31 @@ const ProductModal = ({ product, onClose }) => {
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">سعر الجملة</span>
-            <span className="font-medium text-gray-800">{product.wholesalePrice}</span>
+            <span className="font-medium text-gray-800">{product.wholesalePrice} د.ع</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">سعر البيع المفرد</span>
-            <span className="font-medium text-gray-800">{product.retailPrice}</span>
+            <span className="font-medium text-gray-800">{product.sellingPrice} د.ع</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">الفرق</span>
-            <span className="font-medium text-gray-800">{product.difference}</span>
+            <span className="font-medium text-gray-800">{product.priceDifference} د.ع</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">نسبة حصة التطبيق</span>
-            <span className="font-medium text-gray-800">{product.ratio}</span>
+            <span className="font-medium text-gray-800">15%</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">حصة التطبيق</span>
-            <span className="font-medium text-gray-800">{product.appShare}</span>
+            <span className="font-medium text-gray-800">{product.appShare} د.ع</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">حصة التاجر</span>
-            <span className="font-medium text-gray-800">{product.merchantShare}</span>
+            <span className="font-medium text-gray-800">{product.merchantShare} د.ع</span>
           </div>
           <div className="flex justify-between items-center pb-1">
             <span className="font-semibold text-gray-500">صافي ربح التاجر</span>
-            <span className="font-medium text-gray-800">{product.netProfit}</span>
+            <span className="font-medium text-gray-800">{product.merchantShare} د.ع</span>
           </div>
         </div>
         <div className="mt-4">
@@ -399,7 +344,7 @@ const ExportReportModal = ({ onClose }) => {
     </div>
   );
 };
-const ProductTable = () => {
+const ProductTable = ({ products, totalCount }) => {
   const [activeProduct, setActiveProduct] = useState(null);
   const [showMoreMenu, setShowMoreMenu] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -432,15 +377,15 @@ const ProductTable = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-right">
-            {productsData.map((product, index) => (
+            {products.map((product, index) => (
               <tr key={index}>
-                <Td>{product.name}</Td>
-                <Td>{product.wholesalePrice}</Td>
-                <Td>{product.retailPrice}</Td>
-                <Td>{product.difference}</Td>
-                <Td>{product.appShare}</Td>
-                <Td>{product.merchantShare}</Td>
-                <Td>{product.ratio}</Td>
+                <Td>{product.productName}</Td>
+                <Td>{product.wholesalePrice} د.ع</Td>
+                <Td>{product.sellingPrice} د.ع</Td>
+                <Td>{product.priceDifference} د.ع</Td>
+                <Td>{product.appShare} د.ع</Td>
+                <Td>{product.merchantShare} د.ع</Td>
+                <Td>{product.merchantPercentage}%</Td>
                 <Td>
                   <div className="relative">
                     <button className="text-gray-500 hover:text-gray-700" onClick={() => handleMoreClick(product, index)}>
@@ -463,7 +408,7 @@ const ProductTable = () => {
         </table>
       </div>
       <div className="mt-4 flex justify-between items-center text-sm">
-        <span className="text-gray-700">إجمالي المنتجات: 8764</span>
+        <span className="text-gray-700">إجمالي المنتجات: {totalCount}</span>
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <span className="text-gray-500">أعرض في الصفحة 5</span>
           <div className="flex space-x-1 rtl:space-x-reverse">
@@ -486,10 +431,56 @@ const ProductTable = () => {
   );
 };
 const Dashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showMerchantsModal, setShowMerchantsModal] = useState(false);
+  const [merchantsData, setMerchantsData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const token = localStorage.getItem('userToken');
+      try {
+        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/profits?page=1&limit=20', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const result = await response.json();
+        setData(result);
+        const aggregatedMerchants = {};
+        result.productsProfit.forEach(product => {
+          if (!aggregatedMerchants[product.merchantName]) {
+            aggregatedMerchants[product.merchantName] = {
+              name: product.merchantName,
+              totalSales: 0,
+              totalOrders: 0,
+              netProfit: 0,
+            };
+          }
+          aggregatedMerchants[product.merchantName].totalSales += product.sellingPrice || 0;
+          aggregatedMerchants[product.merchantName].totalOrders += product.timesSold;
+          aggregatedMerchants[product.merchantName].netProfit += product.merchantShare;
+        });
+        setMerchantsData(Object.values(aggregatedMerchants));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
   const handleTotalSalesClick = () => {
     setShowMerchantsModal(true);
   };
+  if (loading || !data) {
+    return <div dir="rtl" className="p-6 text-center text-gray-500">جاري تحميل البيانات...</div>;
+  }
+  const statsCards = [
+    { title: 'متوسط حاصل الأرباح', value: `${data.cards.averageProfitMargin}%`, icon: 'bag' },
+    { title: 'حصة التطبيق', value: `${data.cards.appShare} د.ع`, icon: 'mobile' },
+    { title: 'حصة التاجر', value: `${data.cards.merchantShare} د.ع`, icon: 'store' },
+    { title: 'إجمالي المبيعات', value: `${data.cards.totalSales} د.ع`, icon: 'package' },
+  ];
   return (
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">لوحة التحكم</h1>
@@ -499,10 +490,10 @@ const Dashboard = () => {
         ))}
       </div>
       <div className="grid grid-cols-1 justify-between lg:grid-cols-2 gap-6 mb-6">
-        <ChartContainer title="مقارنة حصة التطبيق والتاجر" data={sharedProfitChartData} chartType="sharedProfit" />
-        <ChartContainer title="تطور أرباح التطبيق" data={profitGrowthChartData} chartType="profitGrowth" />
+        <ChartContainer title="مقارنة حصة التطبيق والتاجر" data={data.profitComparison} chartType="sharedProfit" />
+        <ChartContainer title="تطور أرباح التطبيق" data={data.appProfitEvolution} chartType="profitGrowth" />
       </div>
-      <ProductTable />
+      <ProductTable products={data.productsProfit} totalCount={data.productsProfit.length} />
       {showMerchantsModal && <MerchantsModal merchants={merchantsData} onClose={() => setShowMerchantsModal(false)} />}
     </div>
   );

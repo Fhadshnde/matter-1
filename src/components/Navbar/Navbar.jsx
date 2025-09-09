@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const Navbar = () => {
+// تأكد من استقبال prop onLogout هنا
+const Navbar = ({ onLogout }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -36,8 +37,6 @@ const Navbar = () => {
     { path: "/merchants", icon: <Store className="w-4 h-4" />, text: "التجار" },
     { path: "/customers", icon: <Globe className="w-4 h-4" />, text: "الزبائن" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
-    // { path: "/offers-dashboard", icon: <Tag className="w-4 h-4" />, text: "العروض والخصومات" },
-    // { path: "/customer-behavior", icon: <Bell className="w-4 h-4" />, text: "التنبيهات" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
   ];
 
@@ -179,10 +178,15 @@ const Navbar = () => {
 
             {isProfileMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">الملف الشخصي</Link>
-                <Link to="/profile-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">إعدادات الحساب</Link>
+                <Link to="/profile-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">إعدادات الحساب</Link>
                 <hr className="my-1" />
-                <Link to="/logout" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">تسجيل الخروج</Link>
+                {/* تم تعديل هذا الزر لاستدعاء الدالة onLogout */}
+                <button
+                  onClick={onLogout}
+                  className="block w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg"
+                >
+                  تسجيل الخروج
+                </button>
               </div>
             )}
           </div>
@@ -193,7 +197,7 @@ const Navbar = () => {
               <span className="absolute -top-1 -right-1 block w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             {isNotificationsOpen && (
-              <div className="absolute transform -translate-x-1/2 sm:left-[-70px]  sm:transform-none mt-2 w-full max-w-sm sm:w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute transform -translate-x-1/2 sm:left-[-70px] sm:transform-none mt-2 w-full max-w-sm sm:w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                   <h3 className="text-lg font-bold text-gray-900">
                     الإشعارات
@@ -240,7 +244,6 @@ const Navbar = () => {
               </div>
             )}
           </div>
-
           <div className="flex items-center gap-1 cursor-pointer hover:text-gray-700">
             <Globe className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 font-medium">EN</span>

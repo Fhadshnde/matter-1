@@ -4,6 +4,7 @@ import Navbar from './components/Navbar/Navbar';
 import Home from './components/HomePage/HomePage';
 import Analytics from './components/Analytics/Analytics';
 import CustomerBehavior from './components/Analytics/CustomerBehavior';
+import UserDetailsPage from './components/Customers/UserDetailsPage';
 import Sales from './components/Analytics/Sales';
 import Products from './pages/Products';
 import AddProduct from './components/Products/AddProduct';
@@ -24,39 +25,51 @@ import Login from './components/Login/Login';
 import Register from './components/Login/Register';
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true); // ✅ إضافة حالة انتظار
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    if (token) setIsAuthenticated(true);
+    const token = localStorage.getItem('userToken'); 
+    if (token) {
+      setIsLoggedIn(true);
+    }
+    setLoading(false); // ✅ بعد الفحص نوقف الانتظار
   }, []);
 
-  const handleSelectMerchant = (id) => navigate(`/merchants/${id}`);
-  const handleLogin = () => setIsAuthenticated(true);
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    navigate('/');
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem('userToken');
-    setIsAuthenticated(false);
+    localStorage.removeItem('userToken'); 
+    setIsLoggedIn(false);
     navigate('/login');
   };
 
-  return (
-    <div>
-      {isAuthenticated && <Navbar onLogout={handleLogout} />}
-      <Routes>
-        {!isAuthenticated && (
-          <>
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </>
-        )}
+  const handleSelectMerchant = (merchant) => {
+    setSelectedMerchant(merchant);
+  };
 
-        {isAuthenticated && (
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">جاري التحميل...</div>; 
+  }
+
+  return (
+    <div dir="rtl" className="App">
+      {isLoggedIn && <Navbar onLogout={handleLogout} />}
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/register" element={<Register />} />
+        {!isLoggedIn && <Route path="/*" element={<Navigate to="/login" replace />} />}
+        {isLoggedIn && (
           <>
             <Route path="/" element={<Home />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/customer-behavior" element={<CustomerBehavior />} />
+            <Route path="/customers/:id" element={<UserDetailsPage />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/products" element={<Products />} />
             <Route path="/add-product" element={<AddProduct />} />

@@ -1,138 +1,10 @@
-import React, { useState } from 'react';
-import { FaChevronDown, FaStore, FaChartBar, FaUserTie, FaUsers, FaUser, FaBox, FaPercent, FaTruck, FaWrench } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
-import { BsEye, BsThreeDots } from 'react-icons/bs';
+import { BsEye } from 'react-icons/bs';
+import axios from 'axios';
 
-const statsCards = [
-  { title: 'إجمالي الطلبات', value: '4,753', icon: 'orders' },
-  { title: 'إجمالي المبيعات', value: '240.00 د.ك', icon: 'sales' },
-  { title: 'طلبات مستلمة', value: '3,500', icon: 'received' },
-  { title: 'طلبات مرفوضة', value: '50', icon: 'rejected' },
-];
-
-const ordersData = [
-  {
-    id: 1,
-    orderNumber: 'A-10255',
-    customerName: 'مها أبو زيد',
-    products: ['هاتف ×1 A15 128GB', 'سماعات بلوتوث ×1'],
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    payment: 'مدفوع',
-    shipping: 'ارامكس',
-    notes: 'التغليف هدية',
-    merchant: 'سما للهواتف',
-    customerPhone: '+965500000',
-    shippingCompany: 'ارامكس',
-    orderDate: '2025-09-01',
-    deliveryDate: null,
-    timeline: [
-      { status: 'تم الاستلام', desc: 'الطلب تم تسجيله بنجاح وهو في قائمة الطلبات.', completed: true },
-      { status: 'جاهز للشحن', desc: 'الطلب تم تجهيزه وتأكيد الفاتورة، في انتظار شركة الشحن', completed: true },
-      { status: 'قيد التوصيل', desc: 'الطلب تم تسليمه لشركة الشحن مع إمكانية عرض رقم التتبع', completed: false },
-      { status: 'تم التوصيل', desc: 'الطلب وصل إلى العميل بنجاح (مع وقت وتاريخ التسليم)', completed: false },
-    ]
-  },
-  {
-    id: 2,
-    orderNumber: 'A-10254',
-    customerName: 'أحمد علي',
-    products: ['هاتف ×1 A15 128GB', 'سماعات بلوتوث ×1'],
-    total: '154.90 د.ك',
-    status: 'مكتمل',
-    payment: 'مدفوع',
-    shipping: 'ارامكس',
-    notes: 'التغليف هدية',
-    merchant: 'سما للهواتف',
-    customerPhone: '+965500000',
-    shippingCompany: 'ارامكس',
-    orderDate: '2025-08-28',
-    deliveryDate: '2025-08-30',
-    timeline: [
-      { status: 'تم الاستلام', desc: 'الطلب تم تسجيله بنجاح وهو في قائمة الطلبات.', completed: true },
-      { status: 'قيد المعالجة', desc: 'الطلب تحت المراجعة من قبل التاجر وفريق الدعم', completed: true },
-      { status: 'جاهز للشحن', desc: 'الطلب تم تجهيزه وتأكيد الفاتورة، في انتظار شركة الشحن', completed: true },
-      { status: 'قيد التوصيل', desc: 'الطلب تم تسليمه لشركة الشحن مع إمكانية عرض رقم التتبع', completed: true },
-      { status: 'تم التوصيل', desc: 'الطلب وصل إلى العميل بنجاح (مع وقت وتاريخ التسليم)', completed: true },
-    ]
-  },
-  {
-    id: 3,
-    orderNumber: 'A-10253',
-    customerName: 'محمد صبري',
-    products: ['هاتف ×1 A15 128GB', 'سماعات بلوتوث ×1'],
-    total: '154.90 د.ك',
-    status: 'ملغي',
-    payment: 'مسترد',
-    shipping: 'ارامكس',
-    notes: 'التغليف هدية',
-    merchant: 'سما للهواتف',
-    customerPhone: '+965500000',
-    shippingCompany: 'ارامكس',
-    orderDate: '2025-08-25',
-    deliveryDate: null,
-    timeline: [
-      { status: 'تم الاستلام', desc: 'الطلب تم تسجيله بنجاح وهو في قائمة الطلبات.', completed: true },
-      { status: 'ملغي', desc: 'تم إلغاء الطلب بناء على طلب العميل.', completed: true },
-    ]
-  },
-];
-
-const salesData = [
-  {
-    id: 1,
-    orderNumber: 'S-201',
-    customerName: 'فاطمة خالد',
-    products: ['لابتوب ×1 Z-Series'],
-    total: '350.50 د.ك',
-    date: '2025-09-04',
-    status: 'مكتمل'
-  },
-  {
-    id: 2,
-    orderNumber: 'S-202',
-    customerName: 'يوسف أحمد',
-    products: ['ساعة ذكية ×1 S3'],
-    total: '99.00 د.ك',
-    date: '2025-09-03',
-    status: 'مكتمل'
-  },
-  {
-    id: 3,
-    orderNumber: 'S-203',
-    customerName: 'ليلى سالم',
-    products: ['سماعات بلوتوث ×2 X9'],
-    total: '80.00 د.ك',
-    date: '2025-09-02',
-    status: 'مكتمل'
-  },
-  {
-    id: 4,
-    orderNumber: 'S-204',
-    customerName: 'سارة علي',
-    products: ['شاحن لاسلكي ×1 5W'],
-    total: '25.00 د.ك',
-    date: '2025-09-01',
-    status: 'مكتمل'
-  }
-];
-
-const merchantDetailsData = [
-  { merchant: 'متجر مهند', totalSales: 'د.ك 500,000', orders: 1500, profit: 'د.ك 150,000' },
-  { merchant: 'متجر حازم عبود', totalSales: 'د.ك 350,000', orders: 900, profit: 'د.ك 100,000' },
-  { merchant: 'متجر بيداء', totalSales: 'د.ك 250,000', orders: 750, profit: 'د.ك 75,000' },
-  { merchant: 'متجر محمد', totalSales: 'د.ك 150,000', orders: 500, profit: 'د.ك 40,0.0' },
-];
-
-const ordersByMerchantData = [
-  { merchant: 'متجر مهند', receivedOrders: 1200, rejectedOrders: 50, awaitingShipment: 250 },
-  { merchant: 'متجر حازم عبود', receivedOrders: 750, rejectedOrders: 20, awaitingShipment: 130 },
-  { merchant: 'متجر بيداء', receivedOrders: 600, rejectedOrders: 15, awaitingShipment: 135 },
-  { merchant: 'متجر محمد', receivedOrders: 400, rejectedOrders: 10, awaitingShipment: 90 },
-];
-
-const statusOptions = ['الكل', 'جديد', 'قيد المعالجة', 'بانتظار الشحن', 'تم الشحن', 'مكتمل', 'ملغي'];
-const paymentOptions = ['مدفوع', 'قيد الدفع', 'مسترد'];
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const getStatusClass = (status) => {
   switch (status) {
@@ -140,6 +12,7 @@ const getStatusClass = (status) => {
     case 'مكتمل':
       return 'bg-green-100 text-green-800';
     case 'بانتظار الشحن':
+    case 'قيد المعالجة':
       return 'bg-yellow-100 text-yellow-800';
     case 'ملغي':
     case 'مسترد':
@@ -217,12 +90,34 @@ const Dropdown = ({ options, selected, onSelect, placeholder, className }) => {
 const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   if (!isOpen || !order) return null;
 
+  const orderTimeline = order.orderTimeline.map(item => ({
+    status: item.status,
+    desc: item.status,
+    completed: true,
+  }));
+
+  const timelineSteps = [
+    { status: 'قيد المعالجة', desc: 'الطلب قيد المراجعة من قبل التاجر وفريق الدعم.' },
+    { status: 'جاهز للشحن', desc: 'الطلب تم تجهيزه وتأكيد الفاتورة، في انتظار شركة الشحن.' },
+    { status: 'قيد التوصيل', desc: 'الطلب تم تسليمه لشركة الشحن مع إمكانية عرض رقم التتبع.' },
+    { status: 'تم التوصيل', desc: 'الطلب وصل إلى العميل بنجاح.' },
+    { status: 'ملغي', desc: 'تم إلغاء الطلب بناء على طلب العميل.' }
+  ];
+
+  const fullTimeline = timelineSteps.map(step => {
+    const fetchedStep = orderTimeline.find(item => item.status === step.status);
+    return {
+      ...step,
+      completed: !!fetchedStep,
+    };
+  });
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl mx-auto text-right mt-20" dir="rtl">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-gray-800">
-            تفاصيل الطلب #{order.orderNumber}
+            تفاصيل الطلب #{order.orderId}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <RiCloseFill size={24} />
@@ -236,7 +131,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                 <FaStore className="ml-2" />
                 التاجر
               </span>
-              <p className="font-bold text-gray-800">{order.merchant}</p>
+              <p className="font-bold text-gray-800">{order.merchantName}</p>
               <p className="text-gray-500">{order.customerPhone}</p>
             </div>
             <div>
@@ -245,7 +140,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                 العميل
               </span>
               <p className="font-bold text-gray-800">{order.customerName}</p>
-              <p className="text-gray-500">بغداد</p>
+              <p className="text-gray-500">{order.shippingAddress || 'لا يوجد عنوان'}</p>
             </div>
           </div>
 
@@ -260,7 +155,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
               {order.products.map((product, index) => (
                 <li key={index} className="flex items-center text-gray-700">
                   <div className="w-6 h-6 bg-gray-200 rounded-md flex-shrink-0 ml-2"></div>
-                  <span>{product}</span>
+                  <span>{product.productName} ×{product.quantity}</span>
                 </li>
               ))}
             </ul>
@@ -273,7 +168,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                 <FaTruck className="ml-2" />
                 شركة الشحن
             </span>
-            <p className="font-bold text-gray-800 mt-2">{order.shippingCompany}</p>
+            <p className="font-bold text-gray-800 mt-2">{order.shippingCompany || 'لم يتم التحديد'}</p>
           </div>
 
           <hr />
@@ -281,7 +176,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           <div className="space-y-4 ml-10">
             <h4 className="text-base font-bold text-gray-800 mb-2">خط سير الطلب</h4>
             <div className="relative border-r-2 border-gray-200 pr-4 space-y-4 max-h-64 overflow-y-auto">
-              {order.timeline.map((step, index) => (
+              {fullTimeline.map((step, index) => (
                 <div key={index} className="relative">
                   <span
                     className={`absolute top-0 right-[-25px] h-4 w-4 rounded-full ${
@@ -300,11 +195,11 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-1 md:col-span-2">
               <label className="text-gray-500">ملاحظات</label>
-              <p className="font-bold text-gray-800">{order.notes}</p>
+              <p className="font-bold text-gray-800">{order.notes || 'لا يوجد ملاحظات'}</p>
             </div>
             <div>
               <label className="text-gray-500">الدفع</label>
-              <p className="font-bold text-gray-800">{order.payment}</p>
+              <p className="font-bold text-gray-800">{order.paymentMethod}</p>
             </div>
             <div>
               <label className="text-gray-500">الحالة</label>
@@ -317,12 +212,12 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-gray-500">تاريخ الطلب</label>
-              <p className="font-bold text-gray-800">{order.orderDate}</p>
+              <p className="font-bold text-gray-800">{new Date(order.orderDate).toLocaleDateString('en-US')}</p>
             </div>
             {order.deliveryDate && (
               <div>
                 <label className="text-gray-500">تاريخ الاستلام</label>
-                <p className="font-bold text-gray-800">{order.deliveryDate}</p>
+                <p className="font-bold text-gray-800">{new Date(order.deliveryDate).toLocaleDateString('en-US')}</p>
               </div>
             )}
           </div>
@@ -332,10 +227,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   );
 };
 
-const GenericModal = ({ isOpen, onClose, title, data }) => {
+const GenericModal = ({ isOpen, onClose, title, data, hasProducts = true }) => {
   if (!isOpen) return null;
-
-  const hasProducts = data.some(item => item.products && Array.isArray(item.products));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
@@ -361,22 +254,20 @@ const GenericModal = ({ isOpen, onClose, title, data }) => {
             <tbody className="bg-white divide-y divide-gray-200 text-right">
               {data.map((item, index) => (
                 <tr key={index}>
-                  <Td>#{item.orderNumber}</Td>
+                  <Td>#{item.orderId}</Td>
                   <Td>{item.customerName}</Td>
                   {hasProducts && (
                     <Td>
                       <ul className="list-none space-y-1">
-                        {item.products && item.products.map((product, pIndex) => (
-                          <li key={pIndex} className="flex items-center">
-                            <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
-                            <span className="text-gray-700">{product}</span>
-                          </li>
-                        ))}
+                        <li className="flex items-center">
+                          <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
+                          <span className="text-gray-700">{item.productsSummary}</span>
+                        </li>
                       </ul>
                     </Td>
                   )}
-                  <Td>{item.total}</Td>
-                  <Td>{item.date}</Td>
+                  <Td>{item.totalAmount} د.ع</Td>
+                  <Td>{new Date(item.orderDate).toLocaleDateString('en-US')}</Td>
                   <Td>
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(item.status)}`}>
                       {item.status}
@@ -392,63 +283,60 @@ const GenericModal = ({ isOpen, onClose, title, data }) => {
   );
 };
 
-const TotalOrdersByMerchantModal = ({ isOpen, onClose, title, data }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl mx-auto text-right mt-20" dir="rtl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <RiCloseFill size={24} />
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 text-right">
-              <tr>
-                <Th>التاجر</Th>
-                <Th>الطلبات المستلمة</Th>
-                <Th>الطلبات المرفوضة</Th>
-                <Th>بانتظار الشحن</Th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-right">
-              {data.map((item, index) => (
-                <tr key={index}>
-                  <Td>{item.merchant}</Td>
-                  <Td>{item.receivedOrders}</Td>
-                  <Td>{item.rejectedOrders}</Td>
-                  <Td>{item.awaitingShipment}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
 const OrdersPage = () => {
+  const [statsCards, setStatsCards] = useState([]);
+  const [ordersData, setOrdersData] = useState([]);
+  const [pagination, setPagination] = useState({});
   const [selectedStatus, setSelectedStatus] = useState('الكل');
   const [selectedPayment, setSelectedPayment] = useState('الكل');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalTitle, setModalTitle] = useState('');
   const [modalData, setModalData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
 
-  const openModal = (order) => {
-    setSelectedOrder(order);
-    setIsModalOpen(true);
+  const statusOptions = ['الكل', 'قيد المعالجة', 'مكتمل', 'ملغي', 'بانتظار الشحن'];
+  const paymentOptions = ['الكل', 'دفع عند الاستلام', 'مدفوع'];
+
+  const token = localStorage.getItem('userToken');
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/dashboard/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: currentPage,
+          limit: 20
+        }
+      });
+      const { orders, cards, pagination } = response.data;
+
+      const formattedCards = [
+        { title: 'إجمالي الطلبات', value: cards.totalOrders.toLocaleString(), icon: 'orders' },
+        { title: 'إجمالي المبيعات', value: `${cards.totalSales.toLocaleString()} د.ع`, icon: 'sales' },
+        { title: 'طلبات مستلمة', value: cards.receivedOrders.toLocaleString(), icon: 'received' },
+        { title: 'طلبات مرفوضة', value: cards.rejectedOrders.toLocaleString(), icon: 'rejected' },
+      ];
+
+      setStatsCards(formattedCards);
+      setOrdersData(orders);
+      setPagination(pagination);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
-    setModalData([]);
+  const fetchOrderDetails = async (orderId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/dashboard/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSelectedOrder(response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+    }
   };
 
   const openStatModal = (cardIcon) => {
@@ -456,8 +344,12 @@ const OrdersPage = () => {
     let data = [];
     switch (cardIcon) {
       case 'orders':
-        title = 'إجمالي الطلبات حسب التاجر';
-        data = ordersByMerchantData;
+        title = 'إجمالي الطلبات';
+        data = ordersData;
+        break;
+      case 'sales':
+        title = 'إجمالي المبيعات';
+        data = ordersData;
         break;
       case 'received':
         title = 'طلبات مستلمة';
@@ -467,10 +359,6 @@ const OrdersPage = () => {
         title = 'طلبات مرفوضة';
         data = ordersData.filter(order => order.status === 'ملغي');
         break;
-      case 'sales':
-        title = 'إجمالي المبيعات';
-        data = salesData;
-        break;
       default:
         return;
     }
@@ -479,10 +367,25 @@ const OrdersPage = () => {
     setIsModalOpen(true);
   };
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, [currentPage]);
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedOrder(null);
+    setModalData([]);
+  };
+
   const filteredOrders = ordersData.filter(order => {
     const statusMatch = selectedStatus === 'الكل' || order.status === selectedStatus;
-    const paymentMatch = selectedPayment === 'الكل' || order.payment === selectedPayment;
-    return statusMatch && paymentMatch;
+    const paymentMatch = selectedPayment === 'الكل' || (selectedPayment === 'مدفوع' ? order.paymentMethod !== 'دفع عند الاستلام' : order.paymentMethod === selectedPayment);
+    const searchMatch = searchText === '' || 
+      order.orderId.toString().includes(searchText) ||
+      order.customerName.toLowerCase().includes(searchText.toLowerCase()) ||
+      (order.productsSummary && order.productsSummary.toLowerCase().includes(searchText.toLowerCase()));
+    
+    return statusMatch && paymentMatch && searchMatch;
   });
 
   const getModalComponent = () => {
@@ -490,11 +393,7 @@ const OrdersPage = () => {
       return <OrderDetailsModal isOpen={isModalOpen} onClose={closeModal} order={selectedOrder} />;
     }
     if (modalData.length > 0) {
-      const isMerchantStatModal = modalData[0].hasOwnProperty('receivedOrders');
-      if (isMerchantStatModal) {
-        return <TotalOrdersByMerchantModal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} data={modalData} />;
-      }
-      return <GenericModal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} data={modalData} />;
+      return <GenericModal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} data={modalData} hasProducts={modalTitle !== 'إجمالي الطلبات حسب التاجر'} />;
     }
     return null;
   };
@@ -529,6 +428,8 @@ const OrdersPage = () => {
               type="text"
               placeholder="ابحث برقم الطلب / العميل / المنتج"
               className="w-full md:w-80 px-4 py-2 text-sm bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-800 placeholder-gray-400"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
             <svg className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -546,40 +447,36 @@ const OrdersPage = () => {
                 <Th>الحالة</Th>
                 <Th>الدفع</Th>
                 <Th>تاريخ الطلب</Th>
-                <Th>تاريخ الاستلام</Th>
                 <Th>الإجراءات</Th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-right">
               {filteredOrders.map((order) => (
-                <tr key={order.id}>
-                  <Td>#{order.orderNumber}</Td>
+                <tr key={order.orderId}>
+                  <Td>#{order.orderId}</Td>
                   <Td>{order.customerName}</Td>
                   <Td>
                     <ul className="list-none space-y-1">
-                      {order.products.map((product, index) => (
-                        <li key={index} className="flex items-center">
-                          <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
-                          <span className="text-gray-700">{product}</span>
-                        </li>
-                      ))}
+                      <li className="flex items-center">
+                        <div className="w-4 h-4 bg-gray-200 rounded-md flex-shrink-0 ml-1"></div>
+                        <span className="text-gray-700">{order.productsSummary}</span>
+                      </li>
                     </ul>
                   </Td>
-                  <Td>{order.total}</Td>
+                  <Td>{order.totalAmount} د.ع</Td>
                   <Td>
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.status)}`}>
                       {order.status}
                     </span>
                   </Td>
                   <Td>
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.payment)}`}>
-                      {order.payment}
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.paymentMethod)}`}>
+                      {order.paymentMethod}
                     </span>
                   </Td>
-                  <Td>{order.orderDate}</Td>
-                  <Td>{order.deliveryDate || 'لم يتم الاستلام'}</Td>
+                  <Td>{new Date(order.orderDate).toLocaleDateString('en-US')}</Td>
                   <Td>
-                    <button onClick={() => openModal(order)} className="text-gray-500 hover:text-gray-700">
+                    <button onClick={() => fetchOrderDetails(order.orderId)} className="text-gray-500 hover:text-gray-700">
                       <BsEye className="text-xl" />
                     </button>
                   </Td>
@@ -589,14 +486,17 @@ const OrdersPage = () => {
           </table>
         </div>
         <div className="mt-4 flex justify-between items-center text-sm">
-          <span className="text-gray-700">إجمالي المنتجات: 8764</span>
+          <span className="text-gray-700">إجمالي المنتجات: {pagination.total}</span>
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <span className="text-gray-500">أعرض في الصفحة 10</span>
+            <span className="text-gray-500">
+              أعرض في الصفحة {pagination.limit}
+            </span>
             <div className="flex space-x-1 rtl:space-x-reverse">
-              {[1, 2, 3, 4, 5].map(page => (
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
-                  className={`px-3 py-1 rounded-md text-sm ${page === 1 ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border'}`}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 rounded-md text-sm ${page === currentPage ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border'}`}
                 >
                   {page}
                 </button>

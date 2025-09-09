@@ -22,13 +22,13 @@ const Login = ({ onLogin }) => {
     setIsError(false);
     try {
       const response = await axios.post('https://products-api.cbc-apps.net/auth/login', formData);
-      const token = response.data.access_token; // هنا التغيير
+      const token = response.data.access_token; 
       if (token) {
-        localStorage.setItem('userToken', token);
+        localStorage.setItem('userToken', token); 
         setMessage('تم تسجيل الدخول بنجاح!');
         setIsError(false);
-        onLogin(); // تحديث حالة App.jsx
-        navigate('/'); // الانتقال للصفحة الرئيسية
+        onLogin(); 
+        navigate('/'); 
       }
     } catch (error) {
       console.error('Login failed:', error.response ? error.response.data : error.message);

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BsThreeDots, BsPerson } from 'react-icons/bs';
 import { RiCloseFill } from 'react-icons/ri';
 import { MdOutlineDateRange } from 'react-icons/md';
@@ -13,154 +14,108 @@ import { BiBlock } from 'react-icons/bi';
 import { MdInfoOutline } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
 
-const dummyUser = {
-  name: 'أحمد عبد الله',
-  mobile: '+964770000000',
-  email: 'ahmad@nike.com',
-  city: 'بغداد',
-  registrationDate: '2024-11-10',
-  status: 'نشط',
-  profilePicture: 'http://googleusercontent.com/file_content/0',
-};
-
-const userOrders = [
-  {
-    orderId: 'A-10255',
-    products: 'هاتف A1S 128GB، سماعات بلوتوث',
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    paymentStatus: 'مدفوع',
-    shippingCompany: 'ارامكس',
-  },
-  {
-    orderId: 'A-10254',
-    products: 'هاتف A1S 128GB، سماعات بلوتوث',
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    paymentStatus: 'مدفوع',
-    shippingCompany: 'ارامكس',
-  },
-  {
-    orderId: 'A-10253',
-    products: 'هاتف A1S 128GB، سماعات بلوتوث',
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    paymentStatus: 'مدفوع',
-    shippingCompany: 'aramex',
-  },
-  {
-    orderId: 'A-10252',
-    products: 'هاتف A1S 128GB، سماعات بلوتوث',
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    paymentStatus: 'مدفوع',
-    shippingCompany: 'aramex',
-  },
-  {
-    orderId: 'A-10251',
-    products: 'هاتف A1S 128GB، سماعات بلوتوث',
-    total: '154.90 د.ك',
-    status: 'بانتظار الشحن',
-    paymentStatus: 'مدفوع',
-    shippingCompany: 'aramex',
-  },
-];
-
-const userReviews = [
-  {
-    date: '2025-07-30',
-    comment: 'الخدمة ممتازة ولكن التغليف متوسط',
-    rating: 4,
-    product: 'هاتف A1S، سماعات بلوتوث 1x',
-  },
-  {
-    date: '2025-07-30',
-    comment: 'الخدمة ممتازة ولكن التغليف متوسط',
-    rating: 4,
-    product: 'هاتف A1S، سماعات بلوتوث 1x',
-  },
-  {
-    date: '2025-07-30',
-    comment: 'الخدمة ممتازة ولكن التغليف متوسط',
-    rating: 4,
-    product: 'هاتف A1S، سماعات بلوتوث 1x',
-  },
-  {
-    date: '2025-07-30',
-    comment: 'الخدمة ممتازة ولكن التغليف متوسط',
-    rating: 4,
-    product: 'هاتف A1S، سماعات بلوتوث 1x',
-  },
-  {
-    date: '2025-07-30',
-    comment: 'الخدمة ممتازة ولكن التغليف متوسط',
-    rating: 4,
-    product: 'هاتف A1S، سماعات بلوتوث 1x',
-  },
-];
-
-const StatusBadge = ({ status }) => {
-  const colorMap = {
-    'نشط': 'bg-green-100 text-green-700',
-    'بانتظار الشحن': 'bg-yellow-100 text-yellow-700',
-    'مدفوع': 'bg-green-100 text-green-700',
-  };
+// Helper component for status badges
+const StatusBadge = ({ status, isBanned }) => {
+  let text = status;
+  let colorClass = 'bg-gray-100 text-gray-700';
+  if (isBanned) {
+    text = 'محظور';
+    colorClass = 'bg-red-100 text-red-700';
+  } else {
+    switch (status) {
+      case 'نشط':
+        colorClass = 'bg-green-100 text-green-700';
+        break;
+      case 'موقوف':
+        colorClass = 'bg-yellow-100 text-yellow-700';
+        break;
+      default:
+        break;
+    }
+  }
   return (
-    <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
-      {status}
+    <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+      {text}
     </span>
   );
 };
 
+// Helper component for table header
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
 );
 
+// Helper component for table data
 const Td = ({ children }) => (
   <td className="p-3 text-xs text-gray-700">{children}</td>
 );
 
-const AddNoteModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-xs">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">اضافة ملاحظه</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-4 space-y-4">
-        <div>
-          <label className="block text-xs font-semibold mb-1.5 text-gray-700">اختار التاريخ</label>
-          <div className="relative">
-            <input
-              type="text"
-              value="1 / 8 / 2025"
-              readOnly
+// Modals
+const AddNoteModal = ({ onClose, onSave }) => {
+  const [noteData, setNoteData] = useState({
+    note: '',
+    priority: 'low',
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNoteData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSaveClick = () => {
+    onSave(noteData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-xs">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">اضافة ملاحظه</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+
+          </div>
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 text-gray-700">ادخل نص الملاحظة</label>
+            <textarea
+              name="note"
+              value={noteData.note}
+              onChange={handleInputChange}
+              placeholder="ادخل ملاحظاتك..."
+              className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none resize-none"
+            ></textarea>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 text-gray-700">الأولوية</label>
+            <select
+              name="priority"
+              value={noteData.priority}
+              onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none"
-            />
-            <MdOutlineDateRange className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+            >
+              <option value="low">منخفضة</option>
+              <option value="medium">متوسطة</option>
+              <option value="high">عالية</option>
+            </select>
           </div>
         </div>
-        <div>
-          <label className="block text-xs font-semibold mb-1.5 text-gray-700">ادخل نص الملاحظة</label>
-          <textarea
-            placeholder="ادخل ملاحظاتك..."
-            className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none resize-none"
-          ></textarea>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+          </button>
+          <button onClick={handleSaveClick} className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+            حفظ
+          </button>
         </div>
       </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-          الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-          حفظ
-        </button>
-      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SendNotificationModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
@@ -197,34 +152,47 @@ const SendNotificationModal = ({ onClose }) => (
   </div>
 );
 
-const BlockUserModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-xs text-center">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">حظر الزبون</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="text-red-500 text-4xl flex justify-center mx-auto w-14 h-14 rounded-full bg-red-100 items-center mb-3">
-          <RiCloseFill className="text-red-500 text-3xl"/>
+const BlockUserModal = ({ onClose, onConfirm, isBanned }) => {
+    const [reason, setReason] = useState("");
+    const modalTitle = isBanned ? "إلغاء حظر الزبون" : "حظر الزبون";
+    const modalButtonText = isBanned ? "إلغاء الحظر" : "حظر الزبون";
+    const iconClass = isBanned ? "bg-green-100 text-green-500" : "bg-red-100 text-red-500";
+  
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+        <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-xs text-center">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h2 className="text-lg font-bold">{modalTitle}</h2>
+            <button onClick={onClose}>
+              <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+            </button>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className={`text-4xl flex justify-center mx-auto w-14 h-14 rounded-full ${iconClass} items-center mb-3`}>
+              <BiBlock className="text-3xl"/>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">{isBanned ? "هل انت متأكد أنك تريد إلغاء حظر الزبون؟" : "هل انت متأكد أنك تريد حظر الزبون؟"}</h2>
+            <p className="text-gray-500 text-xs">سوف يتم {isBanned ? "إلغاء حظر" : "حظر"} الزبون نهائيا من قائمة الزبائن لديك</p>
+            <p className="text-gray-700 font-semibold text-sm">هل انت متأكد انك تريد {isBanned ? "إلغاء الحظر" : "الحظر"}؟</p>
+            <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="أدخل السبب..."
+                className="w-full h-20 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none resize-none"
+            ></textarea>
+          </div>
+          <div className="p-4 border-t flex justify-end gap-3">
+            <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+              الغاء
+            </button>
+            <button onClick={() => onConfirm(!isBanned, reason)} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${isBanned ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+              {modalButtonText}
+            </button>
+          </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-800">هل انت متأكد أنك تريد حظر الزبون؟</h2>
-        <p className="text-gray-500 text-xs">سوف يتم حظر الزبون نهائيا من قائمة الزبائن لديك</p>
-        <p className="text-gray-700 font-semibold text-sm">هل انت متأكد انك تريد الحظر؟</p>
       </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-          الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-          حظر الزبون
-        </button>
-      </div>
-    </div>
-  </div>
-);
+    );
+  }
 
 const PrintReceiptModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
@@ -361,54 +329,120 @@ const OrderDetailsModal = ({ orderDetails, onClose }) => (
   </div>
 );
 
-const UserDetailsPage = ({ user, onClose }) => {
+const UserDetailsPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showAddNote, setShowAddNote] = useState(false);
   const [showSendNotification, setShowSendNotification] = useState(false);
   const [showBlockUser, setShowBlockUser] = useState(false);
   const [showPrintReceipt, setShowPrintReceipt] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const MoreOrderOptions = ({ onClose }) => {
-    return (
-      <div className="bg-white rounded-lg shadow-lg py-1.5 w-40 text-right absolute mt-1.5 left-0 border border-gray-200 z-10">
-        <button onClick={() => { setShowPrintReceipt(true); onClose(); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          <FaPrint className="text-base text-gray-400" />
-          طباعة الايصال
-        </button>
-        <div className="border-t border-gray-200 my-1.5"></div>
-        <button onClick={() => { setShowAddNote(true); onClose(); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          <PiNotePencil className="text-base text-gray-400" />
-          اضافة ملاحظة
-        </button>
-        <button onClick={() => { setShowSendNotification(true); onClose(); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          <FaRegBell className="text-base text-gray-400" />
-          ارسال اشعار
-        </button>
-        <div className="border-t border-gray-200 my-1.5"></div>
-        <button onClick={() => { setShowBlockUser(true); onClose(); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-red-500 hover:bg-red-50">
-          <BiBlock className="text-base" />
-          حظر الزبون
-        </button>
-      </div>
-    );
+  const baseUrl = 'https://products-api.cbc-apps.net';
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      setLoading(true);
+      const token = localStorage.getItem('userToken');
+      try {
+        const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch user data');
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) {
+      fetchUserDetails();
+    }
+  }, [id]);
+
+  const handleBlockUser = async (banned, reason) => {
+    const token = localStorage.getItem('userToken');
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}/ban`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ banned, reason })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to ban user.');
+      }
+      alert(`تم ${banned ? 'حظر' : 'إلغاء حظر'} الزبون بنجاح.`);
+      setShowBlockUser(false);
+      const updatedUserData = await response.json();
+      setUserData(updatedUserData);
+
+    } catch (error) {
+      console.error("Error banning user:", error);
+      alert(`فشل في ${banned ? 'حظر' : 'إلغاء حظر'} الزبون.`);
+    }
   };
 
+  const handleSaveNote = async (noteData) => {
+    const token = localStorage.getItem('userToken');
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}/notes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(noteData)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add note.');
+      }
+      alert('تم إضافة الملاحظة بنجاح.');
+      // You might want to refresh user data after adding a note
+      const updatedUserData = await response.json();
+      setUserData(updatedUserData);
+    } catch (error) {
+      console.error("Error adding note:", error);
+      alert('فشل في إضافة الملاحظة.');
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6 text-center">جاري تحميل البيانات...</div>;
+  }
+
+  if (!userData) {
+    return <div className="p-6 text-center">فشل في تحميل بيانات العميل.</div>;
+  }
+  
+  // FIX: Added optional chaining to prevent the error
+  const isBannedBasedOnStatus = userData?.personalData?.status === 'محظور';
+
+  const { personalData, statsCards, ordersHistory, reviews } = userData;
   const dummyOrderDetails = {
-    orderNumber: 'A-10254',
+    orderNumber: selectedOrder?.orderId || 'N/A',
     customer: {
-      name: 'أحمد علي',
-      location: 'بغداد',
+      name: personalData?.customerName || 'N/A',
+      location: personalData?.city || 'N/A',
     },
     vendor: {
       name: 'سما للهواتف',
       phone: '+96550000',
     },
-    products: [
-      { name: 'هاتف A1S 128GB، سماعات بلوتوث', quantity: 1 },
-    ],
-    shippingCompany: 'ارامكس',
-    status: 'جاهز للشحن',
+    products: selectedOrder?.products?.split(', ').map(product => ({ name: product, quantity: 1 })) || [],
+    shippingCompany: selectedOrder?.shippingCompany || 'N/A',
+    status: selectedOrder?.shippingStatus || 'N/A',
     timeline: [
       { step: 'تم الاستلام', active: true, desc: 'الطلب تم تسجيله بنجاح وهو في قائمة الطلبات.' },
       { step: 'قيد المعالجة', active: true, desc: 'الطلب تحت المراجعة من قبل التاجر وفريق الدعم.' },
@@ -417,14 +451,14 @@ const UserDetailsPage = ({ user, onClose }) => {
       { step: 'تم التوصيل', active: false, desc: 'الطلب وصل إلى العميل بنجاح (مع وقت وتاريخ التسليم).' },
     ],
     notes: 'التغليف هدية',
-    paymentStatus: 'مدفوع',
-    shippingStatus: 'بانتظار الشحن',
+    paymentStatus: selectedOrder?.paymentStatus || 'N/A',
+    shippingStatus: selectedOrder?.shippingStatus || 'N/A',
   };
 
   return (
     <div dir="rtl" className="bg-gray-100 min-h-screen p-7 font-sans w-full">
       <div className="flex items-center gap-3 mb-5">
-        <button onClick={onClose} className="p-2.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition-colors">
+        <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition-colors">
           <FaArrowRight className="text-xl" />
         </button>
         <h1 className="text-xl font-bold text-gray-800">تفاصيل العميل</h1>
@@ -434,29 +468,29 @@ const UserDetailsPage = ({ user, onClose }) => {
           <div className="bg-white rounded-lg shadow-sm p-5 text-center">
             <div className="flex flex-col items-center gap-3.5 mb-5">
               <div className="w-20 h-20 rounded-full overflow-hidden border-1.5 border-gray-200 flex-shrink-0">
-                <img src={dummyUser.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                <img src={personalData?.profilePicture || 'https://via.placeholder.com/150'} alt="Profile" className="w-full h-full object-cover" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">{dummyUser.name}</h2>
+              <h2 className="text-xl font-bold text-gray-800">{personalData?.customerName}</h2>
             </div>
             <div className="text-right border-b border-gray-200 pb-3.5 mb-3.5">
               <p className="text-gray-500 text-xs">الجوال</p>
-              <p className="font-semibold text-gray-800 text-sm">{dummyUser.mobile}</p>
+              <p className="font-semibold text-gray-800 text-sm">{personalData?.phone}</p>
             </div>
             <div className="text-right border-b border-gray-200 pb-3.5 mb-3.5">
               <p className="text-gray-500 text-xs">البريد الإلكتروني</p>
-              <p className="font-semibold text-gray-800 text-sm">{dummyUser.email}</p>
+              <p className="font-semibold text-gray-800 text-sm">{personalData?.email}</p>
             </div>
             <div className="text-right border-b border-gray-200 pb-3.5 mb-3.5">
               <p className="text-gray-500 text-xs">المدينة</p>
-              <p className="font-semibold text-gray-800 text-sm">{dummyUser.city}</p>
+              <p className="font-semibold text-gray-800 text-sm">{personalData?.city || 'غير محدد'}</p>
             </div>
             <div className="text-right border-b border-gray-200 pb-3.5 mb-3.5">
               <p className="text-gray-500 text-xs">تاريخ التسجيل</p>
-              <p className="font-semibold text-gray-800 text-sm">{dummyUser.registrationDate}</p>
+              <p className="font-semibold text-gray-800 text-sm">{new Date(personalData?.registrationDate).toLocaleDateString()}</p>
             </div>
             <div className="text-right border-b border-gray-200 pb-3.5 mb-3.5">
               <p className="text-gray-500 text-xs">الحالة</p>
-              <StatusBadge status={dummyUser.status} />
+              <StatusBadge status={personalData?.status} isBanned={isBannedBasedOnStatus} />
             </div>
             <div className="flex flex-col gap-3.5 mt-5">
               <button onClick={() => setShowAddNote(true)} className="bg-white text-red-500 px-3.5 py-2 rounded-lg text-sm font-medium border border-gray-300 flex items-center justify-center gap-1.5">
@@ -465,7 +499,7 @@ const UserDetailsPage = ({ user, onClose }) => {
               </button>
               <button onClick={() => setShowBlockUser(true)} className="bg-white text-red-500 px-3.5 py-2 rounded-lg text-sm font-medium border border-gray-300 flex items-center justify-center gap-1.5">
                 <BiBlock className="text-base" />
-                حظر
+                {isBannedBasedOnStatus ? 'إلغاء الحظر' : 'حظر'}
               </button>
               <button onClick={() => setShowSendNotification(true)} className="bg-white text-red-500 px-3.5 py-2 rounded-lg text-sm font-medium border border-gray-300 flex items-center justify-center gap-1.5">
                 <FaRegBell className="text-base" />
@@ -482,7 +516,7 @@ const UserDetailsPage = ({ user, onClose }) => {
                   <span className="text-gray-400 text-xs">متوسط التقييمات</span>
                   <BsThreeDots className="text-gray-400 text-base" />
                 </div>
-                <p className="text-xl font-semibold mb-1">4.3 من 5</p>
+                <p className="text-xl font-semibold mb-1">{statsCards?.averageRating || 'لا يوجد'} من 5</p>
               </div>
               <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
                 <FaRegStar />
@@ -491,10 +525,10 @@ const UserDetailsPage = ({ user, onClose }) => {
             <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
               <div className="flex flex-col">
                 <div className="flex items-center space-x-1.5 rtl:space-x-reverse mb-1">
-                  <span className="text-gray-400 text-xs">آخر طلب</span>
+                  <span className="text-gray-400 text-xs">إجمالي المصروفات</span>
                   <BsThreeDots className="text-gray-400 text-base" />
                 </div>
-                <p className="text-xl font-semibold mb-1">320 د.ك</p>
+                <p className="text-xl font-semibold mb-1">{statsCards?.totalSpent} د.ع</p>
               </div>
               <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
                 <FaRegClock />
@@ -506,13 +540,24 @@ const UserDetailsPage = ({ user, onClose }) => {
                   <span className="text-gray-400 text-xs">عدد الطلبات</span>
                   <BsThreeDots className="text-gray-400 text-base" />
                 </div>
-                <p className="text-xl font-semibold mb-1">12 طلب</p>
+                <p className="text-xl font-semibold mb-1">{statsCards?.totalOrders} طلب</p>
               </div>
               <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
                 <FaRegCalendarDays />
               </div>
             </div>
-
+            <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-1.5 rtl:space-x-reverse mb-1">
+                  <span className="text-gray-400 text-xs">آخر طلب</span>
+                  <BsThreeDots className="text-gray-400 text-base" />
+                </div>
+                <p className="text-xl font-semibold mb-1">{statsCards?.lastOrderAmount || 0} د.ع</p>
+              </div>
+              <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
+                <FiShoppingBag />
+              </div>
+            </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-5 flex items-center justify-between border-b border-gray-200">
@@ -563,46 +608,52 @@ const UserDetailsPage = ({ user, onClose }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {userOrders.map((order, idx) => (
-                    <tr key={idx} className="border-b border-gray-200">
-                      <Td>
-                        <button onClick={() => setShowOrderDetails(true)} className="text-gray-700 font-semibold hover:underline">
-                          {order.orderId}
-                        </button>
-                      </Td>
-                      <Td className="flex items-center gap-1.5">
-                        <LuPhone className="text-gray-500 text-base" /> {order.products}
-                      </Td>
-                      <Td>{order.total}</Td>
-                      <Td>
-                        <StatusBadge status={order.status} />
-                      </Td>
-                      <Td>
-                        <StatusBadge status={order.paymentStatus} />
-                      </Td>
-                      <Td>{order.shippingCompany}</Td>
-                      <Td>
-                        <div className="relative inline-block">
-                          <button onClick={() => setShowMoreOptions(showMoreOptions === idx ? null : idx)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
-                            <BsThreeDots className="text-base" />
+                  {ordersHistory?.length > 0 ? (
+                    ordersHistory.map((order, idx) => (
+                      <tr key={idx} className="border-b border-gray-200">
+                        <Td>
+                          <button onClick={() => { setShowOrderDetails(true); setSelectedOrder(order); }} className="text-gray-700 font-semibold hover:underline">
+                            {order.orderId}
                           </button>
-                          {showMoreOptions === idx && (
-                            <div className="bg-white rounded-lg shadow-lg py-1.5 w-40 text-right absolute mt-1.5 left-0 border border-gray-200 z-10">
-                              <button onClick={() => { setShowOrderDetails(true); setShowMoreOptions(null); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-                                <FaMagnifyingGlass className="text-base text-gray-400" />
-                                عرض التفاصيل
-                              </button>
-                              <div className="border-t border-gray-200 my-1.5"></div>
-                              <button onClick={() => { setShowAddNote(true); setShowMoreOptions(null); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-                                <PiNotePencil className="text-base text-gray-400" />
-                                اضافه ملاحظه
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </Td>
+                        </Td>
+                        <Td className="flex items-center gap-1.5">
+                          <LuPhone className="text-gray-500 text-base" /> {order.products}
+                        </Td>
+                        <Td>{order.totalAmount} د.ع</Td>
+                        <Td>
+                          <StatusBadge status={order.shippingStatus} isBanned={isBannedBasedOnStatus}/>
+                        </Td>
+                        <Td>
+                          <StatusBadge status={order.paymentStatus} isBanned={isBannedBasedOnStatus}/>
+                        </Td>
+                        <Td>{order.shippingCompany}</Td>
+                        <Td>
+                          <div className="relative inline-block">
+                            <button onClick={() => setShowMoreOptions(showMoreOptions === idx ? null : idx)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                              <BsThreeDots className="text-base" />
+                            </button>
+                            {showMoreOptions === idx && (
+                              <div className="bg-white rounded-lg shadow-lg py-1.5 w-40 text-right absolute mt-1.5 left-0 border border-gray-200 z-10">
+                                <button onClick={() => { setShowOrderDetails(true); setSelectedOrder(order); setShowMoreOptions(null); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
+                                  <FaMagnifyingGlass className="text-base text-gray-400" />
+                                  عرض التفاصيل
+                                </button>
+                                <div className="border-t border-gray-200 my-1.5"></div>
+                                <button onClick={() => { setShowAddNote(true); setShowMoreOptions(null); }} className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
+                                  <PiNotePencil className="text-base" />
+                                  اضافه ملاحظه
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </Td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <Td colSpan="7" className="text-center">لا يوجد سجل طلبات لهذا الزبون.</Td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -616,7 +667,7 @@ const UserDetailsPage = ({ user, onClose }) => {
                 </select>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-400">اجمالي المنتجات: {userOrders.length}</span>
+                <span className="text-xs text-gray-400">اجمالي المنتجات: {ordersHistory?.length}</span>
                 <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
                   &lt;
                 </button>
@@ -687,23 +738,29 @@ const UserDetailsPage = ({ user, onClose }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {userReviews.map((review, idx) => (
-                    <tr key={idx} className="border-b border-gray-200">
-                      <Td>{review.date}</Td>
-                      <Td>{review.comment}</Td>
-                      <Td>
-                        <div className="flex items-center gap-1.5">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <FaRegStar key={i} className={`text-base ${i < review.rating ? "text-yellow-400" : "text-gray-300"}`} />
-                          ))}
-                        </div>
-                      </Td>
-                      <Td className="flex items-center gap-1.5">
-                        <LuPhone className="text-gray-500 text-base" />
-                        {review.product}
-                      </Td>
+                  {reviews?.length > 0 ? (
+                    reviews.map((review, idx) => (
+                      <tr key={idx} className="border-b border-gray-200">
+                        <Td>{new Date(review.date).toLocaleDateString()}</Td>
+                        <Td>{review.comment}</Td>
+                        <Td>
+                          <div className="flex items-center gap-1.5">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <FaRegStar key={i} className={`text-base ${i < review.rating ? "text-yellow-400" : "text-gray-300"}`} />
+                            ))}
+                          </div>
+                        </Td>
+                        <Td className="flex items-center gap-1.5">
+                          <LuPhone className="text-gray-500 text-base" />
+                          {review.productName}
+                        </Td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <Td colSpan="4" className="text-center">لا توجد تقييمات مكتوبة لهذا الزبون.</Td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -717,12 +774,9 @@ const UserDetailsPage = ({ user, onClose }) => {
                 </select>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-400">اجمالي المنتجات: {userReviews.length}</span>
+                <span className="text-xs text-gray-400">اجمالي التقييمات: {reviews?.length}</span>
                 <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
                   &lt;
-                </button>
-                <button className="w-6 h-6 flex items-center justify-center bg-red-500 text-white rounded-full">
-                  1
                 </button>
                 <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
                   2
@@ -744,9 +798,9 @@ const UserDetailsPage = ({ user, onClose }) => {
           </div>
         </div>
       </div>
-      {showAddNote && <AddNoteModal onClose={() => setShowAddNote(false)} />}
+      {showAddNote && <AddNoteModal onClose={() => setShowAddNote(false)} onSave={handleSaveNote} />}
       {showSendNotification && <SendNotificationModal onClose={() => setShowSendNotification(false)} />}
-      {showBlockUser && <BlockUserModal onClose={() => setShowBlockUser(false)} />}
+      {showBlockUser && <BlockUserModal onClose={() => setShowBlockUser(false)} onConfirm={handleBlockUser} isBanned={isBannedBasedOnStatus} />}
       {showPrintReceipt && <PrintReceiptModal onClose={() => setShowPrintReceipt(false)} />}
       {showOrderDetails && <OrderDetailsModal orderDetails={dummyOrderDetails} onClose={() => setShowOrderDetails(false)} />}
     </div>

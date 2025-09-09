@@ -1,26 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BsThreeDots } from 'react-icons/bs';
 import { RiCloseFill } from 'react-icons/ri';
 import { FaRegUser, FaStore, FaChartBar, FaUserLock, FaRegComment, FaCalendarAlt, FaChevronDown, FaRegPauseCircle } from 'react-icons/fa';
 import { FaMagnifyingGlass } from 'react-icons/fa6';
 import { MdInfoOutline } from 'react-icons/md';
-
-const merchantCards = [
-  { title: 'تجار لديهم تقييم', value: '22 تاجر', icon: <FaRegComment /> },
-  { title: 'تجار محظورين', value: '6 تجار', icon: <FaUserLock /> },
-  { title: 'تجار موقوفين', value: '15 تاجر', icon: <FaRegPauseCircle /> },
-  { title: 'التجار النشطين', value: '180 تاجر', icon: <FaRegUser /> },
-];
-
-const merchantsData = [
-  { id: 1, name: 'سارة خالد', store: 'متجر سارة', activity: 'ملابس نسائية', products: 120, orders: 450, rating: 4.5, status: 'نشط' },
-  { id: 2, name: 'أحمد علي', store: 'متجر التكنولوجيا', activity: 'أجهزة إلكترونية', products: 50, orders: 200, rating: 4.8, status: 'نشط' },
-  { id: 3, name: 'فاطمة سعد', store: 'حلويات فاطمة', activity: 'حلويات منزلية', products: 30, orders: 150, rating: 4.2, status: 'موقوف' },
-  { id: 4, name: 'محمود سليمان', store: 'قطع غيار السيارات', activity: 'قطع غيار', products: 80, orders: 300, rating: 4.0, status: 'محظور' },
-  { id: 5, name: 'نورا حسن', store: 'ديكورات نورا', activity: 'ديكورات منزلية', products: 95, orders: 500, rating: 4.7, status: 'نشط' },
-  { id: 6, name: 'عمر جمال', store: 'كتب عمر', activity: 'كتب ومكتبة', products: 200, orders: 600, rating: 4.9, status: 'نشط' },
-];
+import axios from 'axios';
 
 const StatusBadge = ({ status }) => {
   const colorMap = {
@@ -59,6 +44,63 @@ const Card = ({ title, value, icon }) => (
   </div>
 );
 
+const addNote = async (id, noteText, priority = "medium", onClose) => {
+  const token = localStorage.getItem("userToken");
+  const baseUrl = "https://products-api.cbc-apps.net";
+
+  try {
+    const response = await axios.post(
+      `${baseUrl}/admin/dashboard/merchants/${id}/notes`,
+      {
+        note: noteText,
+        priority: priority
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("تمت إضافة الملاحظة:", response.data);
+
+    if (onClose) onClose(); // يغلق المودال لو تم تمرير الدالة
+
+    return response.data;
+
+  } catch (error) {
+    console.error("Error adding note:", error);
+    return null;
+  }
+};
+
+const banMerchant = async (merchantId, banned, reason) => {
+  const token = localStorage.getItem("userToken");
+  const baseUrl = "https://products-api.cbc-apps.net";
+
+  try {
+    const response = await fetch(`${baseUrl}/admin/dashboard/merchants/${merchantId}/ban`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ banned, reason })
+    });
+
+    if (!response.ok) {
+      throw new Error(banned ? "فشل حظر التاجر" : "فشل إلغاء الحظر");
+    }
+
+    const data = await response.json();
+    console.log(banned ? "تم حظر التاجر:" : "تم إلغاء الحظر:", data);
+    return data;
+  } catch (error) {
+    console.error("خطأ في تحديث حالة التاجر:", error);
+  }
+};
+// Modal components (kept as-is for UI)
 const ChangeStatusModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
     <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -93,81 +135,131 @@ const ChangeStatusModal = ({ onClose }) => (
   </div>
 );
 
-const BanMerchantModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-xs text-center">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">حظر التاجر</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="text-red-500 text-4xl flex justify-center mx-auto w-14 h-14 rounded-full bg-red-100 items-center mb-3">
-          <RiCloseFill className="text-red-500 text-3xl"/>
-        </div>
-        <h2 className="text-lg font-bold text-gray-800">هل أنت متأكد أنك تريد حظر هذا التاجر؟</h2>
-        <p className="text-gray-500 text-xs">سوف يتم حظر هذا التاجر نهائياً من قائمة التجار. هل أنت متأكد انك تريد الحظر؟</p>
-      </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-          الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-          حظر التاجر
-        </button>
-      </div>
-    </div>
-  </div>
-);
+const BanMerchantModal = ({ onClose, merchantId, banMerchant }) => {
+  const [reason, setReason] = useState("");
 
-const AddNoteModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-md">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">اضافه ملاحظه</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-5 space-y-4">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">اختار التاريخ</label>
-          <div className="relative">
-            <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm pl-10" value="1 / 8 / 2025" readOnly />
-            <FaCalendarAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+  const handleBan = async () => {
+    if (!reason) {
+      alert("يرجى كتابة سبب الحظر");
+      return;
+    }
+    await banMerchant(merchantId, true, reason); // حظر
+    onClose();
+  };
+
+  const handleUnban = async () => {
+    await banMerchant(merchantId, false, "تم رفع الحظر"); // إلغاء الحظر
+    onClose();
+  };
+
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm text-center">
+        <div className="p-4 flex justify-end">
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">ادخل نص الملاحظه</label>
+        <div className="p-5 space-y-4">
+          <h2 className="text-lg font-bold">إدارة حالة التاجر</h2>
+          <p className="text-gray-500 text-sm">
+            يمكنك حظر التاجر أو إلغاء الحظر.
+          </p>
           <textarea
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
-            rows="4"
-            placeholder="ادخل ملاحظاتك..."
-          ></textarea>
+            className="w-full border p-2 rounded-md"
+            rows={3}
+            placeholder="أدخل سبب الحظر هنا"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
         </div>
-      </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-          الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-          حفظ
-        </button>
+        <div className="p-4 border-t flex justify-center gap-3">
+          <button onClick={onClose} className="px-6 py-2 text-gray-700 font-medium">
+            الغاء
+          </button>
+          <button
+            onClick={handleBan}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg font-medium"
+          >
+            حظر التاجر
+          </button>
+          <button
+            onClick={handleUnban}
+            className="bg-green-500 text-white px-6 py-2 rounded-lg font-medium"
+          >
+            إلغاء الحظر
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+const AddNoteModal = ({ merchantId, onClose }) => {
+  const [noteText, setNoteText] = useState("");
+  const [priority, setPriority] = useState("medium");
+
+  const handleSave = async () => {
+    await addNote(merchantId.toString(), noteText, priority);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+        <h2 className="text-xl font-bold mb-4">إضافة ملاحظة</h2>
+
+        {/* حقل النص */}
+        <textarea
+          className="w-full border p-2 rounded-md mb-3"
+          rows="4"
+          placeholder="أدخل الملاحظة هنا"
+          value={noteText}
+          onChange={(e) => setNoteText(e.target.value)}
+        />
+
+        {/* اختيار الأولوية */}
+        <label className="block mb-2">الأولوية:</label>
+        <select
+          className="w-full border p-2 rounded-md mb-4"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option value="low">منخفضة</option>
+          <option value="medium">متوسطة</option>
+          <option value="high">مرتفعة</option>
+        </select>
+
+        {/* الأزرار */}
+        <div className="flex justify-end space-x-3">
+          <button
+            className="px-4 py-2 bg-gray-300 rounded-md"
+            onClick={onClose}
+          >
+            إلغاء
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            onClick={handleSave}
+          >
+            حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OfferDetailsModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
     <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-      <div className="p-4 border-b flex justify-between items-center">
+      {/* <div className="p-4 border-b flex justify-between items-center">
         <h2 className="text-lg font-bold">تفاصيل العرض</h2>
         <button onClick={onClose}>
           <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
         </button>
-      </div>
+      </div> */}
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm font-semibold">اسم العرض</div>
@@ -208,6 +300,56 @@ const OfferDetailsModal = ({ onClose }) => (
 
 const MerchantsDashboard = ({ onSelectMerchant }) => {
   const [activeModal, setActiveModal] = useState(null);
+  const [merchantsData, setMerchantsData] = useState([]);
+  const [merchantCards, setMerchantCards] = useState([]);
+  const [totalMerchants, setTotalMerchants] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [selectedMerchantId, setSelectedMerchantId] = useState(null);
+
+
+  // Function to fetch data from the merchants dashboard API
+  const fetchMerchantsData = async () => {
+    setLoading(true);
+    const token = localStorage.getItem('userToken');
+    const baseUrl = 'https://products-api.cbc-apps.net';
+
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/merchants?page=1&limit=20`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data.');
+      }
+
+      const apiData = await response.json();
+
+      // Map API card data to the component's card format
+      const cards = [
+        { title: 'تجار لديهم تقييم', value: `${apiData.cards.merchantsWithRatings} تاجر`, icon: <FaRegComment /> },
+        { title: 'تجار محظورين', value: `${apiData.cards.bannedMerchants} تجار`, icon: <FaUserLock /> },
+        { title: 'تجار موقوفين', value: `${apiData.cards.suspendedMerchants} تاجر`, icon: <FaRegPauseCircle /> },
+        { title: 'التجار النشطين', value: `${apiData.cards.activeMerchants} تاجر`, icon: <FaRegUser /> },
+      ];
+
+      setMerchantsData(apiData.merchants);
+      setMerchantCards(cards);
+      setTotalMerchants(apiData.pagination.total);
+
+    } catch (error) {
+      console.error("Error fetching merchants data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMerchantsData();
+  }, []);
 
   const handleOpenModal = (modalName) => {
     setActiveModal(modalName);
@@ -278,6 +420,7 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
                 <Th>المنتجات</Th>
                 <Th>الطلبات</Th>
                 <Th>التقييم</Th>
+                <Th>ملاحظات</Th>
                 <Th>الحالة</Th>
                 <Th>الإجراءات</Th>
               </tr>
@@ -286,16 +429,19 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
               {merchantsData.map((merchant, index) => (
                 <tr key={index}>
                   <Td>
-                    <a onClick={() => onSelectMerchant(merchant.id)} className="text-blue-600 hover:underline cursor-pointer">
-                      {merchant.name}
-                    </a>
+                    <Link to={`/merchants/${merchant.merchantId}`} className="text-blue-600 hover:underline">
+                      {merchant.merchantName}
+                    </Link>
                   </Td>
-                  <Td>{merchant.store}</Td>
-                  <Td>{merchant.activity}</Td>
-                  <Td>{merchant.products}</Td>
-                  <Td>{merchant.orders}</Td>
-                  <Td>{merchant.rating}</Td>
+                  <Td>{merchant.storeName}</Td>
+                  <Td>{merchant.businessType}</Td>
+                  <Td>{merchant.productsCount}</Td>
+                  <Td>{merchant.ordersCount}</Td>
+                  <Td>{merchant.averageRating}</Td>
+                  <Td>{merchant.notes}</Td>
+
                   <Td><StatusBadge status={merchant.status} /></Td>
+
                   <Td>
                     <div className="relative inline-block text-right">
                       <button onClick={() => handleOpenModal(`actions-${index}`)} className="text-gray-500 hover:text-gray-700">
@@ -303,18 +449,31 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
                       </button>
                       {activeModal === `actions-${index}` && (
                         <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                          <a href="#" onClick={() => handleOpenModal('offerDetails')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          {/* <a href="#" onClick={() => handleOpenModal('offerDetails')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                             <MdInfoOutline className="ml-2" /> تفاصيل العرض
-                          </a>
+                          </a> */}
                           <a href="#" onClick={() => handleOpenModal('changeStatus')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                             <FaRegUser className="ml-2" /> تغيير حالة التاجر
                           </a>
-                          <a href="#" onClick={() => handleOpenModal('addNote')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          <a
+                            href="#"
+                            onClick={() => handleOpenModal(`addNote-${merchant.merchantId}`)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          >
                             <FaRegComment className="ml-2" /> اضافه ملاحظه
                           </a>
-                          <a href="#" onClick={() => handleOpenModal('banMerchant')} className="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 flex items-center">
+
+                          <a
+                            href="#"
+                            onClick={() => {
+                              setSelectedMerchantId(merchant.merchantId); // حفظ الـ ID
+                              handleOpenModal('banMerchant');            // فتح المودال
+                            }}
+                            className="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 flex items-center"
+                          >
                             <FaUserLock className="ml-2" /> حظر التاجر
                           </a>
+
                         </div>
                       )}
                     </div>
@@ -326,7 +485,7 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
         </div>
 
         <div className="mt-4 flex justify-between items-center">
-          <span className="text-sm text-gray-700">إجمالي التجار 8764</span>
+          <span className="text-sm text-gray-700">إجمالي التجار {totalMerchants}</span>
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
             <span className="text-sm text-gray-500">اعرض في الصفحة 10</span>
             <div className="flex space-x-1 rtl:space-x-reverse">
@@ -342,10 +501,21 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
           </div>
         </div>
       </div>
-      
+
       {activeModal === 'changeStatus' && <ChangeStatusModal onClose={handleCloseModal} />}
-      {activeModal === 'banMerchant' && <BanMerchantModal onClose={handleCloseModal} />}
-      {activeModal === 'addNote' && <AddNoteModal onClose={handleCloseModal} />}
+      {activeModal === 'banMerchant' && (
+        <BanMerchantModal
+          onClose={handleCloseModal}
+          merchantId={selectedMerchantId} // تحتاج تعريف هذه القيمة عند اختيار التاجر
+          banMerchant={banMerchant}       // تمرير الدالة الصحيحة
+        />
+      )}
+      {activeModal?.startsWith('addNote-') && (
+        <AddNoteModal
+          merchantId={activeModal.split('-')[1]} // استخراج الـ ID
+          onClose={handleCloseModal}
+        />
+      )}
       {activeModal === 'offerDetails' && <OfferDetailsModal onClose={handleCloseModal} />}
 
     </div>

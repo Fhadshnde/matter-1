@@ -1,48 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BsThreeDots, BsPerson } from 'react-icons/bs';
 import { BiBlock } from 'react-icons/bi';
 import { PiNotePencil } from 'react-icons/pi';
-import { FaMagnifyingGlass, FaRegClock, FaRegCalendarDays } from 'react-icons/fa6';
-import UserDetailsPage from './UserDetailsPage';
-
-const dummyUser = {
-  name: 'أحمد عبد الله',
-  mobile: '+964770000000',
-  email: 'ahmad@nike.com',
-  city: 'بغداد',
-  registrationDate: '2024-11-10',
-  status: 'نشط',
-  profilePicture: 'http://googleusercontent.com/file_content/0',
-};
-
-const mainTableUsers = Array(10).fill({
-  name: 'أحمد عبد الله',
-  mobile: '+966550001234',
-  email: 'Ahmed12@gmail.com',
-  orders: 15,
-  lastOrderDate: '2025-08-01',
-  status: 'نشط',
-});
-
-const dashboardCards = [
-  { title: 'إجمالي الزبائن', value: '3,420 زبون', icon: <BsPerson />, percentage: '8% ▲', change: 1 },
-  { title: 'زبائن عندهم طلبات', value: '1,850 زبون', icon: <FaRegCalendarDays />, percentage: '2% ▲', change: 1 },
-  { title: 'زبائن لم يحظرهم', value: '120 زبون', icon: <BiBlock />, percentage: '8% ▲', change: 1 },
-  { title: 'نسبة تراجع الشراء', value: '27%', icon: <FaRegClock />, percentage: '6% ▲', change: 1 },
-];
+import { FaMagnifyingGlass, FaRegClock, FaRegCalendarDays, FaRegNoteSticky } from 'react-icons/fa6';
+import { RiCloseFill } from 'react-icons/ri';
+import { FaChevronDown } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const StatusBadge = ({ status }) => {
   const colorMap = {
     'نشط': 'bg-green-100 text-green-700',
-    'بانتظار الشحن': 'bg-yellow-100 text-yellow-700',
-    'مدفوع': 'bg-green-100 text-green-700',
+    'موقوف': 'bg-yellow-100 text-yellow-700',
+    'محظور': 'bg-red-100 text-red-700',
   };
   return (
-    <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
       {status}
     </span>
   );
 };
+
+const Card = ({ title, value, icon, percentage, change }) => (
+  <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
+    <div className="flex flex-col">
+      <span className="text-gray-400 text-xs mb-1">{title}</span>
+      <p className="text-xl font-semibold mb-1">{value}</p>
+      <div className="text-xs text-green-500 flex items-center">
+        {percentage} <span className="mr-1">{change === 1 ? '▲' : '▼'}</span>
+        <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
+      </div>
+    </div>
+    <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
+      {icon}
+    </div>
+  </div>
+);
 
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
@@ -52,156 +44,272 @@ const Td = ({ children }) => (
   <td className="p-3 text-xs text-gray-700">{children}</td>
 );
 
-const MoreOptionsDashboard = ({ onClose, onMoreDetails, onAddNote }) => {
+// مكون الموديل الجديد
+const ActionModal = ({ customer, actionType, onClose, onConfirm }) => {
+  const [note, setNote] = useState('');
+  const [priority, setPriority] = useState('low');
+
+  if (!customer) return null;
+
+  let title, confirmButtonText, confirmButtonColor, content;
+
+  const handleConfirm = () => {
+    if (actionType === 'addNote') {
+      onConfirm(customer.customerId, actionType, { note, priority });
+    } else {
+      onConfirm(customer.customerId, actionType);
+    }
+  };
+
+  if (actionType === 'edit') {
+    title = 'تعديل الزبون';
+    confirmButtonText = 'تعديل';
+    confirmButtonColor = 'bg-blue-500 hover:bg-blue-600';
+    content = <p className="text-gray-700 mb-6">هل أنت متأكد من أنك تريد تعديل بيانات الزبون {customer.customerName}؟</p>;
+  } else if (actionType === 'ban') {
+    title = 'حظر الزبون';
+    confirmButtonText = 'حظر';
+    confirmButtonColor = 'bg-red-500 hover:bg-red-600';
+    content = <p className="text-gray-700 mb-6">هل أنت متأكد من أنك تريد حظر الزبون {customer.customerName}؟ هذا الإجراء سيمنعه من إجراء أي طلبات جديدة.</p>;
+  } else if (actionType === 'addNote') {
+    title = 'إضافة ملاحظة';
+    confirmButtonText = 'إضافة';
+    confirmButtonColor = 'bg-green-500 hover:bg-green-600';
+    content = (
+      <div className="flex flex-col space-y-4 text-right">
+        <label htmlFor="note" className="text-sm font-medium text-gray-700">الملاحظة:</label>
+        <textarea
+          id="note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows="4"
+          className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="اكتب ملاحظة جديدة..."
+        />
+        <label htmlFor="priority" className="text-sm font-medium text-gray-700">الأولوية:</label>
+        <select
+          id="priority"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+          className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="low">منخفضة</option>
+          <option value="medium">متوسطة</option>
+          <option value="high">مرتفعة</option>
+        </select>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-lg py-1.5 w-40 text-right absolute mt-1.5 left-0 border border-gray-200 z-10">
-      <button
-        onClick={() => {
-          onMoreDetails();
-          onClose();
-        }}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
-      >
-        <FaMagnifyingGlass className="text-base text-gray-400" />
-        عرض التفاصيل
-      </button>
-      <div className="border-t border-gray-200 my-1.5"></div>
-      <button
-        onClick={() => {
-          onAddNote();
-          onClose();
-        }}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
-      >
-        <PiNotePencil className="text-base text-gray-400" />
-        اضافه ملاحظه
-      </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <div className="bg-white rounded-lg p-6 w-96 max-w-full text-center shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <RiCloseFill size={24} />
+          </button>
+        </div>
+        {content}
+        <div className="flex justify-end space-x-2 rtl:space-x-reverse mt-6">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={handleConfirm}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md ${confirmButtonColor}`}
+          >
+            {confirmButtonText}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
 
-const Card = ({ title, value, icon, percentage, change }) => (
-  <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
-    <div className="flex flex-col">
-      <div className="flex items-center space-x-1.5 rtl:space-x-reverse mb-1">
-        <span className="text-gray-400 text-xs">{title}</span>
-        <BsThreeDots className="text-gray-400 text-base" />
-      </div>
-      <p className="text-xl font-semibold mb-1">{value}</p>
-      <span className={`text-xs ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>
-        {percentage}
-        <span className="mr-1">{change < 0 ? '▼' : '▲'}</span>
-        <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
-      </span>
-    </div>
-    <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
-      {icon}
-    </div>
-  </div>
-);
+const Customers = () => {
+  const [customersData, setCustomersData] = useState([]);
+  const [dashboardCards, setDashboardCards] = useState([]);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [modalState, setModalState] = useState({ isOpen: false, customer: null, actionType: null });
 
-const Dashboard = () => {
-  const [showUserDetails, setShowUserDetails] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(dummyUser);
-  const [showMoreOptions, setShowMoreOptions] = useState(null);
+  useEffect(() => {
+    const fetchCustomersData = async () => {
+      setLoading(true);
+      const token = localStorage.getItem('userToken');
+      const baseUrl = 'https://products-api.cbc-apps.net';
 
-  if (showUserDetails) {
-    return <UserDetailsPage user={selectedUser} onClose={() => setShowUserDetails(false)} />;
+      try {
+        const response = await fetch(`${baseUrl}/admin/dashboard/customers?page=1&limit=20`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch customers data.');
+        }
+
+        const apiData = await response.json();
+        
+        const cards = [
+          { title: 'إجمالي الزبائن', value: `${apiData.cards.totalCustomers} زبون`, icon: <BsPerson /> },
+          { title: 'زبائن عندهم طلبات', value: `${apiData.cards.customersWithOrders} زبون`, icon: <FaRegCalendarDays /> },
+          { title: 'زبائن محظورين', value: `${apiData.cards.bannedCustomers} زبون`, icon: <BiBlock /> },
+          { title: 'معدل فشل الشراء', value: `${apiData.cards.purchaseDeclineRate}%`, icon: <PiNotePencil /> },
+        ];
+
+        setCustomersData(apiData.customers);
+        setDashboardCards(cards);
+        setTotalCustomers(apiData.pagination.total);
+      } catch (error) {
+        console.error("Error fetching customers data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomersData();
+  }, []);
+
+  const handleDropdownToggle = (customerId) => {
+    setOpenDropdownId(openDropdownId === customerId ? null : customerId);
+  };
+
+  const openModal = (customer, actionType) => {
+    setModalState({ isOpen: true, customer, actionType });
+    setOpenDropdownId(null);
+  };
+
+  const closeModal = () => {
+    setModalState({ isOpen: false, customer: null, actionType: null });
+  };
+  
+  const handleConfirmAction = async (customerId, actionType, data = {}) => {
+    const baseUrl = 'https://products-api.cbc-apps.net';
+    const token = localStorage.getItem('userToken');
+
+    if (actionType === 'edit') {
+      console.log(`Action: Edit customer ID: ${customerId}`);
+    } else if (actionType === 'ban') {
+      console.log(`Action: Ban customer ID: ${customerId}`);
+    } else if (actionType === 'addNote') {
+      try {
+        console.log(`Action: Add note to customer ID: ${customerId}`);
+        const response = await fetch(`${baseUrl}/admin/dashboard/customers/${customerId}/notes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add note.');
+        }
+        console.log('Note added successfully!');
+      } catch (error) {
+        console.error("Error adding note:", error);
+      }
+    }
+    closeModal();
+  };
+
+  if (loading) {
+    return <div className="p-6 text-center">جاري تحميل البيانات...</div>;
   }
 
   return (
-    <div dir="rtl" className="bg-gray-100 min-h-screen p-7 font-sans">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-7">
+    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">إدارة الزبائن</h1>
+        <div className="flex border-b border-gray-200">
+          <a href="#" className="py-2 px-4 text-sm font-medium border-b-2 border-red-500 text-red-500">
+            ملفات الزبائن
+          </a>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {dashboardCards.map((card, index) => (
           <Card key={index} {...card} />
         ))}
       </div>
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-5 flex items-center justify-between border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">إدارة الزبائن</h2>
-          <BsThreeDots className="text-gray-400 text-xl" />
-        </div>
-        <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-3.5">
-          <div className="relative w-full md:w-auto flex-grow">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <div className="relative w-full md:w-auto">
             <input
               type="text"
-              placeholder="ابحث باسم الزبون، حالة الطلبات"
-              className="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="ابحث عن اسم الزبون، رقم الهاتف"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
             />
-          </div>
-          <div className="flex items-center gap-1.5 w-full md:w-auto">
-            <select className="px-3.5 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 appearance-none bg-white">
-              <option>الكل</option>
-              <option>نشط</option>
-              <option>غير نشط</option>
-            </select>
+            <FaMagnifyingGlass className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-right">
-            <thead className="bg-[#F5F6FA] text-gray-600">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 text-right">
               <tr>
-                <Th className="rounded-tr-lg">الاسم</Th>
-                <Th>الجوال</Th>
-                <Th>البريد</Th>
+                <Th>الزبون</Th>
+                <Th>رقم الهاتف</Th>
                 <Th>عدد الطلبات</Th>
-                <Th>آخر طلب</Th>
+                <Th>إجمالي المصروفات</Th>
                 <Th>الحالة</Th>
-                <Th className="rounded-tl-lg">الإجراءات</Th>
+                <Th>تاريخ التسجيل</Th>
+                <Th>الملاحظات</Th>
+                <Th>الإجراءات</Th>
               </tr>
             </thead>
-            <tbody>
-              {mainTableUsers.map((user, idx) => (
-                <tr key={idx} className="border-b border-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 text-right">
+              {customersData.map((customer) => (
+                <tr key={customer.customerId}>
                   <Td>
-                    <button
-                      onClick={() => {
-                        setSelectedUser({ ...dummyUser, name: user.name, mobile: user.mobile, email: user.email });
-                        setShowUserDetails(true);
-                      }}
-                      className="text-gray-700 font-semibold hover:underline focus:outline-none"
-                    >
-                      {user.name}
-                    </button>
+                    <Link to={`/customers/${customer.customerId}`} className="text-blue-600 hover:underline">
+                      {customer.customerName}
+                    </Link>
                   </Td>
-                  <Td>{user.mobile}</Td>
-                  <Td>{user.email}</Td>
-                  <Td>{user.orders}</Td>
-                  <Td>{user.lastOrderDate}</Td>
+                  <Td>{customer.phone}</Td>
+                  <Td>{customer.ordersCount}</Td>
+                  <Td>{customer.totalSpent} دينار</Td>
+                  <Td><StatusBadge status={customer.status} /></Td>
+                  <Td>{new Date(customer.registrationDate).toLocaleDateString('ar-EG')}</Td>
+                  <Td>{customer.notes || 'لا توجد ملاحظات'}</Td>
                   <Td>
-                    <StatusBadge status={user.status} />
-                  </Td>
-                  <Td>
-                    <div className="relative inline-block">
-                      <button
-                        onClick={() => setShowMoreOptions(showMoreOptions === idx ? null : idx)}
-                        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    <div className="relative inline-block text-right">
+                      <button 
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={() => handleDropdownToggle(customer.customerId)}
                       >
-                        <BsThreeDots className="text-base" />
+                        <BsThreeDots className="text-xl" />
                       </button>
-                      {showMoreOptions === idx && (
-                        <MoreOptionsDashboard
-                          onClose={() => setShowMoreOptions(null)}
-                          onMoreDetails={() => {
-                            setSelectedUser({ ...dummyUser, name: user.name, mobile: user.mobile, email: user.email });
-                            setShowUserDetails(true);
-                          }}
-                          onAddNote={() => alert('Add note functionality')}
-                        />
+                      
+                      {openDropdownId === customer.customerId && (
+                        <div className="absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                          <div className="py-1">
+                            <button
+                              onClick={() => openModal(customer, 'edit')}
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-right"
+                            >
+                              <PiNotePencil className="ml-2" /> طباعة الايصال
+                            </button>
+                            <button
+                              onClick={() => openModal(customer, 'addNote')}
+                              className="flex items-center px-4 py-2 text-sm text-green-600 hover:bg-gray-100 w-full text-right"
+                            >
+                              <FaRegNoteSticky className="ml-2" /> إضافة ملاحظة
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Td>
@@ -210,43 +318,26 @@ const Dashboard = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-5 flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400">اعرض في الصفحة</span>
-            <select className="px-2 py-1 border border-gray-300 rounded text-xs text-gray-700">
-              <option>10</option>
-              <option>20</option>
-              <option>50</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400">اجمالي الزبائن: 8764</span>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              &lt;
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center bg-red-500 text-white rounded-full">
-              1
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              2
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              3
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              4
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              5
-            </button>
-            <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-full">
-              &gt;
-            </button>
+
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-sm text-gray-700">إجمالي الزبائن {totalCustomers}</span>
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <span className="text-sm text-gray-500">اعرض في الصفحة 20</span>
+            <div className="flex space-x-1 rtl:space-x-reverse">
+              {/* Pagination logic can be implemented here */}
+            </div>
           </div>
         </div>
       </div>
+      
+      <ActionModal
+        customer={modalState.customer}
+        actionType={modalState.actionType}
+        onClose={closeModal}
+        onConfirm={handleConfirmAction}
+      />
     </div>
   );
 };
 
-export default Dashboard;
+export default Customers;

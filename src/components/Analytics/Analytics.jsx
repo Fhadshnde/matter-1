@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,39 +11,48 @@ import {
   CartesianGrid,
   Cell
 } from 'recharts';
-const salesOverTimeData = [
-  { name: 'يناير', value: 400000, prevValue: 500000 },
-  { name: 'فبراير', value: 650000, prevValue: 700000 },
-  { name: 'مارس', value: 800000, prevValue: 600000 },
-  { name: 'أبريل', value: 680000, prevValue: 750000 },
-  { name: 'مايو', value: 950000, prevValue: 850000 },
-  { name: 'يونيو', value: 850000, prevValue: 900000 },
-  { name: 'يوليو', value: 720000, prevValue: 780000 },
-  { name: 'أغسطس', value: 880000, prevValue: 820000 },
-  { name: 'سبتمبر', value: 920000, prevValue: 950000 },
-  { name: 'أكتوبر', value: 800000, prevValue: 880000 },
-  { name: 'نوفمبر', value: 780000, prevValue: 700000 },
-  { name: 'ديسمبر', value: 990000, prevValue: 920000 },
-];
-const citySalesData = [
-  { name: 'اسم المحافظة', sales: 42000, color: '#2C2B2B' },
-  { name: 'اسم المحافظة', sales: 25000, color: '#FFB6C1' },
-  { name: 'اسم المحافظة', sales: 33000, color: '#4CAF50' },
-  { name: 'اسم المحافظة', sales: 38000, color: '#DAA520' },
-  { name: 'بغداد', sales: 27000, color: '#FFB6C1', label: 'بغداد 680K', striped: true },
-  { name: 'اسم المحافظة', sales: 40000, color: '#4CAF50' },
-  { name: 'اسم المحافظة', sales: 20000, color: '#E9C46A' },
-  { name: 'اسم المحافظة', sales: 35000, color: '#DAA520' },
-  { name: 'اسم المحافظة', sales: 45000, color: '#4285F4' },
-  { name: 'اسم المحافظة', sales: 29000, color: '#C0C0C0' },
-];
-const departmentData = [
-  { name: 'ملابس', sales: 264000, percentage: 70 },
-  { name: 'ملابس', sales: 264000, percentage: 50 },
-  { name: 'ملابس', sales: 264000, percentage: 85 },
-  { name: 'ملابس', sales: 264000, percentage: 60 },
-  { name: 'ملابس', sales: 264000, percentage: 40 },
-];
+import {
+  X
+} from "lucide-react";
+
+// Modal component from your original file
+const AnalyticsModal = ({ isOpen, onClose, data }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+      <div className="relative bg-white rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6" dir="rtl">
+        <div className="flex justify-between items-center pb-3">
+          <h3 className="text-xl font-semibold text-gray-900">تفاصيل المبيعات</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-right table-auto">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-2 text-sm font-medium text-gray-500">الاسم</th>
+                <th className="px-4 py-2 text-sm font-medium text-gray-500">المبيعات</th>
+                <th className="px-4 py-2 text-sm font-medium text-gray-500">الطلبات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, index) => (
+                <tr key={index} className="border-b border-gray-100">
+                  <td className="px-4 py-4 text-sm font-medium text-gray-900">{item.name}</td>
+                  <td className="px-4 py-4 text-sm text-gray-900">{item.sales}</td>
+                  <td className="px-4 py-4 text-sm text-gray-900">{item.orders}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+// StatCardModal, StatCard, and StripedBar components
 const StatCardModal = ({ title, details, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
@@ -111,6 +120,9 @@ const StripedBar = ({ fill, striped, ...props }) => {
   return <rect {...props} fill={fill} />;
 };
 const SalesDashboard = () => {
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [salesOverTimeStartDate, setSalesOverTimeStartDate] = useState('');
   const [salesOverTimeEndDate, setSalesOverTimeEndDate] = useState('');
@@ -118,42 +130,96 @@ const SalesDashboard = () => {
   const [cityEndDate, setCityEndDate] = useState('');
   const [departmentStartDate, setDepartmentStartDate] = useState('');
   const [departmentEndDate, setDepartmentEndDate] = useState('');
+  // Fetching data from the API
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      const token = localStorage.getItem('userToken');
+
+      if (!token) {
+        setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/analytics', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('فشل في جلب بيانات التحليلات');
+        }
+
+        const data = await response.json();
+        setAnalyticsData(data);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-lg font-semibold text-gray-600">جاري التحميل...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-lg font-semibold text-red-600">خطأ: {error}</p>
+      </div>
+    );
+  }
+
+  const { cards, salesByTime, topCategorySales, provincesSales } = analyticsData;
+
+  const salesOverTimeData = salesByTime.map(item => ({
+    name: item.month,
+    value: item.sales,
+    prevValue: item.sales // Replace with actual prevValue from API if available
+  }));
+  const citySalesData = provincesSales.map(item => ({
+    name: item.provinceName,
+    sales: item.salesAmount,
+    color: '#E95252',
+    striped: false
+  }));
+  const departmentData = topCategorySales.map(item => ({
+    name: item.categoryName,
+    sales: item.salesAmount,
+    percentage: item.percentage
+  }));
+
   const statCards = [
     {
-      title: 'معدل النمو', value: '8.5%', percentage: '+9%', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8L13 15M3 21v-8a2 2 0 012-2h10a2 2 0 012 2v8"></path> </svg>,
-      details: [
-        { trader: 'متجر مهند', totalSales: '500,000 د.ك', orders: '1500', netProfit: '150,000 د.ك' },
-        { trader: 'متجر حازم عبود', totalSales: '350,000 د.ك', orders: '900', netProfit: '100,000 د.ك' },
-        { trader: 'متجر بيداء', totalSales: '250,000 د.ك', orders: '750', netProfit: '75,000 د.ك' },
-        { trader: 'متجر محمد', totalSales: '150,000 د.ك', orders: '500', netProfit: '40,000 د.ك' },
-      ]
+      title: 'معدل النمو', value: `${cards.growthRate}%`, percentage: `${cards.growthRate}%`, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8L13 15M3 21v-8a2 2 0 012-2h10a2 2 0 012 2v8"></path> </svg>,
+      details: [] // Data not provided in API response
     },
     {
-      title: 'مبيعات السنة', value: '1,850,000 د.ك', percentage: '+9%', icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [
-        { trader: 'متجر أ', totalSales: '800,000 د.ك', orders: '8000', netProfit: '400,000 د.ك' },
-        { trader: 'متجر ب', totalSales: '500,000 د.ك', orders: '5000', netProfit: '250,000 د.ك' },
-        { trader: 'متجر ج', totalSales: '350,000 د.ك', orders: '3500', netProfit: '175,000 د.ك' },
-        { trader: 'متجر د', totalSales: '200,000 د.ك', orders: '2000', netProfit: '100,000 د.ك' },
-      ]
+      title: 'مبيعات السنة', value: `${cards.yearSales.toLocaleString()} د.ع`, percentage: `${cards.growthRate}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
+      details: [] // Data not provided in API response
     },
     {
-      title: 'مبيعات الشهر', value: '320,000 د.ك', percentage: '+9%', icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [
-        { trader: 'متجر أ', totalSales: '150,000 د.ك', orders: '1500', netProfit: '75,000 د.ك' },
-        { trader: 'متجر ب', totalSales: '100,000 د.ك', orders: '1000', netProfit: '50,000 د.ك' },
-        { trader: 'متجر ج', totalSales: '70,000 د.ك', orders: '700', netProfit: '35,000 د.ك' },
-      ]
+      title: 'مبيعات الشهر', value: `${cards.monthSales.toLocaleString()} د.ع`, percentage: `${((cards.monthSales / cards.previousMonthSales - 1) * 100).toFixed(2)}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
+      details: [] // Data not provided in API response
     },
     {
-      title: 'مبيعات اليوم', value: '45,200 د.ك', percentage: '+9%', icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [
-        { trader: 'متجر أ', totalSales: '25,000 د.ك', orders: '250', netProfit: '12,500 د.ك' },
-        { trader: 'متجر ب', totalSales: '15,000 د.ك', orders: '150', netProfit: '7,500 د.ك' },
-        { trader: 'متجر ج', totalSales: '5,200 د.ك', orders: '50', netProfit: '2,600 د.ك' },
-      ]
+      title: 'مبيعات اليوم', value: `${cards.dailySales.toLocaleString()} د.ع`, percentage: `${((cards.dailySales / cards.previousDaySales - 1) * 100).toFixed(2)}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
+      details: [] // Data not provided in API response
     },
   ];
+
   return (
     <div className="bg-gray-100 min-h-screen p-8 text-right font-sans" dir="rtl">
       <div className="flex justify-start items-center p-4 bg-white shadow-md mb-6">
@@ -215,7 +281,7 @@ const SalesDashboard = () => {
                 <div className="relative w-full bg-gray-200 h-2.5 rounded-full mr-2">
                   <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: `${item.percentage}%` }}></div>
                 </div>
-                <span className="text-sm font-semibold text-gray-800">{item.sales.toLocaleString()} د.ك</span>
+                <span className="text-sm font-semibold text-gray-800">{item.sales.toLocaleString()} د.ع</span>
               </div>
             ))}
           </div>
