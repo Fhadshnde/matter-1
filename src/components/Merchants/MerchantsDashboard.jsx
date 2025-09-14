@@ -65,7 +65,7 @@ const addNote = async (id, noteText, priority = "medium", onClose) => {
 
     console.log("تمت إضافة الملاحظة:", response.data);
 
-    if (onClose) onClose(); // يغلق المودال لو تم تمرير الدالة
+    if (onClose) onClose();
 
     return response.data;
 
@@ -100,7 +100,8 @@ const banMerchant = async (merchantId, banned, reason) => {
     console.error("خطأ في تحديث حالة التاجر:", error);
   }
 };
-// Modal components (kept as-is for UI)
+
+// Modal components
 const ChangeStatusModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
     <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -143,15 +144,14 @@ const BanMerchantModal = ({ onClose, merchantId, banMerchant }) => {
       alert("يرجى كتابة سبب الحظر");
       return;
     }
-    await banMerchant(merchantId, true, reason); // حظر
+    await banMerchant(merchantId, true, reason);
     onClose();
   };
 
   const handleUnban = async () => {
-    await banMerchant(merchantId, false, "تم رفع الحظر"); // إلغاء الحظر
+    await banMerchant(merchantId, false, "تم رفع الحظر");
     onClose();
   };
-
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
@@ -209,8 +209,6 @@ const AddNoteModal = ({ merchantId, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg p-6 w-96">
         <h2 className="text-xl font-bold mb-4">إضافة ملاحظة</h2>
-
-        {/* حقل النص */}
         <textarea
           className="w-full border p-2 rounded-md mb-3"
           rows="4"
@@ -218,8 +216,6 @@ const AddNoteModal = ({ merchantId, onClose }) => {
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
         />
-
-        {/* اختيار الأولوية */}
         <label className="block mb-2">الأولوية:</label>
         <select
           className="w-full border p-2 rounded-md mb-4"
@@ -230,8 +226,6 @@ const AddNoteModal = ({ merchantId, onClose }) => {
           <option value="medium">متوسطة</option>
           <option value="high">مرتفعة</option>
         </select>
-
-        {/* الأزرار */}
         <div className="flex justify-end space-x-3">
           <button
             className="px-4 py-2 bg-gray-300 rounded-md"
@@ -251,15 +245,219 @@ const AddNoteModal = ({ merchantId, onClose }) => {
   );
 };
 
+// New Supplier Modal
+const AddSupplierModal = ({ onClose }) => {
+  const [supplierData, setSupplierData] = useState({
+    name: "",
+    contactInfo: "",
+    address: "",
+    phone: "",
+    password: "",
+    platformPercentage: 0,
+    hasWholesalePrice: false,
+  });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSupplierData({
+      ...supplierData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+  
+
+  const addSupplier = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("userToken");
+    const baseUrl = "https://products-api.cbc-apps.net";
+    setMessage("");
+    setError("");
+  
+    const payload = {
+      ...supplierData,
+      platformPercentage: parseFloat(supplierData.platformPercentage), 
+      hasWholesalePrice: Boolean(supplierData.hasWholesalePrice),     
+    };
+  
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/suppliers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "فشل في إضافة المورد");
+      }
+  
+      const data = await response.json();
+      console.log("Supplier added successfully:", data);
+      setMessage("تمت إضافة المورد بنجاح.");
+      setSupplierData({
+        name: "",
+        contactInfo: "",
+        address: "",
+        phone: "",
+        password: "",
+        platformPercentage: 0,
+        hasWholesalePrice: false,
+      });
+      if (onClose) onClose();
+      window.location.reload();
+    } catch (err) {
+      console.error("Error adding supplier:", err);
+      setError("فشل في إضافة المورد. يرجى التأكد من البيانات.");
+    }
+  };
+  
+  
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">إضافة مورد جديد</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <form onSubmit={addSupplier} className="p-5 space-y-4">
+  {message && (
+    <div className="bg-green-100 text-green-700 p-3 rounded-lg text-sm">
+      {message}
+    </div>
+  )}
+  {error && (
+    <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+      {error}
+    </div>
+  )}
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      اسم المورد
+    </label>
+    <input
+      type="text"
+      name="name"
+      value={supplierData.name}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      معلومات الاتصال
+    </label>
+    <input
+      type="text"
+      name="contactInfo"
+      value={supplierData.contactInfo}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      العنوان الكامل
+    </label>
+    <input
+      type="text"
+      name="address"
+      value={supplierData.address}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      رقم الهاتف
+    </label>
+    <input
+      type="tel"
+      name="phone"
+      value={supplierData.phone}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      كلمة المرور
+    </label>
+    <input
+      type="password"
+      name="password"
+      value={supplierData.password}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
+      نسبة المنصة
+    </label>
+    <input
+      type="number"
+      name="platformPercentage"
+      step="0.01"
+      value={supplierData.platformPercentage}
+      onChange={handleInputChange}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+      required
+    />
+  </div>
+  <div className="flex items-center">
+    <input
+      type="checkbox"
+      id="hasWholesalePrice"
+      name="hasWholesalePrice"
+      checked={supplierData.hasWholesalePrice}
+      onChange={handleInputChange}
+      className="ml-2"
+    />
+    <label
+      htmlFor="hasWholesalePrice"
+      className="text-sm font-semibold text-gray-700"
+    >
+      لديه سعر جملة
+    </label>
+  </div>
+  <div className="p-4 border-t flex justify-end gap-3">
+    <button
+      type="button"
+      onClick={onClose}
+      className="px-4 py-1.5 text-gray-700 text-sm font-medium"
+    >
+      إلغاء
+    </button>
+    <button
+      type="submit"
+      className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium"
+    >
+      إضافة المورد
+    </button>
+  </div>
+</form>
+
+      </div>
+    </div>
+  );
+};
+
 const OfferDetailsModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
     <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-      {/* <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">تفاصيل العرض</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div> */}
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm font-semibold">اسم العرض</div>
@@ -370,12 +568,13 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
           >
             ملفات التجار
           </Link>
-          <Link
-            to="/employees"
-            className="py-2 px-4 text-sm font-medium text-gray-500 hover:text-gray-700"
+          {/* New Supplier Button */}
+          <button
+            onClick={() => handleOpenModal('addSupplier')}
+            className="py-2 px-4 text-sm font-medium text-blue-500 hover:text-blue-700 border-b-2 border-transparent hover:border-blue-500 transition-colors duration-200"
           >
-            موظفو التاجر
-          </Link>
+            إضافة مورد جديد
+          </button>
         </div>
       </div>
 
@@ -449,12 +648,9 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
                       </button>
                       {activeModal === `actions-${index}` && (
                         <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                          {/* <a href="#" onClick={() => handleOpenModal('offerDetails')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
-                            <MdInfoOutline className="ml-2" /> تفاصيل العرض
-                          </a> */}
-                          <a href="#" onClick={() => handleOpenModal('changeStatus')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          {/* <a href="#" onClick={() => handleOpenModal('changeStatus')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                             <FaRegUser className="ml-2" /> تغيير حالة التاجر
-                          </a>
+                          </a> */}
                           <a
                             href="#"
                             onClick={() => handleOpenModal(`addNote-${merchant.merchantId}`)}
@@ -462,18 +658,16 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
                           >
                             <FaRegComment className="ml-2" /> اضافه ملاحظه
                           </a>
-
                           <a
                             href="#"
                             onClick={() => {
-                              setSelectedMerchantId(merchant.merchantId); // حفظ الـ ID
-                              handleOpenModal('banMerchant');            // فتح المودال
+                              setSelectedMerchantId(merchant.merchantId);
+                              handleOpenModal('banMerchant');
                             }}
                             className="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 flex items-center"
                           >
                             <FaUserLock className="ml-2" /> حظر التاجر
                           </a>
-
                         </div>
                       )}
                     </div>
@@ -506,18 +700,18 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
       {activeModal === 'banMerchant' && (
         <BanMerchantModal
           onClose={handleCloseModal}
-          merchantId={selectedMerchantId} // تحتاج تعريف هذه القيمة عند اختيار التاجر
-          banMerchant={banMerchant}       // تمرير الدالة الصحيحة
+          merchantId={selectedMerchantId}
+          banMerchant={banMerchant}
         />
       )}
       {activeModal?.startsWith('addNote-') && (
         <AddNoteModal
-          merchantId={activeModal.split('-')[1]} // استخراج الـ ID
+          merchantId={activeModal.split('-')[1]}
           onClose={handleCloseModal}
         />
       )}
       {activeModal === 'offerDetails' && <OfferDetailsModal onClose={handleCloseModal} />}
-
+      {activeModal === 'addSupplier' && <AddSupplierModal onClose={handleCloseModal} />}
     </div>
   );
 };

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RiCloseFill } from 'react-icons/ri';
 import { BsCheckSquareFill } from 'react-icons/bs';
 import { FaFilePdf, FaCog, FaPercent, FaWrench } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const GeneralSettings = () => {
   return (
@@ -43,6 +44,7 @@ const GeneralSettings = () => {
 };
 
 const SystemOptions = ({ openModal }) => {
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-6">
       <h3 className="text-xl font-bold text-gray-800 mb-4 text-right">خيارات النظام</h3>
@@ -87,14 +89,34 @@ const SystemOptions = ({ openModal }) => {
   );
 };
 
+
 const SystemLog = () => {
-  const logs = [
-    { date: '28-08-2025 09:45م', employee: 'علي حسين', action: 'تعديل نسبة التطبيق', ip: '192.168.10.45', changes: 'قبل/بعد: +25% +22%' },
-    { date: '28-08-2025 09:45م', employee: 'سارة جاسم', action: 'إضافة موظف', ip: '10.0.2.16', changes: '- / + موظف جديد' },
-    { date: '28-08-2025 09:45م', employee: 'علي حسين', action: 'تعديل نسبة التطبيق', ip: '192.168.10.45', changes: '25% +22%' },
-    { date: '28-08-2025 09:45م', employee: 'علي حسين', action: 'تعديل نسبة التطبيق', ip: '192.168.10.45', changes: '25% +22%' },
-    { date: '28-08-2025 09:45م', employee: 'علي حسين', action: 'تعديل نسبة التطبيق', ip: '192.168.10.45', changes: '25% +22%' },
-  ];
+  const baseUrl = 'https://products-api.cbc-apps.net';
+  const token = localStorage.getItem('userToken');
+
+  const [log, setLog] = useState([]);
+
+  const fattchLogs = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/admin/dashboard/settings/sessions`,
+        { 
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          } 
+        }
+      );
+      
+      setLog(response.data); // تخزين البيانات في state
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fattchLogs(); // استدعاء عند تحميل الكومبوننت
+  }, []);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -103,47 +125,52 @@ const SystemLog = () => {
         <table className="min-w-full divide-y divide-gray-200 text-right">
           <thead className="bg-gray-50">
             <tr>
-              <th className="p-3 font-semibold text-gray-500">التاريخ/الوقت</th>
-              <th className="p-3 font-semibold text-gray-500">الموظف</th>
-              <th className="p-3 font-semibold text-gray-500">الإجراء</th>
-              <th className="p-3 font-semibold text-gray-500">البيان</th>
-              <th className="p-3 font-semibold text-gray-500">قبل/بعد</th>
+              <th className="p-3 font-semibold text-gray-500">Session ID</th>
+              <th className="p-3 font-semibold text-gray-500">الجهاز</th>
               <th className="p-3 font-semibold text-gray-500">IP</th>
+              <th className="p-3 font-semibold text-gray-500">الموقع</th>
+              <th className="p-3 font-semibold text-gray-500">تاريخ الدخول</th>
+              <th className="p-3 font-semibold text-gray-500">آخر نشاط</th>
+              <th className="p-3 font-semibold text-gray-500">الحالة</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {logs.map((log, index) => (
-              <tr key={index}>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.date}</td>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.employee}</td>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.action}</td>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.changes}</td>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.changes}</td>
-                <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{log.ip}</td>
+            {log.length > 0 ? (
+              log.map((item, index) => (
+                <tr key={index}>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.sessionId}</td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.deviceInfo}</td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.ipAddress}</td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.location}</td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    {new Date(item.loginDate).toLocaleString('ar-EG')}
+                  </td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    {new Date(item.lastActivity).toLocaleString('ar-EG')}
+                  </td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    {item.isCurrent ? (
+                      <span className="text-green-600 font-bold">الحالية</span>
+                    ) : (
+                      <span className="text-gray-500">منتهية</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" className="text-center text-gray-500 p-4">
+                  لا توجد سجلات متاحة
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-      </div>
-      <div className="mt-4 flex justify-between items-center text-sm">
-        <span className="text-gray-700">إجمالي السجلات: 133</span>
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-gray-500">أعرض في الصفحة 5</span>
-          <div className="flex space-x-1 rtl:space-x-reverse">
-            {[1, 2, 3, 4, 5].map(page => (
-              <button
-                key={page}
-                className={`px-3 py-1 rounded-md text-sm ${page === 1 ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border'}`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
 };
+
 
 const AppRatioModal = ({ onClose }) => {
   return (
@@ -275,7 +302,7 @@ const SystemSettingsPage = () => {
       <SettingsNav activePage="general" />
 
       <GeneralSettings />
-      <SystemOptions openModal={openModal} />
+      {/* <SystemOptions openModal={openModal} /> */}
       <SystemLog />
 
       {modal === 'appRatio' && <AppRatioModal onClose={closeModal} />}

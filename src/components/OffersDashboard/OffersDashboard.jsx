@@ -34,30 +34,66 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
   const [value, setValue] = useState('');
   const [scope, setScope] = useState('all_products');
   const [categoryId, setCategoryId] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [products, setProducts] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const token = localStorage.getItem('userToken');
+      try {
+        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/products?limit=1000', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error('فشل جلب قائمة المنتجات.');
+        }
+        const data = await response.json();
+        setProducts(data.products);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleProductChange = (e) => {
+    const productId = parseInt(e.target.value);
+    const isChecked = e.target.checked;
+    setSelectedProductIds(prevIds => {
+      if (isChecked) {
+        return [...prevIds, productId];
+      } else {
+        return prevIds.filter(id => id !== productId);
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     const token = localStorage.getItem('userToken');
-
+  
     const payload = {
-      name,
-      type,
-      value: parseFloat(value),
-      scope,
-      startDate,
-      endDate
+      title: name,
+      description: "عرض تم إنشاؤه من قبل الأدمن",
+      discountPercentage: parseFloat(value),
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      isActive: true,
     };
-
-    if (scope === 'category') {
-      payload.categoryId = parseInt(categoryId);
+  
+    if (scope === 'specific_products') {
+      payload.productIds = selectedProductIds;
     }
-
+  
     try {
       const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/offers', {
         method: 'POST',
@@ -78,11 +114,11 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4">
           <h2 className="text-lg font-bold">إضافة عرض جديد</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <RiCloseFill size={24} />
@@ -114,6 +150,7 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
               <option value="all_products">جميع المنتجات</option>
               <option value="category">فئة محددة</option>
+              <option value="specific_products">منتجات محددة</option>
             </select>
           </div>
           {scope === 'category' && (
@@ -121,6 +158,29 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
               <label className="block text-gray-700 text-sm font-bold mb-2">معرف الفئة (ID)</label>
               <input type="number" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+          )}
+          {scope === 'specific_products' && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">اختر المنتجات (يمكن اختيار أكثر من منتج)</label>
+              <div className="w-full px-3 py-2 border rounded-lg h-32 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-red-500">
+                {products.map(product => (
+                  <div key={product.productId} className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      id={`product-${product.productId}`}
+                      name="selectedProducts"
+                      value={product.productId}
+                      checked={selectedProductIds.includes(product.productId)}
+                      onChange={handleProductChange}
+                      className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                    />
+                    <label htmlFor={`product-${product.productId}`} className="ml-2 text-gray-700">
+                      {product.productName} (ID: {product.productId})
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
@@ -135,7 +195,7 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
           </div>
-          <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+          <div className="flex justify-end space-x-2 rtl:space-x-reverse sticky bottom-0 bg-white pt-4">
             <button type="button" onClick={onClose}
               className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">
               إلغاء
@@ -153,15 +213,67 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
 
 const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
   const [name, setName] = useState(offer.offerName);
+  const [type, setType] = useState(offer.offerType);
   const [value, setValue] = useState(offer.value);
+  const [scope, setScope] = useState(offer.scope);
+  const [categoryId, setCategoryId] = useState(offer.categoryId || '');
+  const [selectedProductIds, setSelectedProductIds] = useState(offer.productIds || []);
+  const [products, setProducts] = useState([]);
+  const [startDate, setStartDate] = useState(offer.startDate.split('T')[0]);
+  const [endDate, setEndDate] = useState(offer.endDate.split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const token = localStorage.getItem('userToken');
+      try {
+        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/products?limit=1000', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error('فشل جلب قائمة المنتجات.');
+        }
+        const data = await response.json();
+        setProducts(data.products);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleProductChange = (e) => {
+    const productId = parseInt(e.target.value);
+    const isChecked = e.target.checked;
+    setSelectedProductIds(prevIds => {
+      if (isChecked) {
+        return [...prevIds, productId];
+      } else {
+        return prevIds.filter(id => id !== productId);
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     const token = localStorage.getItem('userToken');
+
+    const payload = {
+      title: name,
+      description: offer.description,
+      discountPercentage: parseFloat(value),
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      isActive: offer.isActive,
+      categoryId: categoryId || undefined,
+      productIds: scope === 'specific_products' ? selectedProductIds : undefined,
+    };
 
     try {
       const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/offers/${offer.offerId}`, {
@@ -170,7 +282,7 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name, value: parseFloat(value) })
+        body: JSON.stringify(payload)
       });
       if (!response.ok) {
         throw new Error('فشل تحديث العرض.');
@@ -186,10 +298,12 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4">
           <h2 className="text-lg font-bold">تعديل عرض</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><RiCloseFill size={24} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <RiCloseFill size={24} />
+          </button>
         </div>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
@@ -199,11 +313,70 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
           </div>
           <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">نوع العرض</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} required
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="percentage">نسبة مئوية</option>
+              <option value="fixed_amount">مبلغ ثابت</option>
+            </select>
+          </div>
+          <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">قيمة الخصم</label>
             <input type="number" value={value} onChange={(e) => setValue(e.target.value)} required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
           </div>
-          <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">نطاق العرض</label>
+            <select value={scope} onChange={(e) => setScope(e.target.value)} required
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="all_products">جميع المنتجات</option>
+              <option value="category">فئة محددة</option>
+              <option value="specific_products">منتجات محددة</option>
+            </select>
+          </div>
+          {scope === 'category' && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">معرف الفئة (ID)</label>
+              <input type="number" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+          )}
+          {scope === 'specific_products' && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">اختر المنتجات (يمكن اختيار أكثر من منتج)</label>
+              <div className="w-full px-3 py-2 border rounded-lg h-32 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-red-500">
+                {products.map(product => (
+                  <div key={product.productId} className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      id={`product-${product.productId}`}
+                      name="selectedProducts"
+                      value={product.productId}
+                      checked={selectedProductIds.includes(product.productId)}
+                      onChange={handleProductChange}
+                      className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                    />
+                    <label htmlFor={`product-${product.productId}`} className="ml-2 text-gray-700">
+                      {product.productName} (ID: {product.productId})
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">تاريخ البدء</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">تاريخ الانتهاء</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 rtl:space-x-reverse sticky bottom-0 bg-white pt-4">
             <button type="button" onClick={onClose}
               className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">
               إلغاء
@@ -281,7 +454,7 @@ const OfferDetailsModal = ({ onClose, offer }) => (
       <div className="space-y-4 text-sm text-gray-700">
         <p><strong>اسم العرض:</strong> {offer.offerName}</p>
         <p><strong>نوع العرض:</strong> {offer.offerType}</p>
-        <p><strong>قيمة الخصم:</strong> {offer.value}%</p>
+        <p><strong>قيمة الخصم:</strong> {offer.value}</p>
         <p><strong>نطاق العرض:</strong> {offer.scope}</p>
         <p><strong>مدة العرض:</strong> {offer.duration}</p>
         <p><strong>الحالة:</strong> {offer.status}</p>
@@ -342,7 +515,7 @@ const OffersDashboard = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ active: currentStatus !== 'نشط' })
+        body: JSON.stringify({ active: currentStatus === 'غير نشط' })
       });
       fetchData();
     } catch (err) {

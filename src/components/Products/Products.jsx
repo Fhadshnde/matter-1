@@ -30,6 +30,151 @@ const StatCard = ({ title, value, icon, onClick }) => {
   );
 };
 
+const Modal = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+                <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                {children}
+            </div>
+        </div>
+    );
+};
+
+const EditStockModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
+    const [stockToUpdate, setStockToUpdate] = useState('');
+    const baseUrl = 'https://products-api.cbc-apps.net';
+  
+    useEffect(() => {
+      if (product) {
+        setStockToUpdate(product.quantity || '');
+      }
+    }, [product]);
+  
+    const handleUpdateStock = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/admin/dashboard/products/${product.productId}/stock`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ stock: parseInt(stockToUpdate), reason: "تحديث المخزون" })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update stock');
+        }
+        onClose();
+        fetchProducts();
+      } catch (error) {
+        console.error('Error updating stock:', error);
+      }
+    };
+  
+    return (
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل المخزون</h2>
+          <div className="mb-4">
+            <input
+              type="number"
+              placeholder="الكمية في المخزون"
+              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+              value={stockToUpdate}
+              onChange={(e) => setStockToUpdate(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-center space-x-4 rtl:space-x-reverse">
+            <button
+              onClick={onClose}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleUpdateStock}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+            >
+              تعديل
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+};
+
+const EditPriceModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
+    const [priceToUpdate, setPriceToUpdate] = useState('');
+    const [wholesalePriceToUpdate, setWholesalePriceToUpdate] = useState('');
+    const baseUrl = 'https://products-api.cbc-apps.net';
+  
+    useEffect(() => {
+      if (product) {
+        setPriceToUpdate(product.sellingPrice || '');
+        setWholesalePriceToUpdate(product.wholesalePrice || '');
+      }
+    }, [product]);
+  
+    const handleUpdatePrice = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/admin/dashboard/products/${product.productId}/price`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ price: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update price');
+        }
+        onClose();
+        fetchProducts();
+      } catch (error) {
+        console.error('Error updating price:', error);
+      }
+    };
+  
+    return (
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل السعر</h2>
+          <div className="space-y-4">
+            <input
+              type="number"
+              placeholder="سعر البيع"
+              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+              value={priceToUpdate}
+              onChange={(e) => setPriceToUpdate(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="سعر الجملة"
+              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+              value={wholesalePriceToUpdate}
+              onChange={(e) => setWholesalePriceToUpdate(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-center mt-6 space-x-4 rtl:space-x-reverse">
+            <button
+              onClick={onClose}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleUpdatePrice}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+            >
+              تعديل
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+};
+
 const Dashboard = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
@@ -44,9 +189,9 @@ const Dashboard = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [stockToUpdate, setStockToUpdate] = useState('');
-    const [priceToUpdate, setPriceToUpdate] = useState('');
-    const [wholesalePriceToUpdate, setWholesalePriceToUpdate] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
 
     const baseUrl = 'https://products-api.cbc-apps.net';
     const token = localStorage.getItem('userToken');
@@ -70,6 +215,39 @@ const Dashboard = () => {
         }
     };
 
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get(`${baseUrl}/admin/dashboard/categories`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setCategories(response.data.categories);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+  
+    const fetchSections = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/admin/dashboard/sections`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setSections(response.data.sections);
+      } catch (error) {
+        console.error('Error fetching sections:', error);
+      }
+    };
+  
+    const fetchSuppliers = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/admin/dashboard/suppliers`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setSuppliers(response.data.suppliers);
+      } catch (error) {
+        console.error('Error fetching suppliers:', error);
+      }
+    };
+
     const fetchProductDetails = async (productId) => {
         try {
             const response = await fetch(`${baseUrl}/admin/dashboard/products/${productId}`, {
@@ -91,6 +269,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchProducts(currentPage, itemsPerPage);
+        fetchSuppliers();
     }, [currentPage, itemsPerPage]);
 
     const getStatusClass = (status) => {
@@ -110,22 +289,14 @@ const Dashboard = () => {
         fetchProductDetails(product.productId);
     };
 
-    const handleOpenEditProduct = (product) => {
-        console.log(`Navigating to /edit-product/${product.productId}`);
-        navigate(`/edit-product/${product.productId}`);
-    };
-
     const handleOpenEditStock = (product) => {
         setSelectedProduct(product);
-        setStockToUpdate(product.quantity);
         setIsEditStockModalOpen(true);
         setIsMoreActionsDropdownOpen(false);
     };
 
     const handleOpenEditPrice = (product) => {
         setSelectedProduct(product);
-        setPriceToUpdate(product.sellingPrice);
-        setWholesalePriceToUpdate(product.wholesalePrice);
         setIsEditPriceModalOpen(true);
         setIsMoreActionsDropdownOpen(false);
     };
@@ -136,49 +307,9 @@ const Dashboard = () => {
         setIsMoreActionsDropdownOpen(false);
     };
 
-    const handleUpdateStock = async () => {
-        try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products/${selectedProduct.productId}/stock`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ stock: parseInt(stockToUpdate), reason: "تحديث المخزون" })
-            });
-            if (!response.ok) {
-                throw new Error('Failed to update stock');
-            }
-            setIsEditStockModalOpen(false);
-            fetchProducts(currentPage, itemsPerPage);
-        } catch (error) {
-            console.error('Error updating stock:', error);
-        }
-    };
-
-    const handleUpdatePrice = async () => {
-        try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products/${selectedProduct.productId}/price`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ price: parseInt(priceToUpdate), reason: "تحديث السعر" })
-            });
-            if (!response.ok) {
-                throw new Error('Failed to update price');
-            }
-            setIsEditPriceModalOpen(false);
-            fetchProducts(currentPage, itemsPerPage);
-        } catch (error) {
-            console.error('Error updating price:', error);
-        }
-    };
-
     const handleDeleteProduct = async () => {
         try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products/${selectedProduct.productId}`, {
+            const response = await fetch(`${baseUrl}/admin/dashboard/products-management/${selectedProduct.productId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -192,18 +323,6 @@ const Dashboard = () => {
         } catch (error) {
             console.error('Error deleting product:', error);
         }
-    };
-
-    const Modal = ({ isOpen, onClose, children }) => {
-        if (!isOpen) return null;
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
-                    <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
-                    {children}
-                </div>
-            </div>
-        );
     };
 
     const productDetailsModal = () => {
@@ -258,16 +377,6 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-6 space-x-4 rtl:space-x-reverse">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsProductDetailsModalOpen(false);
-                                    handleOpenEditProduct(selectedProduct);
-                                }}
-                                className="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-                            >
-                                تعديل
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -307,13 +416,6 @@ const Dashboard = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <button
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center"
-                            onClick={() => navigate('/add-product')}
-                        >
-                            <IoAdd className="w-5 h-5 ml-2" />
-                            إضافة منتج
-                        </button>
                         <div className="relative">
                             <button
                                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center hover:bg-gray-200 transition-colors"
@@ -380,14 +482,10 @@ const Dashboard = () => {
                                             <IoEllipsisHorizontal className="w-5 h-5" />
                                         </button>
                                         {isMoreActionsDropdownOpen === product.productId && (
-                                            <div className="absolute right-5 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10 text-sm text-gray-700">
+                                            <div className="absolute left-1 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10 text-sm text-gray-700">
                                                 <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenProductDetails(product)}>
                                                     <IoEyeOutline className="w-5 h-5 ml-2 text-gray-500" />
                                                     عرض التفاصيل
-                                                </button>
-                                                <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenEditProduct(product)}>
-                                                    <IoPencilOutline className="w-5 h-5 ml-2 text-gray-500" />
-                                                    تعديل المنتج
                                                 </button>
                                                 <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenEditStock(product)}>
                                                     <IoPencilOutline className="w-5 h-5 ml-2 text-gray-500" />
@@ -455,70 +553,21 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <Modal isOpen={isEditStockModalOpen} onClose={() => setIsEditStockModalOpen(false)}>
-                <div className="text-center">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل المخزون</h2>
-                    <div className="mb-4">
-                        <input
-                            type="number"
-                            placeholder="الكمية في المخزون"
-                            className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-                            value={stockToUpdate}
-                            onChange={(e) => setStockToUpdate(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex justify-center space-x-4 rtl:space-x-reverse">
-                        <button
-                            onClick={() => setIsEditStockModalOpen(false)}
-                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                        >
-                            إلغاء
-                        </button>
-                        <button
-                            onClick={handleUpdateStock}
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-                        >
-                            تعديل
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+            <EditStockModal
+                isOpen={isEditStockModalOpen}
+                onClose={() => setIsEditStockModalOpen(false)}
+                product={selectedProduct}
+                token={token}
+                fetchProducts={fetchProducts}
+            />
 
-            <Modal isOpen={isEditPriceModalOpen} onClose={() => setIsEditPriceModalOpen(false)}>
-                <div className="text-center">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل السعر</h2>
-                    <div className="space-y-4">
-                        <input
-                            type="number"
-                            placeholder="سعر البيع"
-                            className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-                            value={priceToUpdate}
-                            onChange={(e) => setPriceToUpdate(e.target.value)}
-                        />
-                        <input
-                            type="number"
-                            placeholder="سعر الجملة"
-                            className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-                            value={wholesalePriceToUpdate}
-                            onChange={(e) => setWholesalePriceToUpdate(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex justify-center mt-6 space-x-4 rtl:space-x-reverse">
-                        <button
-                            onClick={() => setIsEditPriceModalOpen(false)}
-                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                        >
-                            إلغاء
-                        </button>
-                        <button
-                            onClick={handleUpdatePrice}
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-                        >
-                            تعديل
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+            <EditPriceModal
+                isOpen={isEditPriceModalOpen}
+                onClose={() => setIsEditPriceModalOpen(false)}
+                product={selectedProduct}
+                token={token}
+                fetchProducts={fetchProducts}
+            />
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
                 <div className="flex flex-col items-center text-center">
@@ -539,12 +588,12 @@ const Dashboard = () => {
                             onClick={handleDeleteProduct}
                             className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
                         >
-                            حذف المنتج
+                            حذف
                         </button>
                     </div>
                 </div>
             </Modal>
-
+            
             {productDetailsModal()}
         </div>
     );

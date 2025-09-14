@@ -295,14 +295,14 @@ const MoreOptionsModal = ({ onClose, onShowDetails, onDownloadReport }) => {
           </span>
           عرض التفاصيل
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onDownloadReport}>
+        {/* <li className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onDownloadReport}>
           <span className="ml-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
               <path fillRule="evenodd" d="M9 1.5H5.625c-1.036 0-1.875.84-1.875 1.875V15.75c0 1.036.84 1.875 1.875 1.875h4.5a.75.75 0 010 1.5h-4.5A3.375 3.375 0 012.25 15.75V3.375C2.25 2.339 3.09 1.5 4.125 1.5H9a.75.75 0 010 1.5zM15 1.5h3.375c1.036 0 1.875.84 1.875 1.875v12.375c0 1.036-.84 1.875-1.875 1.875h-4.5a.75.75 0 010-1.5h4.5c.276 0 .5-.224.5-.5V3.375a.5.5 0 00-.5-.5h-3.375a.75.75 0 010-1.5zM12 21a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5h-2.25a.75.75 0 01-.75-.75z" clipRule="evenodd" />
             </svg>
           </span>
           تحميل التقرير
-        </li>
+        </li> */}
         <li className="flex items-center p-2 text-red-500 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onClose}>
           <span className="ml-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -397,7 +397,6 @@ const ProductTable = ({ products, totalCount }) => {
                       <MoreOptionsModal
                         onClose={() => setShowMoreMenu(null)}
                         onShowDetails={handleShowDetails}
-                        onDownloadReport={handleDownloadReport}
                       />
                     )}
                   </div>

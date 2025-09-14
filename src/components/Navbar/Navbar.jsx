@@ -190,7 +190,7 @@ const Navbar = ({ onLogout }) => {
               </div>
             )}
           </div>
-
+{/* 
           <div className="relative">
             <button onClick={toggleNotifications}>
               <Inbox className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700" />
@@ -243,11 +243,11 @@ const Navbar = ({ onLogout }) => {
                 </div>
               </div>
             )}
-          </div>
-          <div className="flex items-center gap-1 cursor-pointer hover:text-gray-700">
+          </div> */}
+          {/* <div className="flex items-center gap-1 cursor-pointer hover:text-gray-700">
             <Globe className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 font-medium">EN</span>
-          </div>
+          </div> */}
         </div>
       </div>
 

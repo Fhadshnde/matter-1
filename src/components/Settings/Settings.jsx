@@ -1,176 +1,542 @@
-import React, { useState } from 'react';
-import { FaChevronDown, FaStore, FaChartBar, FaUserTie, FaUsers, FaUserPlus, FaKey, FaTrash } from 'react-icons/fa';
-import { BsThreeDots, BsEyeSlash, BsEye } from 'react-icons/bs';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { FaUser, FaUserTimes, FaUsers, FaSearch, FaEllipsisH, FaAngleUp, FaEye, FaEdit, FaStore, FaRegComment, FaTrashAlt, FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
-
-const statsCards = [
-  { title: 'عدد الموظفين', value: '350,000', icon: 'users' },
-  { title: 'الأدوار المختلفة', value: '24 دور', icon: 'user-tie' },
-  { title: 'الحسابات المحظورة', value: '70,000 حساب', icon: 'locked' },
-  { title: 'نسبة التطبيق', value: '2.5%', icon: 'percent' },
-];
-
-const employeesData = [
-  { id: 1, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 2, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 3, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 4, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 5, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 6, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 7, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-  { id: 8, name: 'محمد صبري', email: 'sabry@gmail.com', phone: '+962312154', role: 'موظف مالي', lastLogin: '2025-08-28', status: 'نشط' },
-];
-
-const StatCard = ({ title, value, icon }) => {
-  const icons = {
-    'users': <div className="bg-gray-100 p-3 rounded-xl"><FaUsers className="text-red-500 text-2xl" /></div>,
-    'user-tie': <div className="bg-gray-100 p-3 rounded-xl"><FaUserTie className="text-red-500 text-2xl" /></div>,
-    'locked': <div className="bg-gray-100 p-3 rounded-xl"><FaChartBar className="text-red-500 text-2xl" /></div>,
-    'percent': <div className="bg-gray-100 p-3 rounded-xl"><FaStore className="text-red-500 text-2xl" /></div>,
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right">
-      <div className="flex flex-col">
-        <span className="text-gray-400 text-xs mb-1">{title}</span>
-        <p className="text-xl font-bold mb-1">{value}</p>
-        <span className="text-xs text-green-500 flex items-center">
-          <FaChevronDown className="transform rotate-180 text-green-500 ml-1" />
-          8%
-          <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
-        </span>
-      </div>
-      {icons[icon]}
-    </div>
-  );
-};
 
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
 );
 
-const Td = ({ children }) => (
-  <td className="p-3 text-xs text-gray-700">{children}</td>
+const Td = ({ children, className = '' }) => (
+  <td className={`p-3 text-xs text-gray-700 ${className}`}>{children}</td>
 );
 
-const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+const StatusBadge = ({ status }) => {
+  const colorMap = {
+    'نشط': 'bg-green-100 text-green-700',
+    'موقوف': 'bg-red-100 text-red-700',
+    'معلق': 'bg-yellow-100 text-yellow-700',
+  };
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4" dir="rtl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <RiCloseFill size={24} />
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
+      {status}
+    </span>
+  );
+};
+
+const StarRating = ({ rating }) => {
+  const fullStars = Math.floor(rating);
+  const stars = [];
+  for (let i = 0; i < 5; i++) {
+    stars.push(
+      <FaStar
+        key={i}
+        className={`w-4 h-4 ${i < fullStars ? 'text-yellow-400' : 'text-gray-300'}`}
+      />
+    );
+  }
+  return <div className="flex items-center justify-center space-x-0.5 rtl:space-x-reverse">{stars}</div>;
+};
+
+// Modal Components
+const EmployeeDetailsModal = ({ employee, onClose }) => (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h2 className="text-lg font-bold">تفاصيل الموظف</h2>
+        <button onClick={onClose}>
+          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
+            <input type="text" value={employee.fullName} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الجوال</label>
+            <input type="text" value={employee.phone} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">البريد</label>
+            <input type="text" value={employee.email} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الصلاحية</label>
+            <input type="text" value={employee.role} readOnly className="px-4 py-2 bg-gray-100 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الحالة</label>
+            <div className="px-4 py-2 bg-gray-100 rounded-lg text-sm flex items-center">
+              <StatusBadge status={employee.status} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="p-4 border-t flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+          الغاء
+        </button>
+        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+          تعديل
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const EditEmployeeModal = ({ employee, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: employee.fullName,
+    email: employee.email,
+    phone: employee.phone,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">تعديل البيانات</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
           </button>
         </div>
-        {children}
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">البريد</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">رقم الجوال</label>
+            <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+          </button>
+          <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+            تعديل
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const AddEmployeeModal = ({ isOpen, onClose }) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="إضافة موظف">
-      <form>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">الاسم الكامل</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="text" placeholder="محمد أحمد صالح" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">البريد الإلكتروني</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="email" placeholder="msaleh@info.com" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">رقم الجوال</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="tel" placeholder="+964 55543456" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">الدور</label>
-          <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option>مالي</option>
+const EditPermissionsModal = ({ onClose }) => (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h2 className="text-lg font-bold">تعديل الصلاحيات</h2>
+        <button onClick={onClose}>
+          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">الدور الاداري للموظف</label>
+        <div className="relative">
+          <select className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10">
+            <option>مدير متجر</option>
+            <option>مسؤول مخزون</option>
+            <option>مسؤول مبيعات</option>
           </select>
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          </div>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">كلمة المرور</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="password" placeholder="********" />
+      </div>
+      <div className="p-4 border-t flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+        </button>
+        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+            حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const ToggleStatusModal = ({ onClose }) => (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h2 className="text-lg font-bold">تعليق أو تفعيل</h2>
+        <button onClick={onClose}>
+          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">برجاء إختيار حالة الموظف</label>
+        <div className="relative">
+          <select className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10">
+            <option>نشط</option>
+            <option>موقوف</option>
+            <option>معلق</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          </div>
         </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">إعادة كلمة المرور</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="password" placeholder="********" />
+      </div>
+      <div className="p-4 border-t flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+          الغاء
+        </button>
+        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+          تعديل
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const AddNoteModal = ({ onClose }) => (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h2 className="text-lg font-bold">اضافه ملاحظه</h2>
+        <button onClick={onClose}>
+          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">اختار التاريخ</label>
+          <div className="relative">
+            <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm pl-10" value="1 / 8 / 2025" readOnly />
+            <FaCalendarAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
         </div>
-        <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse">
-          <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">ادخل نص الملاحظه</label>
+          <textarea
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            rows="4"
+            placeholder="ادخل ملاحظاتك..."
+          ></textarea>
+        </div>
+      </div>
+      <div className="p-4 border-t flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+          الغاء
+        </button>
+        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+          حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const CloseAccountModal = ({ onClose, onConfirm }) => (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm text-center">
+      <div className="p-4 flex justify-end">
+        <button onClick={onClose}>
+          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <div className="flex justify-center text-red-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-bold">هل أنت متأكد أنك تريد إغلاق هذا الحساب؟</h2>
+        <p className="text-gray-500 text-sm font-bold">
+          هل أنت متأكد أنك تريد الإغلاق؟
+        </p>
+      </div>
+      <div className="p-4 border-t flex justify-center gap-3">
+        <button onClick={onClose} className="px-6 py-2 text-gray-700 font-medium">
+          الغاء
+        </button>
+        <button onClick={onConfirm} className="bg-red-500 text-white px-6 py-2 rounded-lg font-medium">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const AddEmployeeModal = ({ onClose, onAdd }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'moderator'
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      alert("كلمة المرور وتأكيد كلمة المرور غير متطابقتين.");
+      return;
+    }
+    await onAdd(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">إضافة موظف جديد</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">رقم الجوال</label>
+            <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">البريد الإلكتروني</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">كلمة المرور</label>
+            <input type="password" name="password" value={formData.password} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">تأكيد كلمة المرور</label>
+            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">الصلاحية</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+              <option value="moderator">محرر</option>
+            </select>
+          </div>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
             الغاء
           </button>
-          <button type="submit" className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+          <button onClick={handleSubmit} className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
             إضافة
           </button>
         </div>
-      </form>
-    </Modal>
+      </div>
+    </div>
   );
 };
 
-const ChangePasswordModal = ({ isOpen, onClose }) => {
+const ChangePasswordModal = ({ onClose, onConfirm, employee }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSubmit = () => {
+    if (newPassword !== confirmPassword) {
+      alert("كلمة المرور الجديدة وتأكيدها غير متطابقتين.");
+      return;
+    }
+    onConfirm(employee.staffId, newPassword, confirmPassword);
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="تغيير كلمة المرور">
-      <form>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">كلمة المرور الجديدة</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="password" placeholder="********" />
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">تغيير كلمة المرور</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
         </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">إعادة كلمة المرور</label>
-          <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="password" placeholder="********" />
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">تأكيد كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
         </div>
-        <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse">
-          <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
             الغاء
           </button>
-          <button type="submit" className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+          <button onClick={handleSubmit} className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
             حفظ
           </button>
         </div>
-      </form>
-    </Modal>
+      </div>
+    </div>
   );
 };
 
-const DeleteConfirmationModal = ({ isOpen, onClose }) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="حذف الحساب">
-      <div className="text-center mb-6">
-        <div className="bg-red-100 rounded-full p-4 inline-block mb-4">
-          <RiCloseFill className="text-red-500" size={48} />
-        </div>
-        <p className="text-gray-700 text-lg font-bold">هل أنت متأكد أنك تريد حذف الحساب؟</p>
-        <p className="text-gray-500 text-sm mt-2">
-          سوف يتم حذف الحساب من قائمة المستخدمين لديك هل انت متاكد؟
-        </p>
-      </div>
-      <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse">
-        <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-          الغاء
-        </button>
-        <button type="button" className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-          حذف
-        </button>
-      </div>
-    </Modal>
-  );
-};
+const EmployeeManagement = () => {
+  const [employeesData, setEmployeesData] = useState([]);
+  const [cardsData, setCardsData] = useState({});
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('الكل');
+  const [activeModal, setActiveModal] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Use useLocation hook to get the current pathname
+  const location = useLocation();
 
-// New Settings Navigation Component
-const SettingsNav = ({ activePage }) => {
-  const linkClass = "px-4 py-2 rounded-lg font-bold transition";
-  const activeClass = "bg-red-500 text-white";
-  const inactiveClass = "bg-white text-gray-700 hover:bg-gray-100";
+  // Define the missing variables here
+  const linkClass = 'px-4 py-2 font-medium rounded-lg transition-colors';
+  const activeClass = 'bg-red-500 text-white';
+  const inactiveClass = 'text-gray-700 hover:bg-gray-100';
+
+  // Determine the active page based on the current pathname
+  const activePage = location.pathname.includes('/powers') ? 'general' : 'employees';
+
+  const baseUrl = 'https://products-api.cbc-apps.net';
+  const token = localStorage.getItem('userToken');
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff?page=1&limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setEmployeesData(data.staff);
+      setCardsData(data.cards);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch employees:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const handleDropdownToggle = (id) => {
+    setActiveDropdown(activeDropdown === id ? null : id);
+  };
+
+  const handleStatusFilterChange = (status) => {
+    setStatusFilter(status);
+    setActiveDropdown(null); 
+  };
+  
+  const handleOpenModal = (modalName, employee = null) => {
+    setSelectedEmployee(employee);
+    setActiveModal(modalName);
+    setActiveDropdown(null);
+  };
+  
+  const handleCloseModal = () => {
+    setActiveModal(null);
+    setSelectedEmployee(null);
+  };
+
+  const handleAddEmployee = async (newEmployeeData) => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newEmployeeData.name,
+          phone: newEmployeeData.phone,
+          password: newEmployeeData.password,
+          confirmPassword: newEmployeeData.confirmPassword,
+          role: newEmployeeData.role
+        })
+      });
+      if (response.ok) {
+        fetchEmployees();
+      } else {
+        console.error("Failed to add employee");
+      }
+    } catch (error) {
+      console.error("Failed to add employee:", error);
+    }
+  };
+
+  const handleChangePassword = async (staffId, newPassword, confirmPassword) => {
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${staffId}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        alert("تم تغيير كلمة المرور بنجاح");
+        handleCloseModal();
+      } else {
+        console.error("Failed to change password");
+      }
+    } catch (error) {
+      console.error("Failed to change password:", error);
+    }
+  };
+
+  const handleDeleteEmployee = async () => {
+    if (!selectedEmployee) return;
+
+    try {
+      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${selectedEmployee.staffId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        fetchEmployees();
+        handleCloseModal();
+      } else {
+        console.error("Failed to delete employee");
+      }
+    } catch (error) {
+      console.error("Failed to delete employee:", error);
+    }
+  };
+
+  const filteredEmployees = statusFilter === 'الكل'
+    ? employeesData
+    : employeesData.filter(emp => emp.status === statusFilter);
 
   return (
-    <div className="flex items-center space-x-4 rtl:space-x-reverse mb-6" dir="rtl">
+    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans">
+      <div className="mb-6">
       <div className="bg-white p-2 rounded-xl shadow-md flex items-center space-x-2 rtl:space-x-reverse">
         {/* استبدال a بـ Link */}
         <Link to="/settings" className={`${linkClass} ${activePage === 'employees' ? activeClass : inactiveClass}`}>
@@ -180,141 +546,184 @@ const SettingsNav = ({ activePage }) => {
           إعدادات عامة
         </Link>
       </div>
-    </div>
-  );
-};
-
-const EmployeesPage = () => {
-  const [showDropdown, setShowDropdown] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const handleDropdownToggle = (id) => {
-    setShowDropdown(showDropdown === id ? null : id);
-  };
-
-  const openAddModal = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const closeAddModal = () => {
-    setIsAddModalOpen(false);
-  };
-
-  const openPasswordModal = () => {
-    setShowDropdown(null);
-    setIsPasswordModalOpen(true);
-  };
-
-  const closePasswordModal = () => {
-    setIsPasswordModalOpen(false);
-  };
-
-  const openDeleteModal = () => {
-    setShowDropdown(null);
-    setIsDeleteModalOpen(true);
-  };
-
-  const closeDeleteModal = () => {
-    setIsDeleteModalOpen(false);
-  };
-
-  return (
-    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">لوحة التحكم</h1>
-      
-      {/* New navigation added here */}
-      <SettingsNav activePage="employees" />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {statsCards.map((card, index) => (
-          <StatCard key={index} {...card} />
-        ))}
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-800">الموظفين</h3>
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <button onClick={openAddModal} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded flex items-center">
-              <FaUserPlus className="ml-2" />
-              إضافة موظف
-            </button>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
+          <FaUserTimes className="text-red-500 text-3xl ml-3" />
+          <div>
+            <p className="text-sm text-gray-500">موظفين تم تعليقهم</p>
+            <p className="text-xl font-bold">{cardsData.bannedAccounts} موظفًا</p>
           </div>
         </div>
+        <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
+          <FaUsers className="text-orange-500 text-3xl ml-3" />
+          <div>
+            <p className="text-sm text-gray-500">صلاحيات محدودة</p>
+            <p className="text-xl font-bold">{cardsData.differentRoles} موظفًا</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
+          <FaUsers className="text-green-500 text-3xl ml-3" />
+          <div>
+            <p className="text-sm text-gray-500">نشطين حالياً</p>
+            <p className="text-xl font-bold">{employeesData.filter(emp => emp.status === 'نشط').length} موظفًا</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-center">
+          <FaUsers className="text-blue-500 text-3xl ml-3" />
+          <div>
+            <p className="text-sm text-gray-500">اجمالي الموظفين</p>
+            <p className="text-xl font-bold">{cardsData.totalStaff} موظفًا</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4 rtl:space-x-reverse">
+        <div className="relative w-full md:w-auto flex-grow">
+          <input
+            type="text"
+            placeholder="ابحث عن اسم الموظف, الحالة"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+          />
+          <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        </div>
+        <div className="relative w-full md:w-48">
+          <button
+            className="w-full bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm flex justify-between items-center"
+            onClick={() => setActiveDropdown(activeDropdown === 'statusFilter' ? null : 'statusFilter')}
+          >
+            {statusFilter}
+            <FaAngleUp className={`transform transition-transform ${activeDropdown === 'statusFilter' ? 'rotate-0' : 'rotate-180'}`} />
+          </button>
+          {activeDropdown === 'statusFilter' && (
+            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <button
+                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => handleStatusFilterChange('الكل')}
+              >
+                الكل
+              </button>
+              <button
+                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => handleStatusFilterChange('نشط')}
+              >
+                نشط
+              </button>
+              <button
+                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => handleStatusFilterChange('موقوف')}
+              >
+                موقوف
+              </button>
+              <button
+                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => handleStatusFilterChange('معلق')}
+              >
+                معلق
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => handleOpenModal('addEmployee')}
+          className="w-full md:w-auto bg-red-500 text-white rounded-lg py-2 px-4 text-sm flex items-center justify-center md:justify-start"
+        >
+          <FaUsers className="ml-2" />
+          إضافة موظف
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 text-right">
               <tr>
-                <Th className="text-right">الاسم</Th>
+                <Th>الاسم</Th>
                 <Th>البريد</Th>
-                <Th>الجوال</Th>
-                <Th>الدور</Th>
-                <Th>آخر دخول</Th>
+                <Th>رقم الجوال</Th>
+                <Th>الصلاحية</Th>
                 <Th>الحالة</Th>
                 <Th>الإجراءات</Th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-right">
-              {employeesData.map((employee) => (
-                <tr key={employee.id}>
-                  <Td>{employee.name}</Td>
+              {filteredEmployees.map((employee) => (
+                <tr key={employee.staffId}>
+                  <Td>{employee.fullName}</Td>
                   <Td>{employee.email}</Td>
                   <Td>{employee.phone}</Td>
                   <Td>{employee.role}</Td>
-                  <Td>{employee.lastLogin}</Td>
-                  <Td>
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.status === 'نشط' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {employee.status}
-                    </span>
-                  </Td>
-                  <Td>
-                    <div className="relative inline-block">
-                      <button onClick={() => handleDropdownToggle(employee.id)} className="text-gray-500 hover:text-gray-700">
-                        <BsThreeDots className="text-xl" />
-                      </button>
-                      {showDropdown === employee.id && (
-                        <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 text-right">
-                          <button onClick={openPasswordModal} className="w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-end">
-                            <span>تغيير كلمة المرور</span>
-                            <FaKey className="ml-2" />
-                          </button>
-                          <button onClick={openDeleteModal} className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-100 flex items-center justify-end">
-                            <span>حذف</span>
-                            <FaTrash className="ml-2" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                  <Td><StatusBadge status={employee.status} /></Td>
+                  <Td className="relative">
+                    <button
+                      className="text-gray-500 hover:text-gray-800"
+                      onClick={() => handleDropdownToggle(employee.staffId)}
+                    >
+                      <FaEllipsisH />
+                    </button>
+                    {activeDropdown === employee.staffId && (
+                      <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button onClick={() => handleOpenModal('details', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaEye className="ml-2" /> عرض التفاصيل
+                        </button>
+                        <button onClick={() => handleOpenModal('edit', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaEdit className="ml-2" /> تعديل البيانات
+                        </button>
+                        <button onClick={() => handleOpenModal('permissions')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaEdit className="ml-2" /> تعديل الصلاحيات
+                        </button>
+                        <button onClick={() => handleOpenModal('toggleStatus')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaStore className="ml-2" /> تعليق أو تفعيل
+                        </button>
+                        <button onClick={() => handleOpenModal('changePassword', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaEdit className="ml-2" /> تغيير كلمة المرور
+                        </button>
+                        <button onClick={() => handleOpenModal('addNote')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <FaRegComment className="ml-2" /> إضافة ملاحظة إدارية
+                        </button>
+                        <button onClick={() => handleOpenModal('closeAccount', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                          <FaTrashAlt className="ml-2" /> إغلاق
+                        </button>
+                      </div>
+                    )}
                   </Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex justify-between items-center text-sm">
-          <span className="text-gray-700">إجمالي الموظفين: 24</span>
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <span className="text-gray-500">أعرض في الصفحة 10</span>
-            <div className="flex space-x-1 rtl:space-x-reverse">
-              {[1, 2, 3, 4, 5].map(page => (
-                <button
-                  key={page}
-                  className={`px-3 py-1 rounded-md text-sm ${page === 1 ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border'}`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
+
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-gray-500 text-sm flex items-center">
+            أعرض في الصفحة
+            <select className="mx-2 border border-gray-300 rounded-md py-1 px-2">
+              <option>10</option>
+              <option>20</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-1 rtl:space-x-reverse text-gray-500">
+            <button className="px-3 py-1 border border-gray-300 rounded-md text-red-500">&gt;</button>
+            <span className="px-3 py-1 border border-gray-300 rounded-md text-red-500 font-bold">1</span>
+            <span className="px-3 py-1 border border-gray-300 rounded-md">2</span>
+            <span className="px-3 py-1 border border-gray-300 rounded-md">3</span>
+            <span className="px-3 py-1 border border-gray-300 rounded-md">4</span>
+            <span className="px-3 py-1 border border-gray-300 rounded-md">5</span>
+            <button className="px-3 py-1 border border-gray-300 rounded-md">&lt;</button>
           </div>
         </div>
       </div>
-
-      <AddEmployeeModal isOpen={isAddModalOpen} onClose={closeAddModal} />
-      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={closePasswordModal} />
-      <DeleteConfirmationModal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} />
+      
+      {activeModal === 'details' && selectedEmployee && <EmployeeDetailsModal employee={selectedEmployee} onClose={handleCloseModal} />}
+      {activeModal === 'edit' && selectedEmployee && <EditEmployeeModal employee={selectedEmployee} onClose={handleCloseModal} />}
+      {activeModal === 'permissions' && <EditPermissionsModal onClose={handleCloseModal} />}
+      {activeModal === 'toggleStatus' && <ToggleStatusModal onClose={handleCloseModal} />}
+      {activeModal === 'addNote' && <AddNoteModal onClose={handleCloseModal} />}
+      {activeModal === 'closeAccount' && selectedEmployee && <CloseAccountModal onClose={handleCloseModal} onConfirm={handleDeleteEmployee} />}
+      {activeModal === 'addEmployee' && <AddEmployeeModal onClose={handleCloseModal} onAdd={handleAddEmployee} />}
+      {activeModal === 'changePassword' && selectedEmployee && <ChangePasswordModal onClose={handleCloseModal} onConfirm={handleChangePassword} employee={selectedEmployee} />}
     </div>
   );
 };
 
-export default EmployeesPage;
+export default EmployeeManagement;

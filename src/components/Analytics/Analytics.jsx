@@ -15,7 +15,6 @@ import {
   X
 } from "lucide-react";
 
-// Modal component from your original file
 const AnalyticsModal = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
@@ -52,43 +51,104 @@ const AnalyticsModal = ({ isOpen, onClose, data }) => {
     </div>
   );
 };
-// StatCardModal, StatCard, and StripedBar components
-const StatCardModal = ({ title, details, onClose }) => {
-  return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full text-right">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+const StatCardModal = ({ selectedCardType, detailsData, onClose }) => {
+    if (!detailsData) return null;
+
+    let title, dataToRender;
+    const isDaily = selectedCardType === 'daily';
+    const isMonthly = selectedCardType === 'monthly';
+    const isYearly = selectedCardType === 'yearly';
+    const isGrowth = selectedCardType === 'growth';
+
+    if (isDaily) {
+        title = 'تفاصيل مبيعات اليوم';
+        dataToRender = detailsData.hourlyBreakdown.map(item => ({
+            name: item.timeRange,
+            sales: item.sales.toLocaleString(),
+            orders: item.ordersCount,
+            avg: item.averageOrderValue.toLocaleString()
+        }));
+    } else if (isMonthly) {
+        title = 'تفاصيل مبيعات الشهر';
+        dataToRender = detailsData.dailyBreakdown.map(item => ({
+            name: item.date,
+            sales: item.sales.toLocaleString(),
+            orders: item.ordersCount,
+            avg: item.averageOrderValue.toLocaleString()
+        }));
+    } else if (isYearly) {
+        title = 'تفاصيل مبيعات السنة';
+        dataToRender = detailsData.monthlyBreakdown.map(item => ({
+            name: item.month,
+            sales: item.sales.toLocaleString(),
+            orders: item.ordersCount,
+            avg: item.averageOrderValue.toLocaleString()
+        }));
+    } else if (isGrowth) {
+        title = 'تفاصيل معدل النمو';
+        dataToRender = detailsData.monthlyData.map(item => ({
+            name: item.month,
+            sales: item.currentSales.toLocaleString(),
+            previousSales: item.previousSales.toLocaleString(),
+            growth: `${item.growthRate}%`
+        }));
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full text-right max-h-screen overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">{title}</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <table className="w-full text-center border-collapse">
+                    <thead>
+                        <tr className="bg-gray-100 border-b-2 border-gray-200">
+                            {isGrowth ? (
+                                <>
+                                    <th className="py-3 px-2 font-bold text-gray-700">الشهر</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">المبيعات الحالية</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">المبيعات السابقة</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">معدل النمو</th>
+                                </>
+                            ) : (
+                                <>
+                                    <th className="py-3 px-2 font-bold text-gray-700">الاسم</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">المبيعات</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">الطلبات</th>
+                                    <th className="py-3 px-2 font-bold text-gray-700">متوسط قيمة الطلب</th>
+                                </>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {dataToRender.map((item, index) => (
+                            <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                <td className="py-3 px-2 text-gray-800">{item.name}</td>
+                                <td className="py-3 px-2 text-gray-800">{item.sales}</td>
+                                {isGrowth ? (
+                                    <>
+                                        <td className="py-3 px-2 text-gray-800">{item.previousSales}</td>
+                                        <td className="py-3 px-2 text-gray-800">{item.growth}</td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td className="py-3 px-2 text-gray-800">{item.orders}</td>
+                                        <td className="py-3 px-2 text-gray-800">{item.avg}</td>
+                                    </>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                <button onClick={onClose} className="mt-6 bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">إغلاق</button>
+            </div>
         </div>
-        <table className="w-full text-center border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b-2 border-gray-200">
-              <th className="py-3 px-2 font-bold text-gray-700">التاجر</th>
-              <th className="py-3 px-2 font-bold text-gray-700">إجمالي المبيعات</th>
-              <th className="py-3 px-2 font-bold text-gray-700">الطلبات</th>
-              <th className="py-3 px-2 font-bold text-gray-700">صافي الأرباح</th>
-            </tr>
-          </thead>
-          <tbody>
-            {details.map((item, index) => (
-              <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                <td className="py-3 px-2 text-gray-800">{item.trader}</td>
-                <td className="py-3 px-2 text-gray-800">{item.totalSales}</td>
-                <td className="py-3 px-2 text-gray-800">{item.orders}</td>
-                <td className="py-3 px-2 text-gray-800">{item.netProfit}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <button onClick={onClose} className="mt-6 bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">إغلاق</button>
-      </div>
-    </div>
-  );
+    );
 };
 const StatCard = ({ title, value, percentage, icon, onClick }) => (
   <div onClick={onClick} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-start justify-between min-h-[140px] cursor-pointer">
@@ -123,14 +183,16 @@ const SalesDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modalData, setModalData] = useState(null);
+  const [selectedCardType, setSelectedCardType] = useState(null);
+  const [detailsData, setDetailsData] = useState(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [salesOverTimeStartDate, setSalesOverTimeStartDate] = useState('');
   const [salesOverTimeEndDate, setSalesOverTimeEndDate] = useState('');
   const [cityStartDate, setCityStartDate] = useState('');
   const [cityEndDate, setCityEndDate] = useState('');
   const [departmentStartDate, setDepartmentStartDate] = useState('');
   const [departmentEndDate, setDepartmentEndDate] = useState('');
-  // Fetching data from the API
+  
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       const token = localStorage.getItem('userToken');
@@ -165,6 +227,47 @@ const SalesDashboard = () => {
 
     fetchAnalyticsData();
   }, []);
+    const fetchCardDetails = async (cardType) => {
+        setIsDetailsLoading(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                throw new Error('Authentication token not found.');
+            }
+
+            let endpoint = '';
+            if (cardType === 'growth') {
+                endpoint = 'growth-rate/details';
+            } else if (cardType === 'yearly') {
+                endpoint = 'year-sales/details';
+            } else if (cardType === 'monthly') {
+                endpoint = 'month-sales/details';
+            } else if (cardType === 'daily') {
+                endpoint = 'daily-sales/details';
+            }
+            const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/analytics/${endpoint}?page=1&limit=20`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch card details.');
+            }
+
+            const data = await response.json();
+            setDetailsData(data);
+            setSelectedCardType(cardType);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsDetailsLoading(false);
+        }
+    };
+
 
   if (isLoading) {
     return (
@@ -187,7 +290,7 @@ const SalesDashboard = () => {
   const salesOverTimeData = salesByTime.map(item => ({
     name: item.month,
     value: item.sales,
-    prevValue: item.sales // Replace with actual prevValue from API if available
+    prevValue: item.sales
   }));
   const citySalesData = provincesSales.map(item => ({
     name: item.provinceName,
@@ -204,19 +307,19 @@ const SalesDashboard = () => {
   const statCards = [
     {
       title: 'معدل النمو', value: `${cards.growthRate}%`, percentage: `${cards.growthRate}%`, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8L13 15M3 21v-8a2 2 0 012-2h10a2 2 0 012 2v8"></path> </svg>,
-      details: [] // Data not provided in API response
+      cardType: 'growth'
     },
     {
       title: 'مبيعات السنة', value: `${cards.yearSales.toLocaleString()} د.ع`, percentage: `${cards.growthRate}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [] // Data not provided in API response
+      cardType: 'yearly'
     },
     {
       title: 'مبيعات الشهر', value: `${cards.monthSales.toLocaleString()} د.ع`, percentage: `${((cards.monthSales / cards.previousMonthSales - 1) * 100).toFixed(2)}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [] // Data not provided in API response
+      cardType: 'monthly'
     },
     {
       title: 'مبيعات اليوم', value: `${cards.dailySales.toLocaleString()} د.ع`, percentage: `${((cards.dailySales / cards.previousDaySales - 1) * 100).toFixed(2)}%`, icon: <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"></path> <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd"></path> </svg>,
-      details: [] // Data not provided in API response
+      cardType: 'daily'
     },
   ];
 
@@ -230,7 +333,7 @@ const SalesDashboard = () => {
           <StatCard
             key={index}
             {...card}
-            onClick={() => setModalData(card)}
+            onClick={() => fetchCardDetails(card.cardType)}
           />
         ))}
       </div>
@@ -318,11 +421,14 @@ const SalesDashboard = () => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      {modalData && (
+      {selectedCardType && detailsData && (
         <StatCardModal
-          title={modalData.title}
-          details={modalData.details}
-          onClose={() => setModalData(null)}
+          selectedCardType={selectedCardType}
+          detailsData={detailsData}
+          onClose={() => {
+            setSelectedCardType(null);
+            setDetailsData(null);
+          }}
         />
       )}
     </div>

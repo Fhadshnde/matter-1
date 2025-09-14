@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BsThreeDots, BsPerson } from 'react-icons/bs';
 import { BiBlock } from 'react-icons/bi';
 import { PiNotePencil } from 'react-icons/pi';
-import { FaMagnifyingGlass, FaRegClock, FaRegCalendarDays, FaRegNoteSticky } from 'react-icons/fa6';
+import { FaMagnifyingGlass, FaRegCalendarDays, FaRegNoteSticky } from 'react-icons/fa6';
 import { RiCloseFill } from 'react-icons/ri';
-import { FaChevronDown } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const StatusBadge = ({ status }) => {
@@ -20,15 +19,11 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const Card = ({ title, value, icon, percentage, change }) => (
+const Card = ({ title, value, icon }) => (
   <div className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
     <div className="flex flex-col">
       <span className="text-gray-400 text-xs mb-1">{title}</span>
       <p className="text-xl font-semibold mb-1">{value}</p>
-      <div className="text-xs text-green-500 flex items-center">
-        {percentage} <span className="mr-1">{change === 1 ? '▲' : '▼'}</span>
-        <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
-      </div>
     </div>
     <div className="bg-gray-100 p-2.5 rounded-full text-xl text-red-500">
       {icon}
@@ -44,7 +39,6 @@ const Td = ({ children }) => (
   <td className="p-3 text-xs text-gray-700">{children}</td>
 );
 
-// مكون الموديل الجديد
 const ActionModal = ({ customer, actionType, onClose, onConfirm }) => {
   const [note, setNote] = useState('');
   const [priority, setPriority] = useState('low');
@@ -65,12 +59,12 @@ const ActionModal = ({ customer, actionType, onClose, onConfirm }) => {
     title = 'تعديل الزبون';
     confirmButtonText = 'تعديل';
     confirmButtonColor = 'bg-blue-500 hover:bg-blue-600';
-    content = <p className="text-gray-700 mb-6">هل أنت متأكد من أنك تريد تعديل بيانات الزبون {customer.customerName}؟</p>;
+    content = <p className="text-gray-700 mb-6">هل أنت متأكد من تعديل بيانات {customer.customerName}؟</p>;
   } else if (actionType === 'ban') {
     title = 'حظر الزبون';
     confirmButtonText = 'حظر';
     confirmButtonColor = 'bg-red-500 hover:bg-red-600';
-    content = <p className="text-gray-700 mb-6">هل أنت متأكد من أنك تريد حظر الزبون {customer.customerName}؟ هذا الإجراء سيمنعه من إجراء أي طلبات جديدة.</p>;
+    content = <p className="text-gray-700 mb-6">هل أنت متأكد من حظر {customer.customerName}؟</p>;
   } else if (actionType === 'addNote') {
     title = 'إضافة ملاحظة';
     confirmButtonText = 'إضافة';
@@ -138,44 +132,43 @@ const Customers = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [modalState, setModalState] = useState({ isOpen: false, customer: null, actionType: null });
 
-  useEffect(() => {
-    const fetchCustomersData = async () => {
+  const baseUrl = 'https://products-api.cbc-apps.net';
+  const token = localStorage.getItem('userToken');
+
+  const fetchCustomersData = async () => {
+    try {
       setLoading(true);
-      const token = localStorage.getItem('userToken');
-      const baseUrl = 'https://products-api.cbc-apps.net';
-
-      try {
-        const response = await fetch(`${baseUrl}/admin/dashboard/customers?page=1&limit=20`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch customers data.');
+      const response = await fetch(`${baseUrl}/admin/dashboard/customers?page=1&limit=20`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
+      });
 
-        const apiData = await response.json();
-        
-        const cards = [
-          { title: 'إجمالي الزبائن', value: `${apiData.cards.totalCustomers} زبون`, icon: <BsPerson /> },
-          { title: 'زبائن عندهم طلبات', value: `${apiData.cards.customersWithOrders} زبون`, icon: <FaRegCalendarDays /> },
-          { title: 'زبائن محظورين', value: `${apiData.cards.bannedCustomers} زبون`, icon: <BiBlock /> },
-          { title: 'معدل فشل الشراء', value: `${apiData.cards.purchaseDeclineRate}%`, icon: <PiNotePencil /> },
-        ];
-
-        setCustomersData(apiData.customers);
-        setDashboardCards(cards);
-        setTotalCustomers(apiData.pagination.total);
-      } catch (error) {
-        console.error("Error fetching customers data:", error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch customers data.');
       }
-    };
 
+      const apiData = await response.json();
+      const cards = [
+        { title: 'إجمالي الزبائن', value: `${apiData.cards.totalCustomers} زبون`, icon: <BsPerson /> },
+        { title: 'زبائن عندهم طلبات', value: `${apiData.cards.customersWithOrders} زبون`, icon: <FaRegCalendarDays /> },
+        { title: 'زبائن محظورين', value: `${apiData.cards.bannedCustomers} زبون`, icon: <BiBlock /> },
+        { title: 'معدل فشل الشراء', value: `${apiData.cards.purchaseDeclineRate}%`, icon: <PiNotePencil /> },
+      ];
+
+      setCustomersData(apiData.customers);
+      setDashboardCards(cards);
+      setTotalCustomers(apiData.pagination.total);
+    } catch (error) {
+      console.error("Error fetching customers data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCustomersData();
   }, []);
 
@@ -193,16 +186,12 @@ const Customers = () => {
   };
   
   const handleConfirmAction = async (customerId, actionType, data = {}) => {
-    const baseUrl = 'https://products-api.cbc-apps.net';
-    const token = localStorage.getItem('userToken');
-
     if (actionType === 'edit') {
       console.log(`Action: Edit customer ID: ${customerId}`);
     } else if (actionType === 'ban') {
       console.log(`Action: Ban customer ID: ${customerId}`);
     } else if (actionType === 'addNote') {
       try {
-        console.log(`Action: Add note to customer ID: ${customerId}`);
         const response = await fetch(`${baseUrl}/admin/dashboard/customers/${customerId}/notes`, {
           method: 'POST',
           headers: {
@@ -216,6 +205,7 @@ const Customers = () => {
           throw new Error('Failed to add note.');
         }
         console.log('Note added successfully!');
+        await fetchCustomersData(); // ✅ هنا الحل
       } catch (error) {
         console.error("Error adding note:", error);
       }
@@ -300,7 +290,7 @@ const Customers = () => {
                               onClick={() => openModal(customer, 'edit')}
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-right"
                             >
-                              <PiNotePencil className="ml-2" /> طباعة الايصال
+                              <PiNotePencil className="ml-2" /> تعديل
                             </button>
                             <button
                               onClick={() => openModal(customer, 'addNote')}
@@ -321,12 +311,6 @@ const Customers = () => {
 
         <div className="mt-4 flex justify-between items-center">
           <span className="text-sm text-gray-700">إجمالي الزبائن {totalCustomers}</span>
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <span className="text-sm text-gray-500">اعرض في الصفحة 20</span>
-            <div className="flex space-x-1 rtl:space-x-reverse">
-              {/* Pagination logic can be implemented here */}
-            </div>
-          </div>
         </div>
       </div>
       
