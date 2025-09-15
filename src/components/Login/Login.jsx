@@ -77,10 +77,7 @@ const Login = ({ onLogin }) => {
           <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg w-full transition duration-200">تسجيل الدخول</button>
         </form>
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            ليس لديك حساب؟{' '}
-            <button onClick={() => navigate('/register')} className="text-blue-600 hover:text-blue-800 font-bold">إنشاء حساب</button>
-          </p>
+
         </div>
       </div>
     </div>
