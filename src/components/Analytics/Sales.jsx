@@ -44,7 +44,7 @@ const departmentData = [
   { name: 'ملابس', sales: 264000, percentage: 70 },
   { name: 'ملابس', sales: 264000, percentage: 50 },
   { name: 'ملابس', sales: 264000, percentage: 85 },
-  { name: 'ملابس', sales: 264000, percentage: 62 },
+  { name: 'ملابس', sales: 264000, percentage: 6 },
   { name: 'ملابس', sales: 264000, percentage: 40 },
   { name: 'ملابس', sales: 264000, percentage: 75 },
   { name: 'ملابس', sales: 264000, percentage: 55 },

@@ -125,16 +125,12 @@ const Navbar = ({ onLogout }) => {
     <div className="bg-white shadow-sm border-b border-gray-200" dir="rtl">
       <div className="flex items-center justify-between px-6 py-3">
         <div>
-          <div className="bg-blue-600 text-white px-4 py-2 rounded-md font-bold text-lg tracking-wider">
+          <div className="  px-4 py-2 rounded-md font-bold text-lg tracking-wider">
             CBC
           </div>
         </div>
 
         <div className="flex items-center gap-4 flex-1 max-w-2xl mx-8">
-          <button className="flex items-center gap-2 bg-red-500 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-colors whitespace-nowrap">
-            <Plus className="w-4 h-4" />
-            <span>إنشاء سريع</span>
-          </button>
 
           <div className="relative flex-1">
             <input
