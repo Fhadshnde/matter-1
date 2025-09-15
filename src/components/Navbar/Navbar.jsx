@@ -10,14 +10,8 @@ import {
   Store,
   Wallet,
   Tag,
-  Truck,
-  History,
-  ClipboardList,
-  Inbox,
   Plus,
   Globe,
-  X,
-  CheckCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -160,9 +154,8 @@ const Navbar = ({ onLogout }) => {
             >
               <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isProfileMenuOpen ? "rotate-180" : "rotate-0"}`} />
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-800">محمد صالح</p>
+                <p className="text-sm font-medium text-gray-800">محمد صلاح</p>
                 <div className="flex items-center gap-1">
-                  <span className="text-xs text-yellow-500">👋</span>
                   <span className="text-xs text-gray-500">أهلاً</span>
                 </div>
               </div>

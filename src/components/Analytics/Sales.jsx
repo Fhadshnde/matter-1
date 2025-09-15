@@ -44,9 +44,13 @@ const departmentData = [
   { name: 'ملابس', sales: 264000, percentage: 70 },
   { name: 'ملابس', sales: 264000, percentage: 50 },
   { name: 'ملابس', sales: 264000, percentage: 85 },
-  { name: 'ملابس', sales: 264000, percentage: 60 },
+  { name: 'ملابس', sales: 264000, percentage: 62 },
   { name: 'ملابس', sales: 264000, percentage: 40 },
-];
+  { name: 'ملابس', sales: 264000, percentage: 75 },
+  { name: 'ملابس', sales: 264000, percentage: 55 },
+  { name: 'ملابس', sales: 264000, percentage: 90 },
+
+];  
 
 const StatCard = ({ title, value, percentage, icon }) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-start justify-between min-h-[140px]">
