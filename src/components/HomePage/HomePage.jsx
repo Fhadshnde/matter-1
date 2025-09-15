@@ -113,6 +113,34 @@ const DetailsModal = ({ isOpen, onClose, title, data }) => {
   );
 };
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 text-right" dir="rtl">
+        <p className="text-sm font-bold text-gray-900">{`الأسبوع: ${data.weekLabel}`}</p>
+        <p className="text-sm text-gray-700 mt-2">
+          <span className="font-semibold text-green-600">تم التوصيل:</span> {data.delivered}
+        </p>
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-yellow-600">قيد المعالجة:</span> {data.processing}
+        </p>
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-blue-600">قيد التوصيل:</span> {data.delivering}
+        </p>
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-red-600">ملغي:</span> {data.cancelled}
+        </p>
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-gray-600">مرتجع:</span> {data.returned}
+        </p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const HomePage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [modalData, setModalData] = useState(null);
@@ -579,7 +607,7 @@ const HomePage = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
                 <Bar dataKey="delivered" name="تم التوصيل" radius={[4, 4, 0, 0]} barSize={40}>
                     {barChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill="#10b981" />
