@@ -18,26 +18,23 @@ const Categories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   
-  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
-  // Form data
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     image: ''
   });
 
-  // Image upload states
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     fetchCategoriesData();
-  }, [currentPage, searchTerm]);
+  }, [currentPage]);
 
   const fetchCategoriesData = async () => {
     try {
@@ -46,10 +43,6 @@ const Categories = () => {
         page: currentPage.toString(),
         limit: '20'
       });
-      
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
       
       const url = `${API_CONFIG.ADMIN.CATEGORIES}?${params.toString()}`;
       const data = await apiCall(url);
@@ -88,14 +81,16 @@ const Categories = () => {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Modal handlers
+  const filteredCategories = categoriesData.filter(category =>
+    category.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const openAddModal = () => {
     setFormData({ name: '', description: '', image: '' });
     setIsAddModalOpen(true);
@@ -142,7 +137,6 @@ const Categories = () => {
     setSelectedCategory(null);
   };
 
-  // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -168,7 +162,6 @@ const Categories = () => {
     try {
       let imageUrl = '';
       
-      // رفع الصورة إذا تم اختيارها
       if (selectedImage) {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
@@ -216,7 +209,6 @@ const Categories = () => {
     try {
       let imageUrl = formData.image;
       
-      // رفع الصورة الجديدة إذا تم اختيارها
       if (selectedImage) {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
@@ -308,7 +300,6 @@ const Categories = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statsCards.map((card, index) => (
           <div key={index} className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
@@ -323,7 +314,6 @@ const Categories = () => {
         ))}
       </div>
 
-      {/* Search and Filters */}
       <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -341,7 +331,6 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Categories Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -368,7 +357,7 @@ const Categories = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {categoriesData.map((category) => (
+              {filteredCategories.map((category) => (
                 <tr key={category.categoryId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -434,21 +423,19 @@ const Categories = () => {
           </table>
         </div>
 
-        {categoriesData.length === 0 && (
+        {filteredCategories.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             لا توجد فئات
           </div>
         )}
       </div>
 
-      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
       />
 
-      {/* Add Category Modal */}
       <Modal 
         isOpen={isAddModalOpen} 
         title="إضافة فئة جديدة" 
@@ -522,7 +509,6 @@ const Categories = () => {
         </form>
       </Modal>
 
-      {/* Edit Category Modal */}
       <Modal 
         isOpen={isEditModalOpen && selectedCategory} 
         title={selectedCategory ? `تعديل الفئة: ${selectedCategory.categoryName}` : ''} 
@@ -596,7 +582,6 @@ const Categories = () => {
         </form>
       </Modal>
 
-      {/* Category Details Modal */}
       <Modal 
         isOpen={isDetailsModalOpen && selectedCategory} 
         title={selectedCategory ? `تفاصيل الفئة: ${selectedCategory.categoryName}` : ''} 
@@ -639,7 +624,6 @@ const Categories = () => {
         </div>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal 
         isOpen={isDeleteModalOpen && selectedCategory} 
         title="تأكيد الحذف" 

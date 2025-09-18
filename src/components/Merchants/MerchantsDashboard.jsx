@@ -262,9 +262,16 @@ const AddSupplierModal = ({ onClose }) => {
   
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let newValue = value;
+
+    // تم تعديل هذا الجزء لتحويل النسبة المئوية
+    if (name === "platformPercentage" && type === "number") {
+      newValue = parseFloat(value) / 100;
+    }
+
     setSupplierData({
       ...supplierData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : newValue,
     });
   };
   
@@ -411,7 +418,7 @@ const AddSupplierModal = ({ onClose }) => {
     <input
       type="number"
       name="platformPercentage"
-      step="0.01"
+      
       value={supplierData.platformPercentage}
       onChange={handleInputChange}
       className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"

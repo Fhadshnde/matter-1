@@ -8,27 +8,27 @@ import axios from 'axios';
 import API_CONFIG, { apiCall } from '../../config/api';
 
 const StatCard = ({ title, value, icon, onClick }) => {
-  const icons = {
-    'totalProducts': <div className="bg-gray-100 p-3 rounded-xl"><FaBox className="text-red-500 text-2xl" /></div>,
-    'lowInventory': <div className="bg-gray-100 p-3 rounded-xl"><FaChartBar className="text-red-500 text-2xl" /></div>,
-    'outOfStock': <div className="bg-gray-100 p-3 rounded-xl"><RiCloseFill className="text-red-500 text-2xl" /></div>,
-    'abandoned': <div className="bg-gray-100 p-3 rounded-xl"><FaBox className="text-red-500 text-2xl" /></div>,
-  };
+    const icons = {
+        'totalProducts': <div className="bg-gray-100 p-3 rounded-xl"><FaBox className="text-red-500 text-2xl" /></div>,
+        'lowInventory': <div className="bg-gray-100 p-3 rounded-xl"><FaChartBar className="text-red-500 text-2xl" /></div>,
+        'outOfStock': <div className="bg-gray-100 p-3 rounded-xl"><RiCloseFill className="text-red-500 text-2xl" /></div>,
+        'abandoned': <div className="bg-gray-100 p-3 rounded-xl"><FaBox className="text-red-500 text-2xl" /></div>,
+    };
 
-  return (
-    <div onClick={onClick} className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right cursor-pointer hover:shadow-lg transition-shadow">
-      <div className="flex flex-col">
-        <span className="text-gray-400 text-xs mb-1">{title}</span>
-        <p className="text-xl font-bold mb-1 text-gray-800">{value}</p>
-        <span className="text-xs text-green-500 flex items-center">
-          <FaChevronDown className="transform rotate-180 text-green-500 ml-1" />
-          8%
-          <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
-        </span>
-      </div>
-      {icons[icon]}
-    </div>
-  );
+    return (
+        <div onClick={onClick} className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right cursor-pointer hover:shadow-lg transition-shadow">
+            <div className="flex flex-col">
+                <span className="text-gray-400 text-xs mb-1">{title}</span>
+                <p className="text-xl font-bold mb-1 text-gray-800">{value}</p>
+                <span className="text-xs text-green-500 flex items-center">
+                    <FaChevronDown className="transform rotate-180 text-green-500 ml-1" />
+                    8%
+                    <span className="text-gray-400 mr-1">عن الفترة السابقة</span>
+                </span>
+            </div>
+            {icons[icon]}
+        </div>
+    );
 };
 
 const Modal = ({ isOpen, onClose, children }) => {
@@ -45,122 +45,155 @@ const Modal = ({ isOpen, onClose, children }) => {
 
 const EditStockModal = ({ isOpen, onClose, product, fetchProducts }) => {
     const [stockToUpdate, setStockToUpdate] = useState('');
-  
+
     useEffect(() => {
-      if (product) {
-        setStockToUpdate(product.stock || '');
-      }
+        if (product) {
+            setStockToUpdate(product.stock || '');
+        }
     }, [product]);
-  
+
     const handleUpdateStock = async () => {
-      try {
-        await apiCall(API_CONFIG.ADMIN.PRODUCT_STOCK(product.id), {
-          method: 'PUT',
-          body: JSON.stringify({ stock: parseInt(stockToUpdate), reason: "تحديث المخزون" })
-        });
-        onClose();
-        fetchProducts();
-        alert('تم تحديث المخزون بنجاح');
-      } catch (error) {
-        console.error('Error updating stock:', error);
-        alert('حدث خطأ في تحديث المخزون: ' + (error.message || 'خطأ غير معروف'));
-      }
+        try {
+            await apiCall(API_CONFIG.ADMIN.PRODUCT_STOCK(product.id), {
+                method: 'PUT',
+                body: JSON.stringify({ stock: parseInt(stockToUpdate), reason: "تحديث المخزون" })
+            });
+            onClose();
+            fetchProducts();
+            alert('تم تحديث المخزون بنجاح');
+        } catch (error) {
+            console.error('Error updating stock:', error);
+            alert('حدث خطأ في تحديث المخزون: ' + (error.message || 'خطأ غير معروف'));
+        }
     };
-  
+
     return (
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل المخزون</h2>
-          <div className="mb-4">
-            <input
-              type="number"
-              placeholder="الكمية في المخزون"
-              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-              value={stockToUpdate}
-              onChange={(e) => setStockToUpdate(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-center space-x-4 rtl:space-x-reverse">
-            <button
-              onClick={onClose}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-            >
-              إلغاء
-            </button>
-            <button
-              onClick={handleUpdateStock}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-            >
-              تعديل
-            </button>
-          </div>
-        </div>
-      </Modal>
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <div className="text-center">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل المخزون</h2>
+                <div className="mb-4">
+                    <input
+                        type="number"
+                        placeholder="الكمية في المخزون"
+                        className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+                        value={stockToUpdate}
+                        onChange={(e) => setStockToUpdate(e.target.value)}
+                    />
+                </div>
+                <div className="flex justify-center space-x-4 rtl:space-x-reverse">
+                    <button
+                        onClick={onClose}
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                        إلغاء
+                    </button>
+                    <button
+                        onClick={handleUpdateStock}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+                    >
+                        تعديل
+                    </button>
+                </div>
+            </div>
+        </Modal>
     );
 };
 
 const EditPriceModal = ({ isOpen, onClose, product, fetchProducts }) => {
     const [priceToUpdate, setPriceToUpdate] = useState('');
     const [wholesalePriceToUpdate, setWholesalePriceToUpdate] = useState('');
-  
+
     useEffect(() => {
-      if (product) {
-        setPriceToUpdate(product.price || '');
-        setWholesalePriceToUpdate(product.wholesalePrice || '');
-      }
+        if (product) {
+            setPriceToUpdate(product.price || '');
+            setWholesalePriceToUpdate(product.wholesalePrice || '');
+        }
     }, [product]);
-  
+
     const handleUpdatePrice = async () => {
-      try {
-        await apiCall(API_CONFIG.ADMIN.PRODUCT_PRICE(product.id), {
-          method: 'PUT',
-          body: JSON.stringify({ price: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
-        });
-        onClose();
-        fetchProducts();
-        alert('تم تحديث السعر بنجاح');
-      } catch (error) {
-        console.error('Error updating price:', error);
-        alert('حدث خطأ في تحديث السعر: ' + (error.message || 'خطأ غير معروف'));
-      }
+        try {
+            await apiCall(API_CONFIG.ADMIN.PRODUCT_PRICE(product.id), {
+                method: 'PUT',
+                body: JSON.stringify({ price: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
+            });
+            onClose();
+            fetchProducts();
+            alert('تم تحديث السعر بنجاح');
+        } catch (error) {
+            console.error('Error updating price:', error);
+            alert('حدث خطأ في تحديث السعر: ' + (error.message || 'خطأ غير معروف'));
+        }
     };
-  
+
     return (
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل السعر</h2>
-          <div className="space-y-4">
-            <input
-              type="number"
-              placeholder="سعر البيع"
-              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-              value={priceToUpdate}
-              onChange={(e) => setPriceToUpdate(e.target.value)}
-            />
-            <input
-              type="number"
-              placeholder="سعر الجملة"
-              className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
-              value={wholesalePriceToUpdate}
-              onChange={(e) => setWholesalePriceToUpdate(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-center mt-6 space-x-4 rtl:space-x-reverse">
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <div className="text-center">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل السعر</h2>
+                <div className="space-y-4">
+                    <input
+                        type="number"
+                        placeholder="سعر البيع"
+                        className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+                        value={priceToUpdate}
+                        onChange={(e) => setPriceToUpdate(e.target.value)}
+                    />
+                    <input
+                        type="number"
+                        placeholder="سعر الجملة"
+                        className="bg-gray-100 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-800 text-right"
+                        value={wholesalePriceToUpdate}
+                        onChange={(e) => setWholesalePriceToUpdate(e.target.value)}
+                    />
+                </div>
+                <div className="flex justify-center mt-6 space-x-4 rtl:space-x-reverse">
+                    <button
+                        onClick={onClose}
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                        إلغاء
+                    </button>
+                    <button
+                        onClick={handleUpdatePrice}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+                    >
+                        تعديل
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+const Dropdown = ({ options, selected, onSelect, placeholder, className }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownOptions = options.includes('الكل') ? options : ['الكل', ...options];
+
+    return (
+        <div className={`relative ${className}`} dir="rtl">
             <button
-              onClick={onClose}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-white border rounded-lg flex items-center justify-between transition ${isOpen ? 'border-red-500' : 'border-gray-300'}`}
             >
-              إلغاء
+                <span>{selected || placeholder}</span>
+                <FaChevronDown className={`transform transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
             </button>
-            <button
-              onClick={handleUpdatePrice}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-            >
-              تعديل
-            </button>
-          </div>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10">
+                    {dropdownOptions.map((option) => (
+                        <button
+                            key={option}
+                            onClick={() => {
+                                onSelect(option);
+                                setIsOpen(false);
+                            }}
+                            className={`w-full text-right px-4 py-2 text-sm ${option === selected ? 'bg-red-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
-      </Modal>
     );
 };
 
@@ -179,33 +212,27 @@ const Dashboard = () => {
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState('20');
     const [categories, setCategories] = useState([]);
     const [sections, setSections] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const fetchProducts = async (page = 1, limit = 10, search = '', status = 'all') => {
+    const fetchProducts = async (page = 1, limit = 20, term = '', status = 'all') => {
         try {
             setIsLoading(true);
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: limit.toString(),
+                ...(term && { search: term }),
+                ...(status !== 'all' && { status: status })
             });
-            if (search) {
-                params.append('search', search);
-            }
-            if (status !== 'all') {
-                params.append('status', status);
-            }
             
             const data = await apiCall(API_CONFIG.ADMIN.PRODUCTS + `?${params.toString()}`);
-            console.log('Raw backend data:', data);
             
-            // Map backend data to frontend format
             const mappedProducts = (data.products || []).map(product => {
-                console.log('Individual product:', product);
+                const productStatus = product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'available';
                 return {
                     id: product.id,
                     name: product.name,
@@ -213,11 +240,11 @@ const Dashboard = () => {
                     stock: product.stock || 0,
                     mainImageUrl: product.mainImageUrl,
                     categoryName: product.category,
-                    status: product.stock === 0 ? 'غير متوفر' : product.stock < 10 ? 'مخزون منخفض' : 'متوفر',
+                    status: productStatus,
                     updatedAt: product.updatedAt
                 };
             });
-            
+
             setProducts(mappedProducts);
             setStats(data.cards || {});
             setPagination(data.pagination || {});
@@ -278,8 +305,6 @@ const Dashboard = () => {
 
     const fetchProductDetails = async (productId) => {
         try {
-            console.log('Fetching product details for ID:', productId);
-            console.log('API endpoint:', API_CONFIG.ADMIN.PRODUCT_DETAILS(productId));
             const data = await apiCall(API_CONFIG.ADMIN.PRODUCT_DETAILS(productId));
             setSelectedProduct(data);
             setIsProductDetailsModalOpen(true);
@@ -296,6 +321,7 @@ const Dashboard = () => {
             });
             if (result.success) {
                 alert('تم حذف المنتج بنجاح');
+                // إعادة جلب المنتجات بعد الحذف
                 fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
                 setIsDeleteModalOpen(false);
                 setSelectedProduct(null);
@@ -308,27 +334,9 @@ const Dashboard = () => {
         }
     };
 
-    const handleSearch = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-        fetchProducts(1, itemsPerPage, e.target.value, filterStatus);
-    };
-
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        fetchProducts(page, itemsPerPage, searchTerm, filterStatus);
-    };
-
-    const handleItemsPerPageChange = (itemsPerPage) => {
-        setItemsPerPage(itemsPerPage);
-        setCurrentPage(1);
-        fetchProducts(1, itemsPerPage, searchTerm, filterStatus);
-    };
-
-    const handleFilterChange = (status) => {
-        setFilterStatus(status);
-        fetchProducts(1, itemsPerPage, searchTerm, status);
-        setCurrentPage(1);
+    const handleItemsPerPageChange = (limit) => {
+        setItemsPerPage(limit);
+        setCurrentPage(1); // Reset to first page when limit changes
     };
 
     const handleAddProduct = () => {
@@ -343,7 +351,7 @@ const Dashboard = () => {
 
     const getStatusClass = (status) => {
         switch (status) {
-            case 'active':
+            case 'available':
                 return 'bg-green-100 text-green-800';
             case 'inactive':
                 return 'bg-red-100 text-red-800';
@@ -358,8 +366,8 @@ const Dashboard = () => {
 
     const getStatusText = (status) => {
         switch (status) {
-            case 'active':
-                return 'نشط';
+            case 'available':
+                return 'متوفر';
             case 'inactive':
                 return 'غير نشط';
             case 'low_stock':
@@ -370,17 +378,13 @@ const Dashboard = () => {
                 return status;
         }
     };
-
+    
+    // Combined useEffect for fetching data based on filters, search, and pagination
     useEffect(() => {
         fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
-        fetchCategories();
-        fetchSections();
-        fetchSuppliers();
-    }, [currentPage, itemsPerPage]);
+    }, [currentPage, itemsPerPage, searchTerm, filterStatus]);
 
-    // Initial load
     useEffect(() => {
-        fetchProducts(1, 10, '', 'all');
         fetchCategories();
         fetchSections();
         fetchSuppliers();
@@ -405,7 +409,7 @@ const Dashboard = () => {
 
     const productDetailsModal = () => {
         if (!selectedProduct) return null;
-        
+
         return (
             <Modal isOpen={isProductDetailsModalOpen} onClose={() => setIsProductDetailsModalOpen(false)}>
                 <div className="w-full max-w-2xl">
@@ -475,10 +479,6 @@ const Dashboard = () => {
         );
     };
 
-    if (isLoading) {
-        return <div className="text-center py-8">جاري تحميل المنتجات...</div>;
-    }
-
     return (
         <div className="container mx-auto p-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-6">إدارة المنتجات</h1>
@@ -516,14 +516,14 @@ const Dashboard = () => {
                             placeholder="البحث عن منتج..."
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
                             value={searchTerm}
-                            onChange={handleSearch}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <IoSearchOutline className="absolute right-3 text-gray-400" />
+                        <IoSearchOutline className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     </div>
                     <div className="relative">
                         <select
                             value={filterStatus}
-                            onChange={(e) => handleFilterChange(e.target.value)}
+                            onChange={(e) => setFilterStatus(e.target.value)}
                             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500"
                         >
                             <option value="all">جميع المنتجات</option>
@@ -546,35 +546,39 @@ const Dashboard = () => {
 
             {/* Products Table */}
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                المنتج
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                السعر
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                المخزون
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الحالة
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الإجراءات
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {products.length === 0 ? (
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+                        <span className="mr-4 text-gray-600">جاري التحميل...</span>
+                    </div>
+                ) : products.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                        <p>لا توجد منتجات لعرضها.</p>
+                        <p className="text-sm mt-2">تحقق من الفلاتر أو جرب البحث</p>
+                    </div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
                             <tr>
-                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                                    لا توجد منتجات لعرضها.
-                                </td>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    المنتج
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    السعر
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    المخزون
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    الحالة
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    الإجراءات
+                                </th>
                             </tr>
-                        ) : (
-                            products.map((product) => (
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {products.map((product) => (
                                 <tr key={product.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -611,8 +615,6 @@ const Dashboard = () => {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    console.log('Edit product ID:', product.id);
-                                                    console.log('Product object:', product);
                                                     navigate(`/edit-product/${product.id}`);
                                                 }}
                                                 className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
@@ -633,43 +635,31 @@ const Dashboard = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-                <div className="flex justify-between items-center mt-6">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <span className="text-sm text-gray-700">عدد العناصر في الصفحة:</span>
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
-                            className="px-3 py-1 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
-                        >
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                        </select>
-                    </div>
+                <div className="mt-4 flex justify-between items-center text-sm">
+                    <span className="text-gray-700">إجمالي المنتجات: {pagination.total}</span>
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                         <button
-                            onClick={() => handlePageChange(currentPage - 1)}
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
-                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className={`px-4 py-2 rounded-md transition-colors ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
                         >
                             السابق
                         </button>
-                        <span className="px-3 py-1 text-sm text-gray-700">
-                            صفحة {currentPage} من {pagination.totalPages}
+                        <span className="px-3 py-1 text-sm bg-gray-200 rounded-md">
+                            الصفحة {currentPage} من {pagination.totalPages}
                         </span>
                         <button
-                            onClick={() => handlePageChange(currentPage + 1)}
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
                             disabled={currentPage === pagination.totalPages}
-                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className={`px-4 py-2 rounded-md transition-colors ${currentPage === pagination.totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
                         >
                             التالي
                         </button>

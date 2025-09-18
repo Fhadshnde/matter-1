@@ -40,7 +40,7 @@ const Sections = () => {
   useEffect(() => {
     fetchSectionsData();
     fetchCategories();
-  }, [currentPage, searchTerm]);
+  }, [currentPage]); // تم إزالة searchTerm من dependencies
 
   const fetchSectionsData = async () => {
     try {
@@ -50,10 +50,7 @@ const Sections = () => {
         limit: '20'
       });
       
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-      
+      // تم إزالة searchTerm من طلب الـ API
       const url = `${API_CONFIG.ADMIN.SECTIONS}?${params.toString()}`;
       const data = await apiCall(url);
       
@@ -99,12 +96,17 @@ const Sections = () => {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    // لا حاجة لتغيير الصفحة هنا، التصفية ستتم تلقائيًا
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
+
+  // دالة تصفية البيانات في الواجهة الأمامية
+  const filteredSections = sectionsData.filter(section =>
+    section.sectionName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Modal handlers
   const openAddModal = () => {
@@ -382,7 +384,7 @@ const Sections = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sectionsData.map((section) => (
+              {filteredSections.map((section) => (
                 <tr key={section.sectionId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -448,7 +450,7 @@ const Sections = () => {
           </table>
         </div>
 
-        {sectionsData.length === 0 && (
+        {filteredSections.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             لا توجد أقسام
           </div>
