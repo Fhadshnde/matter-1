@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Keep original port settings
+    // matter-1 uses port 5173
     port: 5173,
     host: true,
     hmr: {
