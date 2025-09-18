@@ -50,6 +50,7 @@ export const API_CONFIG = {
     STAFF: {
       LIST: '/admin/dashboard/staff',
       CREATE: '/admin/dashboard/settings/staff',
+      UPDATE: (id) => `/admin/dashboard/settings/staff/${id}`,
       UPDATE_ROLE: (id) => `/admin/dashboard/settings/staff/${id}/role`,
       UPDATE_STATUS: (id) => `/admin/dashboard/settings/staff/${id}/status`,
       DELETE: (id) => `/admin/dashboard/settings/staff/${id}`,
