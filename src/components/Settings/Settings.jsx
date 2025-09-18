@@ -161,7 +161,7 @@ const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiCall(API_CONFIG.ADMIN.UPDATE_STAFF_ROLE(employee.staffId), {
+      await apiCall(API_CONFIG.ADMIN.STAFF.UPDATE_ROLE(employee.staffId), {
         method: 'PUT',
         body: JSON.stringify({ role: selectedRole })
       });
@@ -242,7 +242,7 @@ const ToggleStatusModal = ({ onClose, employee, onUpdate }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiCall(API_CONFIG.ADMIN.UPDATE_STAFF_STATUS(employee.staffId), {
+      await apiCall(API_CONFIG.ADMIN.STAFF.UPDATE_STATUS(employee.staffId), {
         method: 'PUT',
         body: JSON.stringify({ status: selectedStatus })
       });
@@ -626,7 +626,7 @@ const EmployeeManagement = () => {
     if (!selectedEmployee) return;
 
     try {
-      await apiCall(API_CONFIG.ADMIN.DELETE_STAFF(selectedEmployee.staffId), {
+      await apiCall(API_CONFIG.ADMIN.STAFF.DELETE(selectedEmployee.staffId), {
         method: 'DELETE'
       });
       fetchEmployees();

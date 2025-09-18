@@ -49,16 +49,18 @@ export const API_CONFIG = {
     
     STAFF: {
       LIST: '/admin/dashboard/staff',
-      CREATE: '/admin/dashboard/staff',
-      UPDATE_ROLE: (id) => `/admin/dashboard/staff/${id}/role`,
-      UPDATE_STATUS: (id) => `/admin/dashboard/staff/${id}/status`,
+      CREATE: '/admin/dashboard/settings/staff',
+      UPDATE_ROLE: (id) => `/admin/dashboard/settings/staff/${id}/role`,
+      UPDATE_STATUS: (id) => `/admin/dashboard/settings/staff/${id}/status`,
+      DELETE: (id) => `/admin/dashboard/settings/staff/${id}`,
       AVAILABLE_ROLES: '/admin/dashboard/staff/available-roles'
     },
     
     // Staff Management
     AVAILABLE_ROLES: '/admin/dashboard/staff/available-roles',
-    UPDATE_STAFF_ROLE: (id) => `/admin/dashboard/staff/${id}/role`,
-    UPDATE_STAFF_STATUS: (id) => `/admin/dashboard/staff/${id}/status`,
+    UPDATE_STAFF_ROLE: (id) => `/admin/dashboard/settings/staff/${id}/role`,
+    UPDATE_STAFF_STATUS: (id) => `/admin/dashboard/settings/staff/${id}/status`,
+    DELETE_STAFF: (id) => `/admin/dashboard/settings/staff/${id}`,
     
     SYSTEM_LOGS: '/admin/dashboard/settings/logs',
     
