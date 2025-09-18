@@ -551,7 +551,7 @@ const EmployeeManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      const data = await apiCall(API_CONFIG.ADMIN.STAFF);
+      const data = await apiCall(API_CONFIG.ADMIN.STAFF.LIST);
       setEmployeesData(data.staff || []);
       setCardsData(data.cards || {});
       setLoading(false);
@@ -587,7 +587,7 @@ const EmployeeManagement = () => {
 
   const handleAddEmployee = async (newEmployeeData) => {
     try {
-      await apiCall(API_CONFIG.ADMIN.STAFF, {
+      await apiCall(API_CONFIG.ADMIN.STAFF.CREATE, {
         method: 'POST',
         body: JSON.stringify({
           name: newEmployeeData.name,
@@ -607,7 +607,7 @@ const EmployeeManagement = () => {
 
   const handleChangePassword = async (staffId, newPassword, confirmPassword) => {
     try {
-      await apiCall(API_CONFIG.ADMIN.STAFF_PASSWORD(staffId), {
+      await apiCall(`/admin/dashboard/settings/staff/${staffId}/password`, {
         method: 'PUT',
         body: JSON.stringify({
           newPassword,
