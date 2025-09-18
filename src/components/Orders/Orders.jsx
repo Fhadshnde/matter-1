@@ -408,17 +408,25 @@ const OrdersPage = () => {
     if (!orderToUpdate || !newStatus) return;
     
     try {
-      // ملاحظة: لا يوجد endpoint محدد لتحديث حالة الطلب في الباك-إند الحالي
-      // يمكن إضافة هذا لاحقاً
       console.log('Updating order status:', orderToUpdate.orderId, 'to', newStatus);
-      alert('تم تحديث حالة الطلب بنجاح');
-      setIsStatusUpdateModalOpen(false);
-      setOrderToUpdate(null);
-      setNewStatus('');
-      fetchDashboardData();
+      
+      const response = await apiCall(API_CONFIG.ADMIN.ORDER_STATUS_UPDATE(orderToUpdate.orderId), {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (response.success || response.message) {
+        alert('تم تحديث حالة الطلب بنجاح');
+        setIsStatusUpdateModalOpen(false);
+        setOrderToUpdate(null);
+        setNewStatus('');
+        fetchDashboardData();
+      } else {
+        throw new Error('فشل في تحديث حالة الطلب');
+      }
     } catch (error) {
       console.error('Error updating order status:', error);
-      alert('حدث خطأ في تحديث حالة الطلب');
+      alert('حدث خطأ في تحديث حالة الطلب: ' + error.message);
     }
   };
 

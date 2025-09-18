@@ -144,10 +144,16 @@ const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
   const fetchRoles = async () => {
     try {
       const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
-      setAvailableRoles(data.roles);
+      setAvailableRoles(data.roles || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching roles:', error);
+      // Fallback to default roles if API fails
+      setAvailableRoles([
+        { value: 'admin', label: 'مدير' },
+        { value: 'moderator', label: 'مشرف' },
+        { value: 'staff', label: 'موظف' }
+      ]);
       setLoading(false);
     }
   };
@@ -377,10 +383,16 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
   const fetchRoles = async () => {
     try {
       const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
-      setAvailableRoles(data.roles);
+      setAvailableRoles(data.roles || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching roles:', error);
+      // Fallback to default roles if API fails
+      setAvailableRoles([
+        { value: 'admin', label: 'مدير' },
+        { value: 'moderator', label: 'مشرف' },
+        { value: 'staff', label: 'موظف' }
+      ]);
       setLoading(false);
     }
   };

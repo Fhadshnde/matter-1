@@ -130,7 +130,7 @@ const SuppliersPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const url = API_CONFIG.ADMIN.SUPPLIER_DETAILS(selectedSupplier.id);
+      const url = API_CONFIG.ADMIN.SUPPLIER_UPDATE(selectedSupplier.id);
       await apiCall(url, {
         method: 'PUT',
         body: JSON.stringify(formData)
@@ -150,7 +150,7 @@ const SuppliersPage = () => {
   const handleDeleteSupplier = async () => {
     setIsLoading(true);
     try {
-      const url = API_CONFIG.ADMIN.SUPPLIER_DETAILS(selectedSupplier.id);
+      const url = API_CONFIG.ADMIN.SUPPLIER_DELETE(selectedSupplier.id);
       await apiCall(url, {
         method: 'DELETE'
       });

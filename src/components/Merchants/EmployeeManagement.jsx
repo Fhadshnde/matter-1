@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUser, FaUserTimes, FaUsers, FaSearch, FaEllipsisH, FaAngleUp, FaEye, FaEdit, FaStore, FaRegComment, FaTrashAlt, FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
@@ -408,19 +409,11 @@ const EmployeeManagement = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const baseUrl = 'https://products-api.cbc-apps.net';
-  const token = localStorage.getItem('userToken');
-
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff?page=1&limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      setEmployeesData(data.staff);
-      setCardsData(data.cards);
+      const data = await apiCall(`${API_CONFIG.ADMIN.STAFF.LIST}?page=1&limit=20`);
+      setEmployeesData(data.staff || []);
+      setCardsData(data.cards || {});
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
