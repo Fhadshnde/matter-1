@@ -6,6 +6,7 @@ import { FaRegUser, FaStore, FaChartBar, FaUserLock, FaRegComment, FaCalendarAlt
 import { FaMagnifyingGlass } from 'react-icons/fa6';
 import { MdInfoOutline } from 'react-icons/md';
 import axios from 'axios';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const StatusBadge = ({ status }) => {
   const colorMap = {
@@ -508,23 +509,13 @@ const MerchantsDashboard = ({ onSelectMerchant }) => {
   // Function to fetch data from the merchants dashboard API
   const fetchMerchantsData = async () => {
     setLoading(true);
-    const token = localStorage.getItem('userToken');
-    const baseUrl = 'https://products-api.cbc-apps.net';
 
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/merchants?page=1&limit=20`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '20'
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data.');
-      }
-
-      const apiData = await response.json();
+      const apiData = await apiCall(`${API_CONFIG.ADMIN.MERCHANTS}?${params.toString()}`);
 
       // Map API card data to the component's card format
       const cards = [

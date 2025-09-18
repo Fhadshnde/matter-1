@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaUser, FaUserTimes, FaUsers, FaSearch, FaEllipsisH, FaAngleUp, FaEye, FaEdit, FaStore, FaRegComment, FaTrashAlt, FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const Th = ({ children, className = '' }) => (
   <th className={`p-3 font-semibold text-gray-500 ${className}`}>{children}</th>
@@ -134,73 +135,163 @@ const EditEmployeeModal = ({ employee, onClose }) => {
   );
 };
 
-const EditPermissionsModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">تعديل الصلاحيات</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-5 space-y-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">الدور الاداري للموظف</label>
-        <div className="relative">
-          <select className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10">
-            <option>مدير متجر</option>
-            <option>مسؤول مخزون</option>
-            <option>مسؤول مبيعات</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
-            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-          </div>
-        </div>
-      </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-            الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-            حفظ
-        </button>
-      </div>
-    </div>
-  </div>
-);
+const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
+  const [selectedRole, setSelectedRole] = useState(employee?.role || 'moderator');
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-const ToggleStatusModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-    <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-bold">تعليق أو تفعيل</h2>
-        <button onClick={onClose}>
-          <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
-        </button>
-      </div>
-      <div className="p-5 space-y-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">برجاء إختيار حالة الموظف</label>
-        <div className="relative">
-          <select className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10">
-            <option>نشط</option>
-            <option>موقوف</option>
-            <option>معلق</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
-            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-          </div>
+  const fetchRoles = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
+      setAvailableRoles(data.roles);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.UPDATE_STAFF_ROLE(employee.staffId), {
+        method: 'PUT',
+        body: JSON.stringify({ role: selectedRole })
+      });
+      alert('تم تحديث صلاحية الموظف بنجاح');
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error updating role:', error);
+      alert('حدث خطأ أثناء تحديث الصلاحية');
+    }
+    setSaving(false);
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">تعديل الصلاحيات - {employee?.fullName}</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">الدور الاداري للموظف</label>
+          {loading ? (
+            <div className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-500">
+              جاري تحميل الصلاحيات...
+            </div>
+          ) : (
+            <div className="relative">
+              <select 
+                value={selectedRole} 
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10"
+              >
+                {availableRoles.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+          )}
+          {selectedRole && availableRoles.find(r => r.value === selectedRole) && (
+            <p className="text-xs text-gray-500">
+              {availableRoles.find(r => r.value === selectedRole).description}
+            </p>
+          )}
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+              الغاء
+          </button>
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+              {saving ? 'جاري الحفظ...' : 'حفظ'}
+          </button>
         </div>
       </div>
-      <div className="p-4 border-t flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
-          الغاء
-        </button>
-        <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-          تعديل
-        </button>
+    </div>
+  );
+};
+
+const ToggleStatusModal = ({ onClose, employee, onUpdate }) => {
+  const [selectedStatus, setSelectedStatus] = useState(employee?.status || 'نشط');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.UPDATE_STAFF_STATUS(employee.staffId), {
+        method: 'PUT',
+        body: JSON.stringify({ status: selectedStatus })
+      });
+      alert('تم تحديث حالة الموظف بنجاح');
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('حدث خطأ أثناء تحديث الحالة');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-bold">تعليق أو تفعيل - {employee?.fullName}</h2>
+          <button onClick={onClose}>
+            <RiCloseFill className="text-gray-500 hover:text-gray-800 text-xl" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">برجاء إختيار حالة الموظف</label>
+          <div className="relative">
+            <select 
+              value={selectedStatus} 
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="block w-full px-4 py-2 border border-gray-300 rounded-lg text-sm appearance-none pr-10"
+            >
+              <option value="نشط">نشط</option>
+              <option value="موقوف">موقوف</option>
+              <option value="معلق">معلق</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+            الغاء
+          </button>
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+            {saving ? 'جاري الحفظ...' : 'تعديل'}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AddNoteModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
@@ -280,6 +371,23 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
     confirmPassword: '',
     role: 'moderator'
   });
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRoles = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
+      setAvailableRoles(data.roles);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -327,9 +435,19 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">الصلاحية</label>
-            <select name="role" value={formData.role} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
-              <option value="moderator">محرر</option>
-            </select>
+            {loading ? (
+              <div className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-500">
+                جاري تحميل الصلاحيات...
+              </div>
+            ) : (
+              <select name="role" value={formData.role} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                {availableRoles.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
         <div className="p-4 border-t flex justify-end gap-3">
@@ -419,19 +537,11 @@ const EmployeeManagement = () => {
   // Determine the active page based on the current pathname
   const activePage = location.pathname.includes('/powers') ? 'general' : 'employees';
 
-  const baseUrl = 'https://products-api.cbc-apps.net';
-  const token = localStorage.getItem('userToken');
-
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff?page=1&limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      setEmployeesData(data.staff);
-      setCardsData(data.cards);
+      const data = await apiCall(API_CONFIG.ADMIN.STAFF);
+      setEmployeesData(data.staff || []);
+      setCardsData(data.cards || {});
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
@@ -465,12 +575,8 @@ const EmployeeManagement = () => {
 
   const handleAddEmployee = async (newEmployeeData) => {
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff`, {
+      await apiCall(API_CONFIG.ADMIN.STAFF, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
           name: newEmployeeData.name,
           phone: newEmployeeData.phone,
@@ -479,33 +585,28 @@ const EmployeeManagement = () => {
           role: newEmployeeData.role
         })
       });
-      if (response.ok) {
-        fetchEmployees();
-      } else {
-        console.error("Failed to add employee");
-      }
+      fetchEmployees();
+      alert('تم إضافة الموظف بنجاح');
     } catch (error) {
       console.error("Failed to add employee:", error);
+      alert('حدث خطأ أثناء إضافة الموظف');
     }
   };
 
   const handleChangePassword = async (staffId, newPassword, confirmPassword) => {
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${staffId}/password`, {
+      await apiCall(API_CONFIG.ADMIN.STAFF_PASSWORD(staffId), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        body: JSON.stringify({
+          newPassword,
+          confirmPassword
+        })
       });
-      if (response.ok) {
-        alert("تم تغيير كلمة المرور بنجاح");
-        handleCloseModal();
-      } else {
-        console.error("Failed to change password");
-      }
+      alert("تم تغيير كلمة المرور بنجاح");
+      handleCloseModal();
     } catch (error) {
       console.error("Failed to change password:", error);
+      alert("حدث خطأ أثناء تغيير كلمة المرور");
     }
   };
 
@@ -513,20 +614,15 @@ const EmployeeManagement = () => {
     if (!selectedEmployee) return;
 
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/settings/staff/${selectedEmployee.staffId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      await apiCall(API_CONFIG.ADMIN.DELETE_STAFF(selectedEmployee.staffId), {
+        method: 'DELETE'
       });
-      if (response.ok) {
-        fetchEmployees();
-        handleCloseModal();
-      } else {
-        console.error("Failed to delete employee");
-      }
+      fetchEmployees();
+      handleCloseModal();
+      alert('تم حذف الموظف بنجاح');
     } catch (error) {
       console.error("Failed to delete employee:", error);
+      alert('حدث خطأ أثناء حذف الموظف');
     }
   };
 
@@ -670,10 +766,10 @@ const EmployeeManagement = () => {
                         <button onClick={() => handleOpenModal('edit', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEdit className="ml-2" /> تعديل البيانات
                         </button>
-                        <button onClick={() => handleOpenModal('permissions')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <button onClick={() => handleOpenModal('permissions', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEdit className="ml-2" /> تعديل الصلاحيات
                         </button>
-                        <button onClick={() => handleOpenModal('toggleStatus')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <button onClick={() => handleOpenModal('toggleStatus', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaStore className="ml-2" /> تعليق أو تفعيل
                         </button>
                         <button onClick={() => handleOpenModal('changePassword', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -716,8 +812,8 @@ const EmployeeManagement = () => {
       
       {activeModal === 'details' && selectedEmployee && <EmployeeDetailsModal employee={selectedEmployee} onClose={handleCloseModal} />}
       {activeModal === 'edit' && selectedEmployee && <EditEmployeeModal employee={selectedEmployee} onClose={handleCloseModal} />}
-      {activeModal === 'permissions' && <EditPermissionsModal onClose={handleCloseModal} />}
-      {activeModal === 'toggleStatus' && <ToggleStatusModal onClose={handleCloseModal} />}
+      {activeModal === 'permissions' && selectedEmployee && <EditPermissionsModal onClose={handleCloseModal} employee={selectedEmployee} onUpdate={fetchEmployees} />}
+      {activeModal === 'toggleStatus' && selectedEmployee && <ToggleStatusModal onClose={handleCloseModal} employee={selectedEmployee} onUpdate={fetchEmployees} />}
       {activeModal === 'addNote' && <AddNoteModal onClose={handleCloseModal} />}
       {activeModal === 'closeAccount' && selectedEmployee && <CloseAccountModal onClose={handleCloseModal} onConfirm={handleDeleteEmployee} />}
       {activeModal === 'addEmployee' && <AddEmployeeModal onClose={handleCloseModal} onAdd={handleAddEmployee} />}

@@ -10,15 +10,15 @@ import Products from './pages/Products';
 import AddProduct from './components/Products/AddProduct';
 import EditProduct from './components/Products/EditProduct';
 import Customers from './components/Customers/Customers';
-import OffersDashboard from './components/OffersDashboard/OffersDashboard';
 import NotificationsDashboard from './components/NotificationsDashboard/NotificationsDashboard';
-import MerchantDetails from './components/Merchants/MerchantDetails';
-import MerchantsDashboard from './components/Merchants/MerchantsDashboard';
 import EmployeeManagement from './components/Merchants/EmployeeManagement';
 import Profits from './components/Profits/Profits';
 import Settings from './components/Settings/Settings';
 import Powers from './components/Settings/Powers';
 import Orders from './components/Orders/Orders';
+import Suppliers from './components/Suppliers/Suppliers';
+import Sections from './components/Sections/Sections';
+import Categories from './components/Categories/Categories';
 import NotificationsPage from './components/NotificationsDashboard/NotificationsPage';
 import ProfileSettingsPage from './components/Settings/ProfileSettingsPage';
 import Login from './components/Login/Login';
@@ -27,7 +27,6 @@ import Register from './components/Login/Register';
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true); // ✅ إضافة حالة انتظار
-  const [selectedMerchant, setSelectedMerchant] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,9 +48,6 @@ const App = () => {
     navigate('/login');
   };
 
-  const handleSelectMerchant = (merchant) => {
-    setSelectedMerchant(merchant);
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">جاري التحميل...</div>; 
@@ -77,15 +73,15 @@ const App = () => {
             <Route path="/customers" element={<Customers />} />
             <Route path="/notifications" element={<NotificationsDashboard />} />
             <Route path="/notifications-page" element={<NotificationsPage />} />
-            <Route path="/offers-dashboard" element={<OffersDashboard />} />
-            <Route path="/merchants" element={<MerchantsDashboard onSelectMerchant={handleSelectMerchant} />} />
-            <Route path="/merchants/:id" element={<MerchantDetails />} />
             <Route path="/employees" element={<EmployeeManagement />} />
             <Route path="/profits" element={<Profits />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile-settings" element={<ProfileSettingsPage />} />
             <Route path="/powers" element={<Powers />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/sections" element={<Sections />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}

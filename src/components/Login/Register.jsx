@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_CONFIG from '../../config/api';
 
 const Register = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
@@ -20,7 +21,7 @@ const Register = ({ onSwitchToLogin }) => {
     setMessage('');
     setIsError(false);
     try {
-      const response = await axios.post('https://products-api.cbc-apps.net/auth/register', formData);
+      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.REGISTER}`, formData);
       console.log('Registration successful:', response.data);
       setMessage('تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول.');
       setIsError(false);

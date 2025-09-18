@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { BsThreeDots, BsPerson } from 'react-icons/bs';
 import { BiBlock } from 'react-icons/bi';
 import { PiNotePencil } from 'react-icons/pi';
-import { FaMagnifyingGlass, FaRegCalendarDays, FaRegNoteSticky } from 'react-icons/fa6';
+import { FaMagnifyingGlass, FaRegCalendarDays, FaRegNoteSticky, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa6';
+import { FaEdit } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import API_CONFIG, { apiCall } from '../../config/api';
+import StatCard from '../Shared/StatCard';
+import Dropdown from '../Shared/Dropdown';
+import Pagination from '../Shared/Pagination';
+import Modal from '../Shared/Modal';
 
 const StatusBadge = ({ status }) => {
   const colorMap = {
@@ -126,200 +132,464 @@ const ActionModal = ({ customer, actionType, onClose, onConfirm }) => {
 
 const Customers = () => {
   const [customersData, setCustomersData] = useState([]);
-  const [dashboardCards, setDashboardCards] = useState([]);
-  const [totalCustomers, setTotalCustomers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [modalState, setModalState] = useState({ isOpen: false, customer: null, actionType: null });
-
-  const baseUrl = 'https://products-api.cbc-apps.net';
-  const token = localStorage.getItem('userToken');
+  const [statsCards, setStatsCards] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    password: ''
+  });
 
   const fetchCustomersData = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(`${baseUrl}/admin/dashboard/customers?page=1&limit=20`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', '20');
+      if (searchText) params.append('search', searchText);
+      if (selectedStatus !== 'all') params.append('status', selectedStatus);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch customers data.');
-      }
-
-      const apiData = await response.json();
-      const cards = [
-        { title: 'إجمالي الزبائن', value: `${apiData.cards.totalCustomers} زبون`, icon: <BsPerson /> },
-        { title: 'زبائن عندهم طلبات', value: `${apiData.cards.customersWithOrders} زبون`, icon: <FaRegCalendarDays /> },
-        { title: 'زبائن محظورين', value: `${apiData.cards.bannedCustomers} زبون`, icon: <BiBlock /> },
-        { title: 'معدل فشل الشراء', value: `${apiData.cards.purchaseDeclineRate}%`, icon: <PiNotePencil /> },
+      const url = `${API_CONFIG.ADMIN.CUSTOMERS}?${params.toString()}`;
+      const data = await apiCall(url);
+      
+      const formattedCards = [
+        { title: 'إجمالي الزبائن', value: data.cards?.totalCustomers?.toLocaleString() || '0', icon: 'user' },
+        { title: 'زبائن نشطين', value: data.cards?.activeCustomers?.toLocaleString() || '0', icon: 'user' },
+        { title: 'زبائن محظورين', value: data.cards?.bannedCustomers?.toLocaleString() || '0', icon: 'block' },
+        { title: 'زبائن مع طلبات', value: data.cards?.customersWithOrders?.toLocaleString() || '0', icon: 'orders' },
       ];
 
-      setCustomersData(apiData.customers);
-      setDashboardCards(cards);
-      setTotalCustomers(apiData.pagination.total);
+      setStatsCards(formattedCards);
+      setCustomersData(data.customers || []);
+      setPagination(data.pagination || {});
+
     } catch (error) {
-      console.error("Error fetching customers data:", error);
+      console.error('Error fetching customers data:', error);
+      setStatsCards([]);
+      setCustomersData([]);
+      setPagination({});
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchCustomersData();
-  }, []);
+  }, [currentPage, searchText, selectedStatus]);
 
-  const handleDropdownToggle = (customerId) => {
-    setOpenDropdownId(openDropdownId === customerId ? null : customerId);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-  const openModal = (customer, actionType) => {
-    setModalState({ isOpen: true, customer, actionType });
-    setOpenDropdownId(null);
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+    setCurrentPage(1);
   };
 
-  const closeModal = () => {
-    setModalState({ isOpen: false, customer: null, actionType: null });
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
+    setCurrentPage(1);
   };
-  
-  const handleConfirmAction = async (customerId, actionType, data = {}) => {
-    if (actionType === 'edit') {
-      console.log(`Action: Edit customer ID: ${customerId}`);
-    } else if (actionType === 'ban') {
-      console.log(`Action: Ban customer ID: ${customerId}`);
-    } else if (actionType === 'addNote') {
-      try {
-        const response = await fetch(`${baseUrl}/admin/dashboard/customers/${customerId}/notes`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(data)
-        });
 
-        if (!response.ok) {
-          throw new Error('Failed to add note.');
-        }
-        console.log('Note added successfully!');
-        await fetchCustomersData(); // ✅ هنا الحل
-      } catch (error) {
-        console.error("Error adding note:", error);
+
+  const openEditModal = (customer) => {
+    setSelectedCustomer(customer);
+    setFormData({
+      name: customer.customerName || '',
+      phone: customer.phone || '',
+      email: '',
+      password: ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setSelectedCustomer(null);
+    setIsEditModalOpen(false);
+  };
+
+  const openDeleteModal = (customer) => {
+    setSelectedCustomer(customer);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setSelectedCustomer(null);
+    setIsDeleteModalOpen(false);
+  };
+
+
+  const openDetailsModal = (customer) => {
+    setSelectedCustomer(customer);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedCustomer(null);
+    setIsDetailsModalOpen(false);
+  };
+
+
+  const handleUpdateCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      const updateData = {
+        name: formData.name,
+        phone: formData.phone
+      };
+      
+      const result = await apiCall(API_CONFIG.ADMIN.CUSTOMER_UPDATE(selectedCustomer?.customerId), {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
+      
+      if (result.success) {
+        alert(result.message || 'تم تحديث بيانات العميل بنجاح');
+        fetchCustomersData();
+        closeEditModal();
+      } else {
+        alert(result.message || 'حدث خطأ أثناء تحديث العميل');
       }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('حدث خطأ أثناء تحديث العميل');
     }
-    closeModal();
   };
 
-  if (loading) {
-    return <div className="p-6 text-center">جاري تحميل البيانات...</div>;
-  }
+  const handleDeleteCustomer = async () => {
+    try {
+      const result = await apiCall(API_CONFIG.ADMIN.CUSTOMER_DELETE(selectedCustomer?.customerId), {
+        method: 'DELETE'
+      });
+      
+      if (result.success) {
+        alert(result.message || 'تم حذف العميل بنجاح');
+        fetchCustomersData();
+        closeDeleteModal();
+      } else {
+        alert(result.message || 'حدث خطأ أثناء حذف العميل');
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      alert('حدث خطأ أثناء حذف العميل');
+    }
+  };
+
+
+  const handleBanCustomer = async (customer, banned) => {
+    try {
+      const result = await apiCall(API_CONFIG.ADMIN.CUSTOMER_BAN(customer.customerId), {
+        method: 'PUT',
+        body: JSON.stringify({ banned, reason: banned ? 'حظر من قبل الإدارة' : 'إلغاء حظر' })
+      });
+      
+      if (result.success) {
+        alert(result.message || (banned ? 'تم حظر العميل بنجاح' : 'تم إلغاء حظر العميل بنجاح'));
+        fetchCustomersData();
+      } else {
+        alert(result.message || 'حدث خطأ أثناء تحديث حالة العميل');
+      }
+    } catch (error) {
+      console.error('Error banning/unbanning customer:', error);
+      alert('حدث خطأ أثناء تحديث حالة العميل');
+    }
+  };
 
   return (
-    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">إدارة الزبائن</h1>
-        <div className="flex border-b border-gray-200">
-          <a href="#" className="py-2 px-4 text-sm font-medium border-b-2 border-red-500 text-red-500">
-            ملفات الزبائن
-          </a>
-        </div>
-      </div>
+    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
+      <h1 className="text-2xl font-bold mb-6 text-right">إدارة المستخدمين</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {dashboardCards.map((card, index) => (
-          <Card key={index} {...card} />
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {statsCards.map((card, index) => (
+          <StatCard
+            key={index}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+          />
         ))}
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <div className="relative w-full md:w-auto">
+      {/* Filters and Search */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="relative flex-1 w-full md:w-auto">
             <input
               type="text"
-              placeholder="ابحث عن اسم الزبون، رقم الهاتف"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+              placeholder="ابحث عن مستخدم (الاسم، الهاتف، البريد الإلكتروني)"
+              className="w-full pr-10 pl-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+              value={searchText}
+              onChange={handleSearchChange}
             />
-            <FaMagnifyingGlass className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <FaMagnifyingGlass className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </div>
+
+          <div className="flex gap-4 w-full md:w-auto">
+            <Dropdown
+              options={[
+                { value: 'all', label: 'جميع المستخدمين' },
+                { value: 'active', label: 'نشط' },
+                { value: 'banned', label: 'محظور' }
+              ]}
+              value={selectedStatus}
+              onChange={handleStatusChange}
+              placeholder="فلترة حسب الحالة"
+            />
           </div>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 text-right">
-              <tr>
-                <Th>الزبون</Th>
-                <Th>رقم الهاتف</Th>
-                <Th>عدد الطلبات</Th>
-                <Th>إجمالي المصروفات</Th>
-                <Th>الحالة</Th>
-                <Th>تاريخ التسجيل</Th>
-                <Th>الملاحظات</Th>
-                <Th>الإجراءات</Th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-right">
-              {customersData.map((customer) => (
-                <tr key={customer.customerId}>
-                  <Td>
-                    <Link to={`/customers/${customer.customerId}`} className="text-blue-600 hover:underline">
-                      {customer.customerName}
-                    </Link>
-                  </Td>
-                  <Td>{customer.phone}</Td>
-                  <Td>{customer.ordersCount}</Td>
-                  <Td>{customer.totalSpent} دينار</Td>
-                  <Td><StatusBadge status={customer.status} /></Td>
-                  <Td>{new Date(customer.registrationDate).toLocaleDateString('ar-EG')}</Td>
-                  <Td>{customer.notes || 'لا توجد ملاحظات'}</Td>
-                  <Td>
-                    <div className="relative inline-block text-right">
-                      <button 
-                        className="text-gray-500 hover:text-gray-700"
-                        onClick={() => handleDropdownToggle(customer.customerId)}
-                      >
-                        <BsThreeDots className="text-xl" />
-                      </button>
-                      
-                      {openDropdownId === customer.customerId && (
-                        <div className="absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                          <div className="py-1">
-                            <button
-                              onClick={() => openModal(customer, 'edit')}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-right"
-                            >
-                              <PiNotePencil className="ml-2" /> تعديل
-                            </button>
-                            <button
-                              onClick={() => openModal(customer, 'addNote')}
-                              className="flex items-center px-4 py-2 text-sm text-green-600 hover:bg-gray-100 w-full text-right"
-                            >
-                              <FaRegNoteSticky className="ml-2" /> إضافة ملاحظة
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex justify-between items-center">
-          <span className="text-sm text-gray-700">إجمالي الزبائن {totalCustomers}</span>
-        </div>
       </div>
-      
-      <ActionModal
-        customer={modalState.customer}
-        actionType={modalState.actionType}
-        onClose={closeModal}
-        onConfirm={handleConfirmAction}
-      />
+
+      {/* Customers Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+            <span className="mr-4 text-gray-600">جاري التحميل...</span>
+          </div>
+        ) : customersData.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p>لا توجد مستخدمين</p>
+            <p className="text-sm mt-2">تحقق من الفلاتر أو جرب البحث</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الاسم
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الهاتف
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    البريد الإلكتروني
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    عدد الطلبات
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    إجمالي المصروفات
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الحالة
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    تاريخ التسجيل
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الإجراءات
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 text-right">
+                {customersData.map((customer) => (
+                  <tr key={customer.customerId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {customer.customerId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.customerName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.phone}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.email || 'غير محدد'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.ordersCount || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.totalSpent ? `${customer.totalSpent.toLocaleString()} د.ع` : '0 د.ع'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <StatusBadge status={customer.status || 'نشط'} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {customer.registrationDate ? new Date(customer.registrationDate).toLocaleDateString('ar-EG') : 'غير محدد'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openDetailsModal(customer)}
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-gray-100"
+                          title="عرض التفاصيل"
+                        >
+                          <FaEye className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(customer)}
+                          className="text-indigo-600 hover:text-indigo-900 p-2 rounded-full hover:bg-gray-100"
+                          title="تعديل"
+                        >
+                          <FaEdit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleBanCustomer(customer, customer.status === 'محظور' ? false : true)}
+                          className={`p-2 rounded-full hover:bg-gray-100 ${
+                            customer.status === 'محظور' 
+                              ? 'text-green-600 hover:text-green-900' 
+                              : 'text-red-600 hover:text-red-900'
+                          }`}
+                          title={customer.status === 'محظور' ? 'إلغاء الحظر' : 'حظر'}
+                        >
+                          {customer.status === 'محظور' ? <FaEye className="w-5 h-5" /> : <FaEyeSlash className="w-5 h-5" />}
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(customer)}
+                          className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-gray-100"
+                          title="حذف"
+                        >
+                          <FaTrash className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
+
+
+      {/* Edit Customer Modal */}
+      <Modal 
+        isOpen={isEditModalOpen && selectedCustomer} 
+        title={selectedCustomer ? `تعديل المستخدم: ${selectedCustomer.customerName || 'غير محدد'}` : ''} 
+        onClose={closeEditModal}
+      >
+          <form onSubmit={handleUpdateCustomer}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  الاسم الكامل:
+                </label>
+                <input
+                  type="text"
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  رقم الهاتف:
+                </label>
+                <input
+                  type="tel"
+                  id="edit-phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 rtl:space-x-reverse mt-6">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                تحديث
+              </button>
+            </div>
+          </form>
+      </Modal>
+
+      {/* Delete Customer Modal */}
+      <Modal 
+        isOpen={isDeleteModalOpen && selectedCustomer} 
+        title="تأكيد الحذف" 
+        onClose={closeDeleteModal}
+      >
+          <p className="text-gray-700 mb-4">
+            هل أنت متأكد أنك تريد حذف المستخدم "{selectedCustomer?.customerName || 'غير محدد'}"؟
+            هذا الإجراء لا يمكن التراجع عنه.
+          </p>
+          <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+            <button
+              type="button"
+              onClick={closeDeleteModal}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteCustomer}
+              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+            >
+              حذف
+            </button>
+          </div>
+      </Modal>
+
+
+      {/* Customer Details Modal */}
+      <Modal 
+        isOpen={isDetailsModalOpen && selectedCustomer} 
+        title={selectedCustomer ? `تفاصيل المستخدم: ${selectedCustomer.customerName || 'غير محدد'}` : ''} 
+        onClose={closeDetailsModal}
+      >
+          <div className="space-y-4 text-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><strong>ID:</strong> {selectedCustomer?.customerId || 'غير محدد'}</p>
+                <p><strong>الاسم:</strong> {selectedCustomer?.customerName || 'غير محدد'}</p>
+                <p><strong>الهاتف:</strong> {selectedCustomer?.phone || 'غير محدد'}</p>
+                <p><strong>البريد الإلكتروني:</strong> غير محدد</p>
+              </div>
+              <div>
+                <p><strong>عدد الطلبات:</strong> {selectedCustomer?.ordersCount || 0}</p>
+                <p><strong>إجمالي المصروفات:</strong> {selectedCustomer?.totalSpent ? `${selectedCustomer.totalSpent.toLocaleString()} د.ع` : '0 د.ع'}</p>
+                <p><strong>الحالة:</strong> <StatusBadge status={selectedCustomer?.status || 'نشط'} /></p>
+                <p><strong>تاريخ التسجيل:</strong> {selectedCustomer?.registrationDate ? new Date(selectedCustomer.registrationDate).toLocaleDateString('ar-EG') : 'غير محدد'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end mt-6">
+            <button
+              type="button"
+              onClick={closeDetailsModal}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              إغلاق
+            </button>
+          </div>
+      </Modal>
     </div>
   );
 };

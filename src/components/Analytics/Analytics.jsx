@@ -14,6 +14,7 @@ import {
 import {
   X
 } from "lucide-react";
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const AnalyticsModal = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
@@ -204,19 +205,7 @@ const SalesDashboard = () => {
       }
 
       try {
-        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/analytics', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('فشل في جلب بيانات التحليلات');
-        }
-
-        const data = await response.json();
+        const data = await apiCall(API_CONFIG.ADMIN.ANALYTICS);
         setAnalyticsData(data);
         setIsLoading(false);
       } catch (err) {
@@ -246,19 +235,11 @@ const SalesDashboard = () => {
             } else if (cardType === 'daily') {
                 endpoint = 'daily-sales/details';
             }
-            const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/analytics/${endpoint}?page=1&limit=20`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+            const params = new URLSearchParams({
+                page: '1',
+                limit: '20'
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch card details.');
-            }
-
-            const data = await response.json();
+            const data = await apiCall(`${API_CONFIG.ADMIN.ANALYTICS_DETAILS(endpoint)}?${params.toString()}`);
             setDetailsData(data);
             setSelectedCardType(cardType);
         } catch (err) {

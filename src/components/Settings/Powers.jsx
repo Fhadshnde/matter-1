@@ -4,46 +4,182 @@ import { BsCheckSquareFill } from 'react-icons/bs';
 import { FaFilePdf, FaCog, FaPercent, FaWrench } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const GeneralSettings = () => {
+  const [settings, setSettings] = useState({
+    companyName: '',
+    officialEmail: '',
+    phoneNumber: '',
+    address: '',
+    currency: '',
+    timezone: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchSettings = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.GENERAL_SETTINGS);
+      setSettings(data.companyInfo);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      // Keep default empty values instead of mock data
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.GENERAL_SETTINGS, {
+        method: 'PUT',
+        body: JSON.stringify({ companyInfo: settings })
+      });
+      alert('تم حفظ الإعدادات بنجاح');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('حدث خطأ أثناء حفظ الإعدادات');
+    }
+    setSaving(false);
+  };
+
+  const handleChange = (field, value) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+          <span className="mr-4 text-gray-600">جاري التحميل...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-6">
       <h3 className="text-xl font-bold text-gray-800 mb-4 text-right">الإعدادات العامة</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-right">
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">اسم الشركة</label>
-          <input type="text" value="CBC" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="text" 
+            value={settings.companyName} 
+            onChange={(e) => handleChange('companyName', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">البريد الرسمي</label>
-          <input type="email" value="admin@cbc.sa" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="email" 
+            value={settings.officialEmail} 
+            onChange={(e) => handleChange('officialEmail', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">رقم الجوال</label>
-          <input type="text" value="+966 55543456" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="text" 
+            value={settings.phoneNumber} 
+            onChange={(e) => handleChange('phoneNumber', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">العملة الافتراضية</label>
-          <input type="text" value="دينار عراق (IQD)" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="text" 
+            value={settings.currency} 
+            onChange={(e) => handleChange('currency', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">المنطقة الرئيسية</label>
-          <input type="text" value="Asia/Baghdad (GMT+3)" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="text" 
+            value={settings.timezone} 
+            onChange={(e) => handleChange('timezone', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
         <div className="flex flex-col">
           <label className="text-sm font-semibold text-gray-500 mb-2">العنوان</label>
-          <input type="text" value="بغداد - الشارع 62 - مجمع الأعمال" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" />
+          <input 
+            type="text" 
+            value={settings.address} 
+            onChange={(e) => handleChange('address', e.target.value)}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500" 
+          />
         </div>
       </div>
       <div className="mt-6 flex justify-end space-x-2 rtl:space-x-reverse">
-        <button className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition">إلغاء</button>
-        <button className="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition">حفظ التغييرات</button>
+        <button 
+          onClick={() => fetchSettings()}
+          className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition"
+        >
+          إلغاء
+        </button>
+        <button 
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+        >
+          {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+        </button>
       </div>
     </div>
   );
 };
 
 const SystemOptions = ({ openModal }) => {
+  const [systemOptions, setSystemOptions] = useState({
+    appRatio: 25,
+    notifications: {
+      email: true,
+      sms: true,
+      inApp: true
+    },
+    maintenanceMode: false
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchSystemOptions = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.GENERAL_SETTINGS);
+      setSystemOptions(data.systemOptions);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching system options:', error);
+      // Keep default values instead of mock data
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSystemOptions();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+          <span className="mr-4 text-gray-600">جاري التحميل...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -51,7 +187,7 @@ const SystemOptions = ({ openModal }) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center text-right space-y-4 md:space-y-0">
         <div className="flex flex-col">
           <span className="text-lg font-bold text-gray-800">نسبة التطبيق</span>
-          <span className="text-sm text-gray-500 mt-1">25% تطبيقًا تلقائيًا على المتاجر الجديدة إن لم توجد نسبة</span>
+          <span className="text-sm text-gray-500 mt-1">{systemOptions.appRatio}% تطبيقًا تلقائيًا على المتاجر الجديدة إن لم توجد نسبة</span>
         </div>
         <button onClick={() => openModal('appRatio')} className="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition">تعديل</button>
       </div>
@@ -61,15 +197,15 @@ const SystemOptions = ({ openModal }) => {
           <span className="text-lg font-bold text-gray-800">الإشعارات</span>
           <span className="text-sm text-gray-500 mt-1">الوسائل التي يستخدمها النظام لإرسال التنبيهات</span>
           <div className="flex items-center space-x-4 rtl:space-x-reverse mt-2">
-            <span className="flex items-center text-red-500">
+            <span className={`flex items-center ${systemOptions.notifications.email ? 'text-red-500' : 'text-gray-400'}`}>
               <BsCheckSquareFill className="ml-1" />
               البريد الالكتروني
             </span>
-            <span className="flex items-center text-red-500">
+            <span className={`flex items-center ${systemOptions.notifications.sms ? 'text-red-500' : 'text-gray-400'}`}>
               <BsCheckSquareFill className="ml-1" />
               رسالة نصية SMS
             </span>
-            <span className="flex items-center text-red-500">
+            <span className={`flex items-center ${systemOptions.notifications.inApp ? 'text-red-500' : 'text-gray-400'}`}>
               <BsCheckSquareFill className="ml-1" />
               اشعار داخل التطبيق
             </span>
@@ -82,6 +218,9 @@ const SystemOptions = ({ openModal }) => {
         <div className="flex flex-col">
           <span className="text-lg font-bold text-gray-800">تفعيل وضع الصيانة</span>
           <span className="text-sm text-gray-500 mt-1">عند تفعيل وضع الصيانة، سيتم إيقاف جميع تفاعلات المستخدمين مؤقتًا، ولن يتمكنوا من الوصول إلى المنصة أو إجراء أي عمليات حتى يتم إلغاء التفعيل.</span>
+          <span className={`text-sm mt-1 font-bold ${systemOptions.maintenanceMode ? 'text-red-500' : 'text-green-500'}`}>
+            {systemOptions.maintenanceMode ? 'وضع الصيانة مفعل' : 'وضع الصيانة معطل'}
+          </span>
         </div>
         <button onClick={() => openModal('maintenance')} className="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition">تعديل</button>
       </div>
@@ -91,32 +230,38 @@ const SystemOptions = ({ openModal }) => {
 
 
 const SystemLog = () => {
-  const baseUrl = 'https://products-api.cbc-apps.net';
-  const token = localStorage.getItem('userToken');
-
   const [log, setLog] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const fattchLogs = async () => {
+  const fetchLogs = async () => {
     try {
-      const response = await axios.get(
-        `${baseUrl}/admin/dashboard/settings/sessions`,
-        { 
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          } 
-        }
-      );
-      
-      setLog(response.data); // تخزين البيانات في state
+      console.log('Fetching system logs from:', API_CONFIG.ADMIN.SYSTEM_LOGS);
+      const data = await apiCall(`${API_CONFIG.ADMIN.SYSTEM_LOGS}?page=1&limit=20`);
+      console.log('System logs data received:', data);
+      setLog(data.logs || []);
+      setLoading(false);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching system logs:', error);
+      setLog([]);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fattchLogs(); // استدعاء عند تحميل الكومبوننت
+    fetchLogs();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-800 mb-4 text-right">السجل العام</h3>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+          <span className="mr-4 text-gray-600">جاري التحميل...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -125,42 +270,55 @@ const SystemLog = () => {
         <table className="min-w-full divide-y divide-gray-200 text-right">
           <thead className="bg-gray-50">
             <tr>
-              <th className="p-3 font-semibold text-gray-500">Session ID</th>
-              <th className="p-3 font-semibold text-gray-500">الجهاز</th>
+              <th className="p-3 font-semibold text-gray-500">الإجراء</th>
+              <th className="p-3 font-semibold text-gray-500">الوصف</th>
+              <th className="p-3 font-semibold text-gray-500">المستوى</th>
+              <th className="p-3 font-semibold text-gray-500">المستخدم</th>
               <th className="p-3 font-semibold text-gray-500">IP</th>
-              <th className="p-3 font-semibold text-gray-500">الموقع</th>
-              <th className="p-3 font-semibold text-gray-500">تاريخ الدخول</th>
-              <th className="p-3 font-semibold text-gray-500">آخر نشاط</th>
-              <th className="p-3 font-semibold text-gray-500">الحالة</th>
+              <th className="p-3 font-semibold text-gray-500">التاريخ</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {log.length > 0 ? (
               log.map((item, index) => (
                 <tr key={index}>
-                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.sessionId}</td>
-                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.deviceInfo}</td>
-                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.ipAddress}</td>
-                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.location}</td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.action}</td>
+                  <td className="p-3 text-sm text-gray-700">{item.description}</td>
                   <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                    {new Date(item.loginDate).toLocaleString('ar-EG')}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      item.level === 'error' ? 'bg-red-100 text-red-800' :
+                      item.level === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                      item.level === 'success' ? 'bg-green-100 text-green-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {item.level}
+                    </span>
                   </td>
                   <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                    {new Date(item.lastActivity).toLocaleString('ar-EG')}
+                    {item.user ? `${item.user.name} (${item.user.phone})` : 'نظام'}
                   </td>
+                  <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{item.ipAddress || '-'}</td>
                   <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                    {item.isCurrent ? (
-                      <span className="text-green-600 font-bold">الحالية</span>
-                    ) : (
-                      <span className="text-gray-500">منتهية</span>
-                    )}
+                    {new Date(item.createdAt).toLocaleString('ar-EG')}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center text-gray-500 p-4">
-                  لا توجد سجلات متاحة
+                <td colSpan="6" className="text-center text-gray-500 p-8">
+                  <div className="flex flex-col items-center">
+                    <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p className="text-lg font-semibold text-gray-600 mb-2">لا يمكن تحميل السجل العام</p>
+                    <p className="text-sm text-gray-500 mb-4">يبدو أن هناك مشكلة في الاتصال بالخادم أو أنك غير مخول للوصول لهذه البيانات</p>
+                    <button 
+                      onClick={fetchLogs}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      إعادة المحاولة
+                    </button>
+                  </div>
                 </td>
               </tr>
             )}
@@ -173,6 +331,29 @@ const SystemLog = () => {
 
 
 const AppRatioModal = ({ onClose }) => {
+  const [ratio, setRatio] = useState(25);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.GENERAL_SETTINGS, {
+        method: 'PUT',
+        body: JSON.stringify({
+          systemOptions: {
+            appRatio: ratio
+          }
+        })
+      });
+      alert('تم تحديث نسبة التطبيق بنجاح');
+      onClose();
+    } catch (error) {
+      console.error('Error saving app ratio:', error);
+      alert('حدث خطأ أثناء حفظ النسبة');
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
@@ -185,13 +366,24 @@ const AppRatioModal = ({ onClose }) => {
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-500 mb-2">النسبة</label>
           <div className="relative">
-            <input type="text" value="25%" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 text-right" />
+            <input 
+              type="number" 
+              value={ratio} 
+              onChange={(e) => setRatio(parseInt(e.target.value) || 0)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 text-right" 
+            />
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <button onClick={onClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">الغاء</button>
-          <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">حفظ</button>
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+          >
+            {saving ? 'جاري الحفظ...' : 'حفظ'}
+          </button>
         </div>
       </div>
     </div>
@@ -202,6 +394,31 @@ const NotificationsModal = ({ onClose }) => {
   const [emailChecked, setEmailChecked] = useState(true);
   const [smsChecked, setSmsChecked] = useState(true);
   const [inAppChecked, setInAppChecked] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.GENERAL_SETTINGS, {
+        method: 'PUT',
+        body: JSON.stringify({
+          systemOptions: {
+            notifications: {
+              email: emailChecked,
+              sms: smsChecked,
+              inApp: inAppChecked
+            }
+          }
+        })
+      });
+      alert('تم تحديث إعدادات الإشعارات بنجاح');
+      onClose();
+    } catch (error) {
+      console.error('Error saving notifications:', error);
+      alert('حدث خطأ أثناء حفظ الإعدادات');
+    }
+    setSaving(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
@@ -228,7 +445,13 @@ const NotificationsModal = ({ onClose }) => {
         </div>
         <div className="mt-6 flex justify-between items-center">
           <button onClick={onClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">الغاء</button>
-          <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">تعديل</button>
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+          >
+            {saving ? 'جاري الحفظ...' : 'تعديل'}
+          </button>
         </div>
       </div>
     </div>
@@ -302,7 +525,7 @@ const SystemSettingsPage = () => {
       <SettingsNav activePage="general" />
 
       <GeneralSettings />
-      {/* <SystemOptions openModal={openModal} /> */}
+      <SystemOptions openModal={openModal} />
       <SystemLog />
 
       {modal === 'appRatio' && <AppRatioModal onClose={closeModal} />}

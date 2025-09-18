@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_CONFIG from '../../config/api';
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Login = ({ onLogin }) => {
     setMessage('');
     setIsError(false);
     try {
-      const response = await axios.post('https://products-api.cbc-apps.net/auth/login', formData);
+      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.LOGIN}`, formData);
       const token = response.data.access_token; 
       if (token) {
         localStorage.setItem('userToken', token); 

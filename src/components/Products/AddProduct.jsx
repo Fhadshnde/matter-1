@@ -1,241 +1,506 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoArrowBackOutline } from 'react-icons/io5';
+import { ArrowLeft, Upload, X, Star } from 'lucide-react';
+import { API_CONFIG, apiCall } from '../../config/api';
+import axios from 'axios';
 
 const AddProduct = () => {
     const navigate = useNavigate();
-    const [productData, setProductData] = useState({
-        name: '',
+    const [formData, setFormData] = useState({
+        productName: '',
         description: '',
-        originalPrice: '',
+        sellingPrice: '',
         wholesalePrice: '',
-        mainImageUrl: '',
+        stock: '',
         categoryId: '',
         sectionId: '',
         supplierId: '',
-        notes: ''
+        imageUrl: ''
     });
-    const [suppliers, setSuppliers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
-
-    const baseUrl = 'https://products-api.cbc-apps.net';
-    const token = localStorage.getItem('userToken');
+    const [selectedImages, setSelectedImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [mainImageIndex, setMainImageIndex] = useState(0);
+    const [isCompressing, setIsCompressing] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
 
     useEffect(() => {
-        const fetchSuppliers = async () => {
-            try {
-                const response = await fetch(`${baseUrl}/admin/dashboard/suppliers?page=1&limit=20`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('فشل في جلب قائمة الموردين');
-                }
-                const data = await response.json();
-                setSuppliers(data.suppliers);
-            } catch (error) {
-                console.error('Error fetching suppliers:', error);
-                setError('فشل في تحميل الموردين. يرجى المحاولة مرة أخرى.');
-            }
-        };
+        fetchCategories();
+        fetchSections();
+        fetchSuppliers();
+    }, []);
 
-        if (token) {
-            fetchSuppliers();
-        } else {
-            setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
+    const fetchCategories = async () => {
+        try {
+            const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                }
+            });
+            const transformedCategories = data.categories.map(category => ({
+                categoryId: category.categoryId,
+                categoryName: category.categoryName
+            }));
+            setCategories(transformedCategories);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            setCategories([]);
         }
-    }, [token]);
+    };
+
+    const fetchSections = async () => {
+        try {
+            const data = await apiCall(API_CONFIG.ADMIN.SECTIONS, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                }
+            });
+            const transformedSections = data.sections.map(section => ({
+                sectionId: section.sectionId,
+                sectionName: section.sectionName,
+                categoryId: section.categoryId
+            }));
+            setSections(transformedSections);
+        } catch (error) {
+            console.error('Error fetching sections:', error);
+            setSections([]);
+        }
+    };
+
+    const fetchSuppliers = async () => {
+        try {
+            const data = await apiCall(API_CONFIG.ADMIN.SUPPLIERS, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                }
+            });
+            const transformedSuppliers = (data.suppliers || []).map(supplier => ({
+                supplierId: supplier.id,
+                supplierName: supplier.name || 'مورد بدون اسم',
+                contactInfo: supplier.contactInfo,
+                phone: supplier.phone
+            }));
+            setSuppliers(transformedSuppliers);
+        } catch (error) {
+            console.error('Error fetching suppliers:', error);
+            setSuppliers([]);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setProductData(prevState => ({
-            ...prevState,
-            [name]: value
+        setFormData(prev => ({
+            ...prev,
+            [name]: value,
+            // إعادة تعيين القسم عند تغيير الفئة
+            ...(name === 'categoryId' && { sectionId: '' })
         }));
+    };
+
+    const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+                canvas.width = img.width * ratio;
+                canvas.height = img.height * ratio;
+                
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(resolve, 'image/jpeg', quality);
+            };
+            
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleImageChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setIsCompressing(true);
+        try {
+            const compressedFiles = [];
+            const previews = [];
+
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    const compressed = await compressImage(file);
+                    compressedFiles.push(compressed);
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previews.push(e.target.result);
+                        if (previews.length === files.length) {
+                            setImagePreviews([...imagePreviews, ...previews]);
+                        }
+                    };
+                    reader.readAsDataURL(compressed);
+                }
+            }
+
+            setSelectedImages([...selectedImages, ...compressedFiles]);
+        } catch (error) {
+            console.error('Error compressing images:', error);
+            alert('حدث خطأ في ضغط الصور');
+        } finally {
+            setIsCompressing(false);
+        }
+    };
+
+    const removeImage = (index) => {
+        const newImages = selectedImages.filter((_, i) => i !== index);
+        const newPreviews = imagePreviews.filter((_, i) => i !== index);
+        
+        setSelectedImages(newImages);
+        setImagePreviews(newPreviews);
+        
+        if (mainImageIndex >= newImages.length) {
+            setMainImageIndex(Math.max(0, newImages.length - 1));
+        }
+    };
+
+    const setAsMainImage = (index) => {
+        setMainImageIndex(index);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        setError(null);
-        setSuccessMessage(null);
-
         try {
-            const body = {
-                name: productData.name,
-                description: productData.description,
-                originalPrice: parseInt(productData.originalPrice),
-                wholesalePrice: parseInt(productData.wholesalePrice),
-                mainImageUrl: productData.mainImageUrl,
-                categoryId: parseInt(productData.categoryId),
-                sectionId: parseInt(productData.sectionId),
-                supplierId: parseInt(productData.supplierId),
-                notes: productData.notes
-            };
+            // 1. رفع الصور أولاً إلى الباك-إند
+            let uploadedImageUrls = [];
+            if (selectedImages.length > 0) {
+                for (let i = 0; i < selectedImages.length; i++) {
+                    const file = selectedImages[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const uploadRes = await axios.post(
+                        `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`,
+                        formData,
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1ODEyOSwiZXhwIjoxNzU4MjQ0NTI5fQ.j55YUdRdTRW8qq4pd4sZELJXmau-5P4rApKMlOB0Zyc'}`
+                            }
+                        }
+                    );
+                    uploadedImageUrls.push(uploadRes.data.url);
+                }
+            }
             
-            const response = await fetch(`${baseUrl}/admin/dashboard/products-management`, {
+            // 2. تجهيز media/mainImageUrl
+            let mainImageUrl = '';
+            const media = [];
+            if (uploadedImageUrls.length > 0) {
+                uploadedImageUrls.forEach((url, i) => {
+                    media.push({ url, type: 'image', isMain: i === mainImageIndex });
+                    if (i === mainImageIndex) {
+                        mainImageUrl = url;
+                    }
+                });
+            }
+            
+            // 3. إنشاء المنتج
+            const productData = {
+                name: formData.productName,
+                description: formData.description,
+                price: parseFloat(formData.sellingPrice),
+                originalPrice: parseFloat(formData.sellingPrice) * 1.2, // 20% markup
+                wholesalePrice: parseFloat(formData.wholesalePrice),
+                stock: parseInt(formData.stock),
+                categoryId: parseInt(formData.categoryId),
+                sectionId: parseInt(formData.sectionId),
+                supplierId: parseInt(formData.supplierId),
+                mainImageUrl,
+                media
+            };
+
+            const result = await apiCall(API_CONFIG.ADMIN.PRODUCT_CREATE, {
                 method: 'POST',
+                body: JSON.stringify(productData),
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(body)
+                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'فشل في إضافة المنتج. يرجى التحقق من البيانات.');
+            if (result.success) {
+                alert('تم إنشاء المنتج بنجاح');
+                navigate('/products');
+            } else {
+                alert(result.message || 'حدث خطأ أثناء إنشاء المنتج');
             }
-
-            setSuccessMessage('تمت إضافة المنتج بنجاح!');
-            setTimeout(() => {
-                navigate('/products-dashboard');
-            }, 2000);
-        } catch (err) {
-            console.error('Error adding product:', err);
-            setError(err.message);
+        } catch (error) {
+            console.error('Error creating product:', error);
+            alert('حدث خطأ أثناء إنشاء المنتج');
         } finally {
             setIsLoading(false);
         }
     };
 
+    const filteredSections = sections.filter(section => 
+        section.categoryId === parseInt(formData.categoryId)
+    );
+
     return (
-        <div className="bg-gray-100 min-h-screen p-8 text-right font-['Tajawal']">
-            <div className="flex justify-between items-center mb-6">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center"
-                >
-                    <IoArrowBackOutline className="w-5 h-5 ml-2" />
-                    العودة
-                </button>
-                <h1 className="text-2xl font-bold text-gray-800">إضافة منتج جديد</h1>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center">{error}</div>}
-                {successMessage && <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center">{successMessage}</div>}
-                
-                <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">اسم المنتج</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={productData.name}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            />
+        <div className="min-h-screen bg-gray-50">
+            <div className="container mx-auto px-4 py-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center">
+                        <button
+                            onClick={() => navigate('/products')}
+                            className="flex items-center text-gray-600 hover:text-gray-800 mr-4"
+                        >
+                            <ArrowLeft className="w-5 h-5 ml-2" />
+                            العودة للمنتجات
+                        </button>
+                        <h1 className="text-3xl font-bold text-gray-800">إضافة منتج جديد</h1>
+                    </div>
+                </div>
+
+                {/* Form */}
+                <div className="bg-white rounded-lg shadow-md p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Basic Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    اسم المنتج *
+                                </label>
+                                <input
+                                    type="text"
+                                    name="productName"
+                                    value={formData.productName}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                    placeholder="أدخل اسم المنتج"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    سعر البيع *
+                                </label>
+                                <input
+                                    type="number"
+                                    name="sellingPrice"
+                                    value={formData.sellingPrice}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    سعر الجملة *
+                                </label>
+                                <input
+                                    type="number"
+                                    name="wholesalePrice"
+                                    value={formData.wholesalePrice}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    الكمية في المخزن *
+                                </label>
+                                <input
+                                    type="number"
+                                    name="stock"
+                                    value={formData.stock}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                    placeholder="0"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    الفئة *
+                                </label>
+                                <select
+                                    name="categoryId"
+                                    value={formData.categoryId}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                >
+                                    <option value="">اختر الفئة</option>
+                                    {categories.map((category) => (
+                                        <option key={category.categoryId} value={category.categoryId}>
+                                            {category.categoryName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    المورد *
+                                </label>
+                                <select
+                                    name="supplierId"
+                                    value={formData.supplierId}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                >
+                                    <option value="">اختر المورد</option>
+                                    {suppliers.map((supplier) => (
+                                        <option key={supplier.supplierId} value={supplier.supplierId}>
+                                            {supplier.supplierName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    القسم
+                                </label>
+                                <select
+                                    name="sectionId"
+                                    value={formData.sectionId}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                    disabled={!formData.categoryId}
+                                >
+                                    <option value="">اختر القسم</option>
+                                    {filteredSections.map((section) => (
+                                        <option key={section.sectionId} value={section.sectionId}>
+                                            {section.sectionName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">الوصف</label>
+
+                        {/* Description */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                وصف المنتج
+                            </label>
                             <textarea
                                 name="description"
-                                value={productData.description}
+                                value={formData.description}
                                 onChange={handleChange}
-                                rows="1"
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            ></textarea>
-                        </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">سعر البيع الأصلي</label>
-                            <input
-                                type="number"
-                                name="originalPrice"
-                                value={productData.originalPrice}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
+                                rows={4}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+                                placeholder="أدخل وصف المنتج"
                             />
                         </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">سعر الجملة</label>
-                            <input
-                                type="number"
-                                name="wholesalePrice"
-                                value={productData.wholesalePrice}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            />
+
+                        {/* Image Upload */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                صور المنتج
+                            </label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                    id="image-upload"
+                                />
+                                <label
+                                    htmlFor="image-upload"
+                                    className="cursor-pointer flex flex-col items-center"
+                                >
+                                    <Upload className="w-12 h-12 text-gray-400 mb-4" />
+                                    <p className="text-gray-600 mb-2">
+                                        {isCompressing ? 'جاري ضغط الصور...' : 'اضغط لرفع الصور'}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        يمكنك رفع عدة صور في نفس الوقت
+                                    </p>
+                                </label>
+                            </div>
+
+                            {/* Image Previews */}
+                            {imagePreviews.length > 0 && (
+                                <div className="mt-6">
+                                    <h3 className="text-lg font-medium text-gray-700 mb-4">معاينة الصور</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {imagePreviews.map((preview, index) => (
+                                            <div key={index} className="relative group">
+                                                <img
+                                                    src={preview}
+                                                    alt={`معاينة ${index + 1}`}
+                                                    className="w-full h-32 object-cover rounded-lg border"
+                                                />
+                                                {mainImageIndex === index && (
+                                                    <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full">
+                                                        <Star className="w-4 h-4" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                                    <div className="opacity-0 group-hover:opacity-100 flex space-x-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAsMainImage(index)}
+                                                            className="bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600"
+                                                            title="تعيين كصورة رئيسية"
+                                                        >
+                                                            <Star className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeImage(index)}
+                                                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                                                            title="حذف الصورة"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">رابط صورة المنتج</label>
-                            <input
-                                type="url"
-                                name="mainImageUrl"
-                                value={productData.mainImageUrl}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">معرف القسم</label>
-                            <input
-                                type="number"
-                                name="categoryId"
-                                value={productData.categoryId}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">معرف القسم الفرعي</label>
-                            <input
-                                type="number"
-                                name="sectionId"
-                                value={productData.sectionId}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">المورد</label>
-                            <select
-                                name="supplierId"
-                                value={productData.supplierId}
-                                onChange={handleChange}
-                                required
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
+
+                        {/* Submit Buttons */}
+                        <div className="flex justify-end space-x-4 pt-6 border-t">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/products')}
+                                className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <option value="">اختر موردًا</option>
-                                {suppliers.map(supplier => (
-                                    <option key={supplier.supplierId} value={supplier.supplierId}>
-                                        {supplier.supplierName}
-                                    </option>
-                                ))}
-                            </select>
+                                إلغاء
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isLoading ? 'جاري الحفظ...' : 'حفظ المنتج'}
+                            </button>
                         </div>
-                        <div className="relative">
-                            <label className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">ملاحظات (JSON)</label>
-                            <textarea
-                                name="notes"
-                                value={productData.notes}
-                                onChange={handleChange}
-                                rows="1"
-                                className="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6"
-                            ></textarea>
-                        </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-6">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? 'جاري الإضافة...' : 'إضافة المنتج'}
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );

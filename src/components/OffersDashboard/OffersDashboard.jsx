@@ -7,6 +7,7 @@ import { MdOutlineDateRange } from 'react-icons/md';
 import { AiOutlineBarChart } from "react-icons/ai";
 import { FiEdit2 } from "react-icons/fi";
 import { Link } from 'react-router-dom';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const StatCard = ({ title, value, icon, className }) => (
   <div className={`bg-white rounded-xl shadow-md p-4 flex items-center justify-between text-right cursor-pointer ${className}`}>
@@ -479,17 +480,12 @@ const OffersDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('userToken');
     try {
-      const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/offers?page=${currentPage}&limit=${itemsPerPage}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString()
       });
-      if (!response.ok) {
-        throw new Error('فشل جلب بيانات العروض.');
-      }
-      const result = await response.json();
+      const result = await apiCall(`${API_CONFIG.ADMIN.OFFERS}?${params.toString()}`);
       setData(result);
     } catch (err) {
       setError(err.message);

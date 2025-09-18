@@ -12,6 +12,8 @@ import {
   Tag,
   Plus,
   Globe,
+  FolderOpen,
+  Layers,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -27,8 +29,10 @@ const Navbar = ({ onLogout }) => {
     { path: "/", icon: <LayoutDashboard className="w-4 h-4" />, text: "نظرة عامة" },
     { path: "/analytics", icon: <BarChart2 className="w-4 h-4" />, text: "التحليلات" },
     { path: "/products", icon: <Package className="w-4 h-4" />, text: "المنتجات" },
+    { path: "/sections", icon: <FolderOpen className="w-4 h-4" />, text: "الأقسام" },
+    { path: "/categories", icon: <Layers className="w-4 h-4" />, text: "الفئات" },
     { path: "/orders", icon: <ShoppingCart className="w-4 h-4" />, text: "الطلبات" },
-    { path: "/merchants", icon: <Store className="w-4 h-4" />, text: "التجار" },
+    { path: "/suppliers", icon: <Store className="w-4 h-4" />, text: "الموردين" },
     { path: "/customers", icon: <Globe className="w-4 h-4" />, text: "الزبائن" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },

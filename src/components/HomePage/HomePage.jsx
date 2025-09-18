@@ -7,6 +7,7 @@ import {
   Bell
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const DetailsModal = ({ isOpen, onClose, title, data }) => {
   const modalRef = useRef();
@@ -184,19 +185,7 @@ const HomePage = () => {
     }
 
     try {
-      const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/overview/${endpoint}/details`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في جلب التفاصيل');
-      }
-
-      const rawData = await response.json();
+      const rawData = await apiCall(API_CONFIG.ADMIN.OVERVIEW_DETAILS(endpoint));
       const detailsData = rawData.details || rawData;
 
       const titleMap = {
@@ -227,19 +216,7 @@ const HomePage = () => {
     }
 
     try {
-      const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/overview', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في جلب بيانات لوحة التحكم');
-      }
-
-      const data = await response.json();
+      const data = await apiCall(API_CONFIG.ADMIN.OVERVIEW);
       setDashboardData(data);
     } catch (err) {
       setError(err.message);

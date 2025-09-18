@@ -1,11 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const ProfileSettings = () => {
   const [activeTab, setActiveTab] = useState('personal');
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    profileImageUrl: ''
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const inputStyle = "w-full bg-white border border-gray-300 rounded-full p-3 mt-1 text-gray-800";
   const buttonStyle = "bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg";
   const sectionContainerStyle = "bg-gray-100 w-full max-w-2xl rounded-3xl p-8 mb-8 shadow-lg";
+
+  const fetchProfileData = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.ACCOUNT_SETTINGS);
+      setProfileData(data.personalData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchSessions = async () => {
+    try {
+      const data = await apiCall(API_CONFIG.ADMIN.LOGIN_SESSIONS);
+      setSessions(data);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+    fetchSessions();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.ACCOUNT_SETTINGS, {
+        method: 'PUT',
+        body: JSON.stringify({
+          personalData: profileData
+        })
+      });
+      alert('تم حفظ البيانات الشخصية بنجاح');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('حدث خطأ أثناء حفظ البيانات');
+    }
+    setSaving(false);
+  };
+
+  const handleSavePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('كلمة المرور الجديدة وتأكيدها غير متطابقتين');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await apiCall(API_CONFIG.ADMIN.ACCOUNT_SETTINGS, {
+        method: 'PUT',
+        body: JSON.stringify({
+          passwordSettings: passwordData
+        })
+      });
+      alert('تم تغيير كلمة المرور بنجاح');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      console.error('Error saving password:', error);
+      alert('حدث خطأ أثناء تغيير كلمة المرور');
+    }
+    setSaving(false);
+  };
+
+  const handleProfileChange = (field, value) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePasswordChange = (field, value) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+  };
 
   const tabs = [
     { id: 'personal', label: 'البيانات الشخصية' },
@@ -50,16 +138,31 @@ const ProfileSettings = () => {
           </div>
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">الاسم الكامل</label>
-            <input type="text" value="محمد صالح" className={inputStyle} readOnly />
+            <input 
+              type="text" 
+              value={profileData.fullName} 
+              onChange={(e) => handleProfileChange('fullName', e.target.value)}
+              className={inputStyle} 
+            />
           </div>
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">البريد الإلكتروني</label>
-            <input type="email" value="admin@cbr.sa" className={inputStyle} readOnly />
+            <input 
+              type="email" 
+              value={profileData.email} 
+              onChange={(e) => handleProfileChange('email', e.target.value)}
+              className={inputStyle} 
+            />
           </div>
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">رقم الجوال</label>
             <div className="flex">
-              <input type="tel" value="55543456" className="flex-1 bg-white border border-gray-300 rounded-r-full p-3 mt-1 text-gray-800" readOnly />
+              <input 
+                type="tel" 
+                value={profileData.phone} 
+                onChange={(e) => handleProfileChange('phone', e.target.value)}
+                className="flex-1 bg-white border border-gray-300 rounded-r-full p-3 mt-1 text-gray-800" 
+              />
               <div className="flex items-center bg-gray-200 border border-gray-300 rounded-l-full p-3 mt-1">
                 <span className="ml-2 text-gray-800">+٩٦٤</span>
                 <img src="https://flagcdn.com/sa.svg" alt="Saudi Arabia Flag" className="w-6 h-4" />
@@ -76,7 +179,13 @@ const ProfileSettings = () => {
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">كلمة المرور الحالية</label>
             <div className="relative">
-              <input type="password" placeholder="********" className={inputStyle} />
+              <input 
+                type="password" 
+                value={passwordData.currentPassword}
+                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                placeholder="********" 
+                className={inputStyle} 
+              />
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.577 3.01 9.964 7.822a.99.99 0 010 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.577-3.01-9.964-7.822z" />
@@ -88,7 +197,13 @@ const ProfileSettings = () => {
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">كلمة المرور الجديدة</label>
             <div className="relative">
-              <input type="password" placeholder="********" className={inputStyle} />
+              <input 
+                type="password" 
+                value={passwordData.newPassword}
+                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                placeholder="********" 
+                className={inputStyle} 
+              />
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.577 3.01 9.964 7.822a.99.99 0 010 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.577-3.01-9.964-7.822z" />
@@ -100,7 +215,13 @@ const ProfileSettings = () => {
           <div className="mb-4">
             <label className="block text-gray-500 text-sm">تأكيد كلمة المرور</label>
             <div className="relative">
-              <input type="password" placeholder="********" className={inputStyle} />
+              <input 
+                type="password" 
+                value={passwordData.confirmPassword}
+                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                placeholder="********" 
+                className={inputStyle} 
+              />
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.577 3.01 9.964 7.822a.99.99 0 010 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.577-3.01-9.964-7.822z" />
@@ -118,18 +239,23 @@ const ProfileSettings = () => {
             <h2 className="text-xl font-bold text-gray-800">أجهزة وجلسات الدخول</h2>
             <p className="text-gray-500 text-sm">يمكنك إنهاء الجلسات النشطة على الأجهزة الأخرى</p>
           </div>
-          {['Firefox - Mac', 'Chrome - Windows', 'Safari - iPhone'].map((device, index) => (
+          {sessions.map((session, index) => (
             <div key={index} className="flex justify-between items-center bg-white rounded-full p-4 mb-3 shadow-sm border border-gray-300">
               <div>
-                <p className="text-gray-800">{device}</p>
-                <p className="text-gray-500 text-sm">جدة السعودية، قبل ٥ ساعات</p>
+                <p className="text-gray-800">{session.deviceInfo}</p>
+                <p className="text-gray-500 text-sm">{session.location}، {new Date(session.lastActivity).toLocaleString('ar-EG')}</p>
               </div>
-              <button className="text-red-600 flex items-center">
-                <span className="ml-2">تسجيل خروج</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12a2.25 2.25 0 012.25 2.25v2.25" />
-                </svg>
-              </button>
+              {!session.isCurrent && (
+                <button className="text-red-600 flex items-center">
+                  <span className="ml-2">تسجيل خروج</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12a2.25 2.25 0 012.25 2.25v2.25" />
+                  </svg>
+                </button>
+              )}
+              {session.isCurrent && (
+                <span className="text-green-600 font-bold">الجلسة الحالية</span>
+              )}
             </div>
           ))}
         </div>
@@ -152,8 +278,25 @@ const ProfileSettings = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-center w-full max-w-2xl mt-4 space-x-4">
-        <button className={buttonStyle}>حفظ التغييرات</button>
-        <button className="bg-gray-400 text-white font-bold py-3 px-8 rounded-full shadow-lg">إلغاء</button>
+        <button 
+          onClick={activeTab === 'personal' ? handleSaveProfile : activeTab === 'password' ? handleSavePassword : null}
+          disabled={saving}
+          className={`${buttonStyle} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+        </button>
+        <button 
+          onClick={() => {
+            if (activeTab === 'personal') {
+              fetchProfileData();
+            } else if (activeTab === 'password') {
+              setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            }
+          }}
+          className="bg-gray-400 text-white font-bold py-3 px-8 rounded-full shadow-lg"
+        >
+          إلغاء
+        </button>
       </div>
     </div>
   );

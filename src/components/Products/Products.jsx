@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck } from 'react-icons/fa';
+import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
 import { BsEye } from 'react-icons/bs';
-import { IoChevronUpOutline, IoChevronDownOutline, IoSearchOutline, IoAdd, IoEllipsisHorizontal, IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
+import { IoChevronUpOutline, IoChevronDownOutline, IoSearchOutline, IoAdd, IoEllipsisHorizontal, IoEyeOutline, IoPencilOutline, IoTrashOutline, IoCloseOutline } from 'react-icons/io5';
 import axios from 'axios';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 const StatCard = ({ title, value, icon, onClick }) => {
   const icons = {
@@ -42,33 +43,27 @@ const Modal = ({ isOpen, onClose, children }) => {
     );
 };
 
-const EditStockModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
+const EditStockModal = ({ isOpen, onClose, product, fetchProducts }) => {
     const [stockToUpdate, setStockToUpdate] = useState('');
-    const baseUrl = 'https://products-api.cbc-apps.net';
   
     useEffect(() => {
       if (product) {
-        setStockToUpdate(product.quantity || '');
+        setStockToUpdate(product.stock || '');
       }
     }, [product]);
   
     const handleUpdateStock = async () => {
       try {
-        const response = await fetch(`${baseUrl}/admin/dashboard/products/${product.productId}/stock`, {
+        await apiCall(API_CONFIG.ADMIN.PRODUCT_STOCK(product.id), {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
           body: JSON.stringify({ stock: parseInt(stockToUpdate), reason: "تحديث المخزون" })
         });
-        if (!response.ok) {
-          throw new Error('Failed to update stock');
-        }
         onClose();
         fetchProducts();
+        alert('تم تحديث المخزون بنجاح');
       } catch (error) {
         console.error('Error updating stock:', error);
+        alert('حدث خطأ في تحديث المخزون: ' + (error.message || 'خطأ غير معروف'));
       }
     };
   
@@ -104,35 +99,29 @@ const EditStockModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
     );
 };
 
-const EditPriceModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
+const EditPriceModal = ({ isOpen, onClose, product, fetchProducts }) => {
     const [priceToUpdate, setPriceToUpdate] = useState('');
     const [wholesalePriceToUpdate, setWholesalePriceToUpdate] = useState('');
-    const baseUrl = 'https://products-api.cbc-apps.net';
   
     useEffect(() => {
       if (product) {
-        setPriceToUpdate(product.sellingPrice || '');
+        setPriceToUpdate(product.price || '');
         setWholesalePriceToUpdate(product.wholesalePrice || '');
       }
     }, [product]);
   
     const handleUpdatePrice = async () => {
       try {
-        const response = await fetch(`${baseUrl}/admin/dashboard/products/${product.productId}/price`, {
+        await apiCall(API_CONFIG.ADMIN.PRODUCT_PRICE(product.id), {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
           body: JSON.stringify({ price: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
         });
-        if (!response.ok) {
-          throw new Error('Failed to update price');
-        }
         onClose();
         fetchProducts();
+        alert('تم تحديث السعر بنجاح');
       } catch (error) {
         console.error('Error updating price:', error);
+        alert('حدث خطأ في تحديث السعر: ' + (error.message || 'خطأ غير معروف'));
       }
     };
   
@@ -178,12 +167,14 @@ const EditPriceModal = ({ isOpen, onClose, product, token, fetchProducts }) => {
 const Dashboard = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
-    const [cardsData, setCardsData] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [stats, setStats] = useState({});
     const [pagination, setPagination] = useState({});
     const [isEditStockModalOpen, setIsEditStockModalOpen] = useState(false);
     const [isEditPriceModalOpen, setIsEditPriceModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] = useState(false);
+    const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
     const [isMoreActionsDropdownOpen, setIsMoreActionsDropdownOpen] = useState(null);
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -192,409 +183,575 @@ const Dashboard = () => {
     const [categories, setCategories] = useState([]);
     const [sections, setSections] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
 
-    const baseUrl = 'https://products-api.cbc-apps.net';
-    const token = localStorage.getItem('userToken');
-
-    const fetchProducts = async (page = 1, limit = 10) => {
+    const fetchProducts = async (page = 1, limit = 10, search = '', status = 'all') => {
         try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products?page=${page}&limit=${limit}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            setIsLoading(true);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
             });
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
+            if (search) {
+                params.append('search', search);
             }
-            const data = await response.json();
-            setProducts(data.products);
-            setCardsData(data.cards);
-            setPagination(data.pagination);
+            if (status !== 'all') {
+                params.append('status', status);
+            }
+            
+            const data = await apiCall(API_CONFIG.ADMIN.PRODUCTS + `?${params.toString()}`);
+            console.log('Raw backend data:', data);
+            
+            // Map backend data to frontend format
+            const mappedProducts = (data.products || []).map(product => {
+                console.log('Individual product:', product);
+                return {
+                    id: product.id,
+                    name: product.name,
+                    price: product.originalPrice || product.price,
+                    stock: product.stock || 0,
+                    mainImageUrl: product.mainImageUrl,
+                    categoryName: product.category,
+                    status: product.stock === 0 ? 'غير متوفر' : product.stock < 10 ? 'مخزون منخفض' : 'متوفر',
+                    updatedAt: product.updatedAt
+                };
+            });
+            
+            setProducts(mappedProducts);
+            setStats(data.cards || {});
+            setPagination(data.pagination || {});
         } catch (error) {
             console.error('Error fetching products:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get(`${baseUrl}/admin/dashboard/categories`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setCategories(response.data.categories);
+            const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES);
+            const transformedCategories = data.categories.map((category, index) => ({
+                categoryId: category.categoryId,
+                categoryName: category.categoryName,
+                key: category.categoryId || index
+            }));
+            setCategories(transformedCategories);
         } catch (error) {
             console.error('Error fetching categories:', error);
+            setCategories([]);
         }
     };
-  
+
     const fetchSections = async () => {
-      try {
-        const response = await axios.get(`${baseUrl}/admin/dashboard/sections`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        setSections(response.data.sections);
-      } catch (error) {
-        console.error('Error fetching sections:', error);
-      }
+        try {
+            const data = await apiCall(API_CONFIG.ADMIN.SECTIONS);
+            const transformedSections = data.sections.map((section, index) => ({
+                sectionId: section.sectionId,
+                sectionName: section.sectionName,
+                categoryId: section.categoryId,
+                key: section.sectionId || index
+            }));
+            setSections(transformedSections);
+        } catch (error) {
+            console.error('Error fetching sections:', error);
+            setSections([]);
+        }
     };
-  
+
     const fetchSuppliers = async () => {
-      try {
-        const response = await axios.get(`${baseUrl}/admin/dashboard/suppliers`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        setSuppliers(response.data.suppliers);
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
-      }
+        try {
+            const data = await apiCall(API_CONFIG.ADMIN.SUPPLIERS);
+            const transformedSuppliers = (data.suppliers || []).map((supplier, index) => ({
+                supplierId: supplier.id,
+                supplierName: supplier.name || 'مورد بدون اسم',
+                contactInfo: supplier.contactInfo,
+                phone: supplier.phone,
+                key: supplier.id || index
+            }));
+            setSuppliers(transformedSuppliers);
+        } catch (error) {
+            console.error('Error fetching suppliers:', error);
+            setSuppliers([]);
+        }
     };
 
     const fetchProductDetails = async (productId) => {
         try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products/${productId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                throw new Error('Failed to fetch product details');
-            }
-            const data = await response.json();
+            console.log('Fetching product details for ID:', productId);
+            console.log('API endpoint:', API_CONFIG.ADMIN.PRODUCT_DETAILS(productId));
+            const data = await apiCall(API_CONFIG.ADMIN.PRODUCT_DETAILS(productId));
             setSelectedProduct(data);
             setIsProductDetailsModalOpen(true);
-            setIsMoreActionsDropdownOpen(false);
         } catch (error) {
             console.error('Error fetching product details:', error);
+            alert('حدث خطأ أثناء جلب تفاصيل المنتج');
         }
-    };
-
-    useEffect(() => {
-        fetchProducts(currentPage, itemsPerPage);
-        fetchSuppliers();
-    }, [currentPage, itemsPerPage]);
-
-    const getStatusClass = (status) => {
-        switch (status) {
-            case 'متوفر':
-                return 'bg-green-100 text-green-700';
-            case 'غير متوفر':
-                return 'bg-red-100 text-red-700';
-            case 'مخزون منخفض':
-                return 'bg-yellow-100 text-yellow-700';
-            default:
-                return 'bg-gray-100 text-gray-700';
-        }
-    };
-
-    const handleOpenProductDetails = (product) => {
-        fetchProductDetails(product.productId);
-    };
-
-    const handleOpenEditStock = (product) => {
-        setSelectedProduct(product);
-        setIsEditStockModalOpen(true);
-        setIsMoreActionsDropdownOpen(false);
-    };
-
-    const handleOpenEditPrice = (product) => {
-        setSelectedProduct(product);
-        setIsEditPriceModalOpen(true);
-        setIsMoreActionsDropdownOpen(false);
-    };
-
-    const handleOpenDeleteModal = (product) => {
-        setSelectedProduct(product);
-        setIsDeleteModalOpen(true);
-        setIsMoreActionsDropdownOpen(false);
     };
 
     const handleDeleteProduct = async () => {
         try {
-            const response = await fetch(`${baseUrl}/admin/dashboard/products-management/${selectedProduct.productId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const result = await apiCall(API_CONFIG.ADMIN.PRODUCT_DELETE(selectedProduct.id), {
+                method: 'DELETE'
             });
-            if (!response.ok) {
-                throw new Error('Failed to delete product');
+            if (result.success) {
+                alert('تم حذف المنتج بنجاح');
+                fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
+                setIsDeleteModalOpen(false);
+                setSelectedProduct(null);
+            } else {
+                alert(result.message || 'حدث خطأ أثناء حذف المنتج');
             }
-            setIsDeleteModalOpen(false);
-            fetchProducts(currentPage, itemsPerPage);
         } catch (error) {
             console.error('Error deleting product:', error);
+            alert('حدث خطأ أثناء حذف المنتج');
         }
     };
 
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+        fetchProducts(1, itemsPerPage, e.target.value, filterStatus);
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        fetchProducts(page, itemsPerPage, searchTerm, filterStatus);
+    };
+
+    const handleItemsPerPageChange = (itemsPerPage) => {
+        setItemsPerPage(itemsPerPage);
+        setCurrentPage(1);
+        fetchProducts(1, itemsPerPage, searchTerm, filterStatus);
+    };
+
+    const handleFilterChange = (status) => {
+        setFilterStatus(status);
+        fetchProducts(1, itemsPerPage, searchTerm, status);
+        setCurrentPage(1);
+    };
+
+    const handleAddProduct = () => {
+        navigate('/add-product');
+    };
+
+    const handleEditProduct = (product) => {
+        setSelectedProduct(product);
+        setIsEditProductModalOpen(true);
+        setIsMoreActionsDropdownOpen(false);
+    };
+
+    const getStatusClass = (status) => {
+        switch (status) {
+            case 'active':
+                return 'bg-green-100 text-green-800';
+            case 'inactive':
+                return 'bg-red-100 text-red-800';
+            case 'low_stock':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'out_of_stock':
+                return 'bg-gray-100 text-gray-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'active':
+                return 'نشط';
+            case 'inactive':
+                return 'غير نشط';
+            case 'low_stock':
+                return 'مخزون منخفض';
+            case 'out_of_stock':
+                return 'نفد المخزون';
+            default:
+                return status;
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
+        fetchCategories();
+        fetchSections();
+        fetchSuppliers();
+    }, [currentPage, itemsPerPage]);
+
+    // Initial load
+    useEffect(() => {
+        fetchProducts(1, 10, '', 'all');
+        fetchCategories();
+        fetchSections();
+        fetchSuppliers();
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isMoreActionsDropdownOpen && !event.target.closest('.relative')) {
+                setIsMoreActionsDropdownOpen(null);
+            }
+            if (isFilterDropdownOpen && !event.target.closest('.relative')) {
+                setIsFilterDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isMoreActionsDropdownOpen, isFilterDropdownOpen]);
+
     const productDetailsModal = () => {
-        if (!isProductDetailsModalOpen || !selectedProduct) return null;
+        if (!selectedProduct) return null;
+        
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <div className="p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-800">تفاصيل المنتج</h2>
-                            <button
-                                onClick={() => setIsProductDetailsModalOpen(false)}
-                                className="text-gray-400 text-2xl font-bold hover:text-gray-600"
-                            >
-                                &times;
-                            </button>
-                        </div>
-                        <div className="space-y-4 text-gray-700">
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">الاسم</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.productName}</span>
+            <Modal isOpen={isProductDetailsModalOpen} onClose={() => setIsProductDetailsModalOpen(false)}>
+                <div className="w-full max-w-2xl">
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">تفاصيل المنتج</h2>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">اسم المنتج</label>
+                                <p className="text-gray-900">{selectedProduct.name}</p>
                             </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">صورة المنتج</span>
-                                <span className="w-2/3 text-left pl-4">
-                                    <img src={selectedProduct.imageUrl} alt="product" className="w-16 h-16 rounded-lg object-cover" />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">سعر البيع</label>
+                                <p className="text-gray-900">{selectedProduct.sellingPrice} د.ع</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">سعر الجملة</label>
+                                <p className="text-gray-900">{selectedProduct.wholesalePrice} د.ع</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">الكمية في المخزن</label>
+                                <p className="text-gray-900">{selectedProduct.stock}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">الفئة</label>
+                                <p className="text-gray-900">{selectedProduct.mainCategory}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">القسم</label>
+                                <p className="text-gray-900">{selectedProduct.subCategory}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">المورد</label>
+                                <p className="text-gray-900">{selectedProduct.merchantName}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">الحالة</label>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(selectedProduct.status)}`}>
+                                    {getStatusText(selectedProduct.status)}
                                 </span>
                             </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">سعر البيع</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.sellingPrice} د.ع</span>
-                            </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">سعر الجملة</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.wholesalePrice} د.ع</span>
-                            </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">الحالة</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.status}</span>
-                            </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">المخزون</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.stock}</span>
-                            </div>
-                            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <span className="w-1/3 text-gray-500 text-right pr-4">القسم</span>
-                                <span className="w-2/3 text-left pl-4 text-gray-900">{selectedProduct.categoryName || selectedProduct.mainCategory}</span>
-                            </div>
-                            <div className="p-2 bg-gray-50 rounded-lg">
-                                <span className="block text-gray-500 text-right pr-4 mb-1">وصف المنتج</span>
-                                <span className="block text-right pr-4 text-gray-900">{selectedProduct.description || 'لا يوجد وصف.'}</span>
-                            </div>
                         </div>
-                        <div className="flex justify-end mt-6 space-x-4 rtl:space-x-reverse">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">وصف المنتج</label>
+                            <p className="text-gray-900">{selectedProduct.description || 'لا يوجد وصف'}</p>
                         </div>
+                        {selectedProduct.mainImageUrl && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">الصورة الرئيسية</label>
+                                <img
+                                    src={selectedProduct.mainImageUrl}
+                                    alt={selectedProduct.name}
+                                    className="w-32 h-32 object-cover rounded-lg"
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex justify-end mt-6">
+                        <button
+                            onClick={() => setIsProductDetailsModalOpen(false)}
+                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                        >
+                            إغلاق
+                        </button>
                     </div>
                 </div>
-            </div>
+            </Modal>
         );
     };
 
+    if (isLoading) {
+        return <div className="text-center py-8">جاري تحميل المنتجات...</div>;
+    }
+
     return (
-        <div className="bg-gray-100 min-h-screen p-8 text-right font-['Tajawal']">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="container mx-auto p-6">
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">إدارة المنتجات</h1>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
                     title="إجمالي المنتجات"
-                    value={cardsData.totalProducts || '...'}
+                    value={stats.totalProducts || 0}
                     icon="totalProducts"
-                    onClick={() => console.log('Total Products clicked')}
                 />
                 <StatCard
-                    title="منتجات منخفضة المخزون"
-                    value={cardsData.lowInventoryProducts || '...'}
+                    title="مخزون منخفض"
+                    value={stats.lowInventoryProducts || 0}
                     icon="lowInventory"
-                    onClick={() => console.log('Low Inventory Products clicked')}
                 />
                 <StatCard
-                    title="منتجات غير متوفرة"
-                    value={cardsData.outOfStockProducts || '...'}
+                    title="نفد المخزون"
+                    value={stats.outOfStockProducts || 0}
                     icon="outOfStock"
-                    onClick={() => console.log('Out of Stock Products clicked')}
                 />
                 <StatCard
                     title="منتجات مهجورة"
-                    value={cardsData.abandonedProducts || '...'}
+                    value={stats.abandonedProducts || 0}
                     icon="abandoned"
-                    onClick={() => console.log('Abandoned Products clicked')}
                 />
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <div className="relative">
-                            <button
-                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center hover:bg-gray-200 transition-colors"
-                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                            >
-                                <span className="text-sm">الكل</span>
-                                <IoChevronDownOutline className="w-4 h-4 mr-2 text-gray-500" />
-                            </button>
-                            {isFilterDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-10">
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">متوفر</a>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">غير متوفر</a>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">كمية منخفضة</a>
-                                </div>
-                            )}
-                        </div>
-                        <div className="relative flex items-center">
-                            <input
-                                type="text"
-                                placeholder="ابحث باسم المنتج / الحالة"
-                                className="bg-gray-100 text-gray-700 px-4 py-2 pr-10 rounded-lg w-full md:w-auto focus:outline-none focus:ring-2 focus:ring-red-500 text-right"
-                            />
-                            <IoSearchOutline className="absolute right-3 text-gray-400" />
-                        </div>
+            {/* Search and Filter */}
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="البحث عن منتج..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
+                            value={searchTerm}
+                            onChange={handleSearch}
+                        />
+                        <IoSearchOutline className="absolute right-3 text-gray-400" />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800">إدارة المنتجات</h2>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-right bg-white">
-                        <thead>
-                            <tr className="border-b border-gray-300">
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">صورة المنتج</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">اسم المنتج</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">سعر الجملة</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">سعر البيع</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">الكمية</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">الحالة</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">القسم</th>
-                                <th className="py-3 px-4 text-gray-500 font-normal text-sm">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {products.map((product) => (
-                                <tr key={product.productId} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                                    <td className="py-3 px-4">
-                                        <img src={product.imageUrl || 'https://placehold.co/40x40/e0e0e0/ffffff?text=P'} alt="product" className="w-10 h-10 rounded-md object-cover" />
-                                    </td>
-                                    <td className="py-3 px-4 text-sm text-gray-800">{product.productName}</td>
-                                    <td className="py-3 px-4 text-sm text-gray-800">{product.wholesalePrice} د.ع</td>
-                                    <td className="py-3 px-4 text-sm text-gray-800">{product.sellingPrice} د.ع</td>
-                                    <td className="py-3 px-4 text-sm text-gray-800">{product.quantity || product.stock}</td>
-                                    <td className="py-3 px-4">
-                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusClass(product.status)}`}>
-                                            {product.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-sm text-gray-800">{product.categoryName}</td>
-                                    <td className="py-3 px-4 relative">
-                                        <button
-                                            className="text-gray-500 hover:text-gray-900"
-                                            onClick={() => setIsMoreActionsDropdownOpen(isMoreActionsDropdownOpen === product.productId ? null : product.productId)}
-                                        >
-                                            <IoEllipsisHorizontal className="w-5 h-5" />
-                                        </button>
-                                        {isMoreActionsDropdownOpen === product.productId && (
-                                            <div className="absolute left-1 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10 text-sm text-gray-700">
-                                                <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenProductDetails(product)}>
-                                                    <IoEyeOutline className="w-5 h-5 ml-2 text-gray-500" />
-                                                    عرض التفاصيل
-                                                </button>
-                                                <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenEditStock(product)}>
-                                                    <IoPencilOutline className="w-5 h-5 ml-2 text-gray-500" />
-                                                    تعديل المخزون
-                                                </button>
-                                                <button className="flex items-center w-full text-right px-4 py-2 hover:bg-gray-100" onClick={() => handleOpenEditPrice(product)}>
-                                                    <IoPencilOutline className="w-5 h-5 ml-2 text-gray-500" />
-                                                    تعديل السعر
-                                                </button>
-                                                <button className="flex items-center w-full text-right px-4 py-2 text-red-600 hover:bg-red-50" onClick={() => handleOpenDeleteModal(product)}>
-                                                    <IoTrashOutline className="w-5 h-5 ml-2 text-red-600" />
-                                                    حذف المنتج
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="flex justify-between items-center mt-4 text-gray-500 text-sm">
-                    <p>إجمالي المنتجات: {pagination.total || '...'}</p>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <button
-                            className={`bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            <IoChevronDownOutline className="w-4 h-4 rotate-90" />
-                        </button>
-                        {Array.from({ length: pagination.totalPages || 1 }, (_, i) => i + 1).slice(
-                            Math.max(0, currentPage - 3),
-                            Math.min(pagination.totalPages, currentPage + 2)
-                        ).map(page => (
-                            <button
-                                key={page}
-                                className={`px-3 py-1 rounded-md ${currentPage === page ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                onClick={() => setCurrentPage(page)}
-                            >
-                                {page}
-                            </button>
-                        ))}
-                        <button
-                            className={`bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300 transition-colors ${currentPage === pagination.totalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={currentPage === pagination.totalPages}
-                        >
-                            <IoChevronUpOutline className="w-4 h-4 rotate-90" />
-                        </button>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <span className="text-sm">عرض في الصفحة</span>
+                    <div className="relative">
                         <select
-                            className="bg-gray-100 text-gray-900 rounded-md px-2 py-1 border border-gray-300"
-                            onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
-                            value={itemsPerPage}
+                            value={filterStatus}
+                            onChange={(e) => handleFilterChange(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500"
                         >
-                            <option>10</option>
-                            <option>20</option>
-                            <option>50</option>
+                            <option value="all">جميع المنتجات</option>
+                            <option value="available">متوفر</option>
+                            <option value="low_stock">مخزون منخفض</option>
+                            <option value="out_of_stock">نفد المخزون</option>
                         </select>
                     </div>
                 </div>
+                <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                    <button
+                        onClick={handleAddProduct}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-red-600 transition-colors"
+                    >
+                        <FaPlus className="w-4 h-4 ml-2" />
+                        إضافة منتج
+                    </button>
+                </div>
             </div>
 
+            {/* Products Table */}
+            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                المنتج
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                السعر
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                المخزون
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                الحالة
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                الإجراءات
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {products.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                                    لا توجد منتجات لعرضها.
+                                </td>
+                            </tr>
+                        ) : (
+                            products.map((product) => (
+                                <tr key={product.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            {product.mainImageUrl && (
+                                                <div className="flex-shrink-0 h-10 w-10">
+                                                    <img className="h-10 w-10 rounded-full object-cover" src={product.mainImageUrl} alt={product.name} />
+                                                </div>
+                                            )}
+                                            <div className="ml-4">
+                                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                                <div className="text-sm text-gray-500">ID: {product.id}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {product.price} د.ع
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {product.stock}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(product.status)}`}>
+                                            {getStatusText(product.status)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                            <button
+                                                onClick={() => fetchProductDetails(product.id)}
+                                                className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                                                title="عرض التفاصيل"
+                                            >
+                                                <IoEyeOutline className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    console.log('Edit product ID:', product.id);
+                                                    console.log('Product object:', product);
+                                                    navigate(`/edit-product/${product.id}`);
+                                                }}
+                                                className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                                                title="تعديل"
+                                            >
+                                                <IoPencilOutline className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedProduct(product);
+                                                    setIsDeleteModalOpen(true);
+                                                }}
+                                                className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                                                title="حذف"
+                                            >
+                                                <IoTrashOutline className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <span className="text-sm text-gray-700">عدد العناصر في الصفحة:</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                            className="px-3 py-1 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                            السابق
+                        </button>
+                        <span className="px-3 py-1 text-sm text-gray-700">
+                            صفحة {currentPage} من {pagination.totalPages}
+                        </span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === pagination.totalPages}
+                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                            التالي
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modals */}
             <EditStockModal
                 isOpen={isEditStockModalOpen}
                 onClose={() => setIsEditStockModalOpen(false)}
                 product={selectedProduct}
-                token={token}
-                fetchProducts={fetchProducts}
+                fetchProducts={() => fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus)}
             />
 
             <EditPriceModal
                 isOpen={isEditPriceModalOpen}
                 onClose={() => setIsEditPriceModalOpen(false)}
                 product={selectedProduct}
-                token={token}
-                fetchProducts={fetchProducts}
+                fetchProducts={() => fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus)}
             />
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-                <div className="flex flex-col items-center text-center">
-                    <div className="bg-red-100 text-red-600 p-4 rounded-full mb-4">
-                        <IoTrashOutline className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-xl font-bold mt-2 text-gray-800">هل أنت متأكد أنك تريد حذف المنتج؟</h3>
-                    <p className="text-sm text-gray-500 mt-2">سوف يتم حذف هذا المنتج نهائيًا من قائمة المنتجات لديك</p>
-                    <p className="text-sm text-gray-500 mt-1">هل أنت متأكد أنك تريد الحذف؟</p>
-                    <div className="flex justify-center space-x-4 rtl:space-x-reverse mt-6 w-full">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold mb-4 text-gray-800">تأكيد الحذف</h2>
+                    <p className="text-gray-600 mb-6">
+                        هل أنت متأكد أنك تريد حذف المنتج "{selectedProduct?.name}"؟
+                        لا يمكن التراجع عن هذا الإجراء.
+                    </p>
+                    <div className="flex justify-center space-x-4 rtl:space-x-reverse">
                         <button
                             onClick={() => setIsDeleteModalOpen(false)}
-                            className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                         >
                             إلغاء
                         </button>
                         <button
                             onClick={handleDeleteProduct}
-                            className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors"
                         >
                             حذف
                         </button>
                     </div>
                 </div>
             </Modal>
-            
+
             {productDetailsModal()}
+
+            {/* Edit Product Modal */}
+            <Modal isOpen={isEditProductModalOpen} onClose={() => setIsEditProductModalOpen(false)}>
+                <div className="w-full max-w-2xl">
+                    <div className="bg-white rounded-lg shadow-xl">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">تعديل المنتج</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <p className="text-gray-600 mb-4">
+                                تم فتح صفحة التعديل في تبويب جديد. يمكنك إغلاق هذا النافذة.
+                            </p>
+                            <div className="flex justify-end space-x-3 rtl:space-x-reverse">
+                                <button
+                                    onClick={() => setIsEditProductModalOpen(false)}
+                                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                                >
+                                    إغلاق
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (selectedProduct) {
+                                            window.open(`/edit-product/${selectedProduct.id}`, '_blank');
+                                        }
+                                        setIsEditProductModalOpen(false);
+                                    }}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                                >
+                                    فتح صفحة التعديل
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

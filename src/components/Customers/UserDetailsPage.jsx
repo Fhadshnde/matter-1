@@ -13,6 +13,7 @@ import { TbPackage } from 'react-icons/tb';
 import { BiBlock } from 'react-icons/bi';
 import { MdInfoOutline } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
+import API_CONFIG, { apiCall } from '../../config/api';
 
 // Helper component for status badges
 const StatusBadge = ({ status, isBanned }) => {
@@ -342,20 +343,11 @@ const UserDetailsPage = () => {
   const [showMoreOptions, setShowMoreOptions] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const baseUrl = 'https://products-api.cbc-apps.net';
-
   useEffect(() => {
     const fetchUserDetails = async () => {
       setLoading(true);
-      const token = localStorage.getItem('userToken');
       try {
-        const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch user data');
-        const data = await response.json();
+        const data = await apiCall(API_CONFIG.ADMIN.CUSTOMER_DETAILS(id));
         setUserData(data);
       } catch (error) {
         console.error("Error fetching user details:", error);
@@ -369,23 +361,13 @@ const UserDetailsPage = () => {
   }, [id]);
 
   const handleBlockUser = async (banned, reason) => {
-    const token = localStorage.getItem('userToken');
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}/ban`, {
+      const updatedUserData = await apiCall(API_CONFIG.ADMIN.CUSTOMER_BAN(id), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({ banned, reason })
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to ban user.');
-      }
       alert(`تم ${banned ? 'حظر' : 'إلغاء حظر'} الزبون بنجاح.`);
       setShowBlockUser(false);
-      const updatedUserData = await response.json();
       setUserData(updatedUserData);
 
     } catch (error) {
@@ -395,22 +377,12 @@ const UserDetailsPage = () => {
   };
 
   const handleSaveNote = async (noteData) => {
-    const token = localStorage.getItem('userToken');
     try {
-      const response = await fetch(`${baseUrl}/admin/dashboard/customers/${id}/notes`, {
+      const updatedUserData = await apiCall(API_CONFIG.ADMIN.CUSTOMER_NOTES(id), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(noteData)
       });
-      if (!response.ok) {
-        throw new Error('Failed to add note.');
-      }
       alert('تم إضافة الملاحظة بنجاح.');
-      // You might want to refresh user data after adding a note
-      const updatedUserData = await response.json();
       setUserData(updatedUserData);
     } catch (error) {
       console.error("Error adding note:", error);
