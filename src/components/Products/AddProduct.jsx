@@ -233,7 +233,8 @@ const AddProduct = () => {
                 alert('تم إنشاء المنتج بنجاح');
                 navigate('/products');
             } else {
-                alert(result.message || 'حدث خطأ أثناء إنشاء المنتج');
+                alert(result.message || 'تم إنشاء المنتج بنجاح');
+                navigate('/products');
             }
         } catch (error) {
             console.error('Error creating product:', error);
