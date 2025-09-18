@@ -194,26 +194,30 @@ const SalesDashboard = () => {
   const [departmentStartDate, setDepartmentStartDate] = useState('');
   const [departmentEndDate, setDepartmentEndDate] = useState('');
   
+  const fetchAnalyticsData = async (dateFrom = '', dateTo = '') => {
+    const token = localStorage.getItem('userToken');
+
+    if (!token) {
+      setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      let endpoint = API_CONFIG.ADMIN.ANALYTICS;
+      if (dateFrom && dateTo) {
+        endpoint += `?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+      }
+      const data = await apiCall(endpoint);
+      setAnalyticsData(data);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAnalyticsData = async () => {
-      const token = localStorage.getItem('userToken');
-
-      if (!token) {
-        setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const data = await apiCall(API_CONFIG.ADMIN.ANALYTICS);
-        setAnalyticsData(data);
-        setIsLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setIsLoading(false);
-      }
-    };
-
     fetchAnalyticsData();
   }, []);
     const fetchCardDetails = async (cardType) => {
@@ -332,6 +336,22 @@ const SalesDashboard = () => {
               <label htmlFor="sales-end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
               <input type="date" id="sales-end-date" value={salesOverTimeEndDate} onChange={(e) => setSalesOverTimeEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
             </div>
+            <button 
+              onClick={() => fetchAnalyticsData(salesOverTimeStartDate, salesOverTimeEndDate)}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              تطبيق الفلتر
+            </button>
+            <button 
+              onClick={() => {
+                setSalesOverTimeStartDate('');
+                setSalesOverTimeEndDate('');
+                fetchAnalyticsData();
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              إعادة تعيين
+            </button>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={salesOverTimeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -382,6 +402,22 @@ const SalesDashboard = () => {
               <label htmlFor="city-end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
               <input type="date" id="city-end-date" value={cityEndDate} onChange={(e) => setCityEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
             </div>
+            <button 
+              onClick={() => fetchAnalyticsData(cityStartDate, cityEndDate)}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              تطبيق الفلتر
+            </button>
+            <button 
+              onClick={() => {
+                setCityStartDate('');
+                setCityEndDate('');
+                fetchAnalyticsData();
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              إعادة تعيين
+            </button>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={300}>

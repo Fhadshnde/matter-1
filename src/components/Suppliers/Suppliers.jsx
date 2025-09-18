@@ -102,7 +102,7 @@ const SuppliersPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await apiCall(API_CONFIG.ADMIN.SUPPLIERS, {
+      await apiCall(API_CONFIG.ADMIN.SUPPLIER_CREATE, {
         method: 'POST',
         body: JSON.stringify(formData)
       });
