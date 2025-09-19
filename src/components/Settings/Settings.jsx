@@ -136,23 +136,28 @@ const EditEmployeeModal = ({ employee, onClose }) => {
 };
 
 const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
-  const [selectedRole, setSelectedRole] = useState(employee?.role || 'moderator');
+  const [selectedRole, setSelectedRole] = useState('');
   const [availableRoles, setAvailableRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const fetchRoles = async () => {
     try {
+      console.log('Fetching available roles from:', API_CONFIG.ADMIN.AVAILABLE_ROLES);
       const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
+      console.log('Available roles response:', data);
       setAvailableRoles(data.roles || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching roles:', error);
       // Fallback to default roles if API fails
       setAvailableRoles([
-        { value: 'admin', label: 'مدير' },
-        { value: 'moderator', label: 'مشرف' },
-        { value: 'staff', label: 'موظف' }
+        { value: 'admin', label: 'مدير عام', description: 'صلاحيات كاملة على النظام' },
+        { value: 'manager', label: 'مدير متجر', description: 'إدارة المنتجات والطلبات' },
+        { value: 'moderator', label: 'محرر', description: 'تعديل المحتوى والمنتجات' },
+        { value: 'supervisor', label: 'مشرف', description: 'مراقبة العمليات والتقارير' },
+        { value: 'support', label: 'دعم فني', description: 'مساعدة العملاء والتجار' },
+        { value: 'analyst', label: 'محلل بيانات', description: 'الوصول للتقارير والتحليلات' }
       ]);
       setLoading(false);
     }
@@ -161,16 +166,46 @@ const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiCall(API_CONFIG.ADMIN.STAFF.UPDATE_ROLE(employee.staffId), {
+      console.log('Updating role for employee:', employee);
+      console.log('Employee staffId:', employee.staffId);
+      console.log('Selected role:', selectedRole);
+      console.log('API endpoint:', API_CONFIG.ADMIN.STAFF.UPDATE_ROLE(employee.staffId));
+      console.log('Available roles:', availableRoles);
+      console.log('Selected role exists in available roles:', availableRoles.find(r => r.value === selectedRole));
+      
+      if (!employee.staffId) {
+        alert('خطأ: لا يوجد معرف للموظف');
+        setSaving(false);
+        return;
+      }
+      
+      // Validate that the selected role exists in available roles
+      if (!selectedRole || !availableRoles.find(r => r.value === selectedRole)) {
+        alert(`الصلاحية المحددة غير صحيحة: ${selectedRole || 'غير محدد'}`);
+        setSaving(false);
+        return;
+      }
+      
+      const requestBody = { role: selectedRole };
+      console.log('Request body:', requestBody);
+      
+      const response = await apiCall(API_CONFIG.ADMIN.STAFF.UPDATE_ROLE(employee.staffId), {
         method: 'PUT',
-        body: JSON.stringify({ role: selectedRole })
+        body: JSON.stringify(requestBody)
       });
-      alert('تم تحديث صلاحية الموظف بنجاح');
-      onUpdate();
-      onClose();
+      
+      console.log('Role update response:', response);
+      
+      if (response.success) {
+        alert('تم تحديث صلاحية الموظف بنجاح');
+        onUpdate();
+        onClose();
+      } else {
+        alert(`خطأ في تحديث الصلاحية: ${response.message}`);
+      }
     } catch (error) {
       console.error('Error updating role:', error);
-      alert('حدث خطأ أثناء تحديث الصلاحية');
+      alert(`حدث خطأ أثناء تحديث الصلاحية: ${error.message}`);
     }
     setSaving(false);
   };
@@ -178,6 +213,34 @@ const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
   useEffect(() => {
     fetchRoles();
   }, []);
+
+  useEffect(() => {
+    // Set the current employee's role after available roles are loaded
+    if (availableRoles.length > 0 && !selectedRole) {
+      const currentRole = employee?.role;
+      console.log('Setting role after roles loaded. Current role:', currentRole);
+      
+      // Map Arabic role labels to English values
+      const roleMapping = {
+        'مدير عام': 'admin',
+        'مدير متجر': 'manager',
+        'محرر': 'moderator',
+        'مشرف': 'supervisor',
+        'دعم فني': 'support',
+        'محلل بيانات': 'analyst'
+      };
+      
+      const englishRole = roleMapping[currentRole] || currentRole;
+      console.log('Mapped role:', currentRole, '->', englishRole);
+      
+      if (englishRole && availableRoles.find(r => r.value === englishRole)) {
+        setSelectedRole(englishRole);
+      } else {
+        setSelectedRole('admin');
+        console.log('Setting default role to admin because current role is invalid');
+      }
+    }
+  }, [availableRoles, employee?.role, selectedRole]);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
@@ -382,16 +445,21 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
 
   const fetchRoles = async () => {
     try {
+      console.log('Fetching available roles from:', API_CONFIG.ADMIN.AVAILABLE_ROLES);
       const data = await apiCall(API_CONFIG.ADMIN.AVAILABLE_ROLES);
+      console.log('Available roles response:', data);
       setAvailableRoles(data.roles || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching roles:', error);
       // Fallback to default roles if API fails
       setAvailableRoles([
-        { value: 'admin', label: 'مدير' },
-        { value: 'moderator', label: 'مشرف' },
-        { value: 'staff', label: 'موظف' }
+        { value: 'admin', label: 'مدير عام', description: 'صلاحيات كاملة على النظام' },
+        { value: 'manager', label: 'مدير متجر', description: 'إدارة المنتجات والطلبات' },
+        { value: 'moderator', label: 'محرر', description: 'تعديل المحتوى والمنتجات' },
+        { value: 'supervisor', label: 'مشرف', description: 'مراقبة العمليات والتقارير' },
+        { value: 'support', label: 'دعم فني', description: 'مساعدة العملاء والتجار' },
+        { value: 'analyst', label: 'محلل بيانات', description: 'الوصول للتقارير والتحليلات' }
       ]);
       setLoading(false);
     }
