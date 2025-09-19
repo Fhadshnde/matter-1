@@ -808,13 +808,13 @@ const Profits = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">إدارة الأرباح</h1>
         <div className="flex gap-4">
-          <button
+          {/* <button
             onClick={handleExportReport}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
           >
             <FaDownload className="w-4 h-4" />
             تصدير التقرير
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -834,7 +834,7 @@ const Profits = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex gap-4 w-full md:w-auto">
             <Dropdown
@@ -895,7 +895,7 @@ const Profits = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

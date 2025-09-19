@@ -207,7 +207,7 @@ const HomePage = () => {
     }
   }, []);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (start, end) => {
     const token = localStorage.getItem('userToken');
     if (!token) {
       setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
@@ -216,7 +216,13 @@ const HomePage = () => {
     }
 
     try {
-      const data = await apiCall(API_CONFIG.ADMIN.OVERVIEW);
+      setIsLoading(true);
+      setError(null);
+      let url = API_CONFIG.ADMIN.OVERVIEW;
+      if (start && end) {
+        url += `?dateFrom=${start}&dateTo=${end}`;
+      }
+      const data = await apiCall(url);
       setDashboardData(data);
     } catch (err) {
       setError(err.message);
@@ -225,9 +231,20 @@ const HomePage = () => {
     }
   }, []);
 
+  const handleApplyFilter = () => {
+    fetchDashboardData(startDate, endDate);
+  };
+
+  const handleResetFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    fetchDashboardData('', '');
+  };
+
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    // جلب البيانات الأولية عند تحميل الصفحة
+    fetchDashboardData(startDate, endDate);
+  }, [fetchDashboardData, startDate, endDate]);
 
   if (isLoading) {
     return (
@@ -270,6 +287,37 @@ const HomePage = () => {
     name: item.month,
     value: item.sales
   }));
+
+  const FilterControls = () => (
+    <div className="flex items-center gap-2 mb-4">
+      <span className="text-sm text-gray-500">من</span>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+      />
+      <span className="text-sm text-gray-500">إلى</span>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+      />
+      <button
+        onClick={handleApplyFilter}
+        className="py-1 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 bg-red-500 text-white hover:bg-red-600"
+      >
+        تطبيق الفلتر
+      </button>
+      <button
+        onClick={handleResetFilter}
+        className="py-1 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 bg-gray-200 text-gray-800 hover:bg-gray-300"
+      >
+        إعادة تعيين
+      </button>
+    </div>
+  );
 
   const ProductsPerformanceTable = () => (
     <div className="overflow-x-auto">
@@ -549,25 +597,8 @@ const HomePage = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">من</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <span className="text-sm text-gray-500">إلى</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">حالة طلبات هذا الشهر</h2>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">حالة طلبات هذا الشهر</h2>
+            <FilterControls />
             <div className="flex items-center justify-between mb-4">
               <div className="space-y-2 text-sm">
                 {monthlyOrderStatus.map((item, index) => (
@@ -614,25 +645,8 @@ const HomePage = () => {
             </ResponsiveContainer>
           </div>
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">من</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <span className="text-sm text-gray-500">إلى</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">المبيعات حسب الوقت</h2>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">المبيعات حسب الوقت</h2>
+            <FilterControls />
             <div className="relative">
               <ResponsiveContainer width="100%" height={375}>
                 <AreaChart data={areaChartData} margin={{ top: 20, right: 40, left: 0, bottom: 0 }}>
@@ -671,22 +685,7 @@ const HomePage = () => {
 
         <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">من</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-              />
-              <span className="text-sm text-gray-500">إلى</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-              />
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900">المنتجات الأكثر أداءً</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTable('performance')}
@@ -714,24 +713,22 @@ const HomePage = () => {
               </button>
             </div>
           </div>
+          {/* <FilterControls /> */}
 
           {activeTable === 'performance' && (
             <>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">المنتجات الأكثر أداءً</h2>
               <ProductsPerformanceTable />
             </>
           )}
 
           {activeTable === 'visited' && (
             <>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">المنتجات الأكثر زيارة (والتحويل)</h2>
               <ProductsVisitedTable />
             </>
           )}
 
           {activeTable === 'abandoned' && (
             <>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">المنتجات المهجورة</h2>
               <AbandonedProductsTable />
             </>
           )}
@@ -750,25 +747,8 @@ const HomePage = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">من</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <span className="text-sm text-gray-500">إلى</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">طلبات تحتاج انتباه</h2>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">طلبات تحتاج انتباه</h2>
+            {/* <FilterControls /> */}
             <div className="space-y-4">
               {ordersNeedingAttention.map((order, index) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -792,25 +772,8 @@ const HomePage = () => {
             </div>
           </div>
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">من</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <span className="text-sm text-gray-500">إلى</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">آراء الزبائن</h2>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">آراء الزبائن</h2>
+            {/* <FilterControls /> */}
             <div className="space-y-4">
               {customerReviews.length > 0 ? (
                 customerReviews.map((review, index) => (

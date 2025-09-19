@@ -216,19 +216,19 @@ const Dashboard = () => {
     const [categories, setCategories] = useState([]);
     const [sections, setSections] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
+    // تم تغيير هذه الحالة لعملية البحث على الفرونت-إند
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const fetchProducts = async (page = 1, limit = 20, term = '', status = 'all') => {
+    const fetchProducts = async (page = 1, limit = 20) => {
         try {
             setIsLoading(true);
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: limit.toString(),
-                ...(term && { search: term }),
-                ...(status !== 'all' && { status: status })
             });
             
+            // تم إزالة معاملات البحث والتصفية من طلب الـ API
             const data = await apiCall(API_CONFIG.ADMIN.PRODUCTS + `?${params.toString()}`);
             
             const mappedProducts = (data.products || []).map(product => {
@@ -322,7 +322,7 @@ const Dashboard = () => {
             if (result.success) {
                 alert('تم حذف المنتج بنجاح');
                 // إعادة جلب المنتجات بعد الحذف
-                fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
+                fetchProducts(currentPage, itemsPerPage);
                 setIsDeleteModalOpen(false);
                 setSelectedProduct(null);
             } else {
@@ -334,9 +334,25 @@ const Dashboard = () => {
         }
     };
 
+    // دالة لتصفية المنتجات بناءً على مصطلح البحث والحالة
+    const filterAndSearchProducts = (productsToFilter) => {
+        return productsToFilter.filter(product => {
+            const searchTermMatch = searchTerm === '' ||
+                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                product.id?.toString().includes(searchTerm);
+            
+            const statusMatch = filterStatus === 'all' || product.status === filterStatus;
+            
+            return searchTermMatch && statusMatch;
+        });
+    };
+    
+    // المنتجات التي سيتم عرضها في الجدول بعد التصفية
+    const displayedProducts = filterAndSearchProducts(products);
+
     const handleItemsPerPageChange = (limit) => {
         setItemsPerPage(limit);
-        setCurrentPage(1); // Reset to first page when limit changes
+        setCurrentPage(1);
     };
 
     const handleAddProduct = () => {
@@ -379,10 +395,10 @@ const Dashboard = () => {
         }
     };
     
-    // Combined useEffect for fetching data based on filters, search, and pagination
+    // تم تعديل useEffect ليعمل فقط عند تغير أزرار الترقيم
     useEffect(() => {
-        fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus);
-    }, [currentPage, itemsPerPage, searchTerm, filterStatus]);
+        fetchProducts(currentPage, itemsPerPage);
+    }, [currentPage, itemsPerPage]);
 
     useEffect(() => {
         fetchCategories();
@@ -551,7 +567,7 @@ const Dashboard = () => {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
                         <span className="mr-4 text-gray-600">جاري التحميل...</span>
                     </div>
-                ) : products.length === 0 ? (
+                ) : displayedProducts.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                         <p>لا توجد منتجات لعرضها.</p>
                         <p className="text-sm mt-2">تحقق من الفلاتر أو جرب البحث</p>
@@ -578,7 +594,7 @@ const Dashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {products.map((product) => (
+                            {displayedProducts.map((product) => (
                                 <tr key={product.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -672,14 +688,14 @@ const Dashboard = () => {
                 isOpen={isEditStockModalOpen}
                 onClose={() => setIsEditStockModalOpen(false)}
                 product={selectedProduct}
-                fetchProducts={() => fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus)}
+                fetchProducts={() => fetchProducts(currentPage, itemsPerPage)}
             />
 
             <EditPriceModal
                 isOpen={isEditPriceModalOpen}
                 onClose={() => setIsEditPriceModalOpen(false)}
                 product={selectedProduct}
-                fetchProducts={() => fetchProducts(currentPage, itemsPerPage, searchTerm, filterStatus)}
+                fetchProducts={() => fetchProducts(currentPage, itemsPerPage)}
             />
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>

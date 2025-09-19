@@ -268,7 +268,7 @@ const SuppliersPage = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col lg:flex-row gap-4 items-center flex-1">
-            <div className="relative flex-1 max-w-md">
+            {/* <div className="relative flex-1 max-w-md">
               <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -277,7 +277,7 @@ const SuppliersPage = () => {
                 onChange={handleSearch}
                 className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </div> */}
             <div className="flex gap-2">
               <select
                 value={itemsPerPage}
