@@ -87,7 +87,7 @@ const EmployeeDetailsModal = ({ employee, onClose }) => (
   </div>
 );
 
-const EditEmployeeModal = ({ employee, onClose }) => {
+const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
     name: employee.fullName,
     email: employee.email,
@@ -97,6 +97,21 @@ const EditEmployeeModal = ({ employee, onClose }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    try {
+      await apiCall(API_CONFIG.ADMIN.STAFF.UPDATE(employee.staffId), {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+      alert("تم تعديل بيانات الموظف بنجاح");
+      if (onUpdate) onUpdate(); // تحديث القائمة
+      onClose(); // إغلاق المودال
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      alert("حدث خطأ أثناء تعديل البيانات");
+    }
   };
 
   return (
@@ -111,22 +126,46 @@ const EditEmployeeModal = ({ employee, onClose }) => {
         <div className="p-5 space-y-4">
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">الاسم</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+            <input 
+              type="text" 
+              name="name" 
+              value={formData.name} 
+              onChange={handleChange} 
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm" 
+            />
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">البريد</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+            <input 
+              type="email" 
+              name="email" 
+              value={formData.email} 
+              onChange={handleChange} 
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm" 
+            />
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-700 mb-1">رقم الجوال</label>
-            <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+            <input 
+              type="text" 
+              name="phone" 
+              value={formData.phone} 
+              onChange={handleChange} 
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm" 
+            />
           </div>
         </div>
         <div className="p-4 border-t flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-1.5 text-gray-700 text-sm font-medium">
+          <button 
+            onClick={onClose} 
+            className="px-4 py-1.5 text-gray-700 text-sm font-medium"
+          >
             الغاء
           </button>
-          <button className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+          <button 
+            onClick={handleSave} 
+            className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium"
+          >
             تعديل
           </button>
         </div>
@@ -134,6 +173,7 @@ const EditEmployeeModal = ({ employee, onClose }) => {
     </div>
   );
 };
+
 
 const EditPermissionsModal = ({ onClose, employee, onUpdate }) => {
   const [selectedRole, setSelectedRole] = useState('');

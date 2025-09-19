@@ -205,8 +205,15 @@ const SalesDashboard = () => {
 
     try {
       let endpoint = API_CONFIG.ADMIN.ANALYTICS;
-      if (dateFrom && dateTo) {
-        endpoint += `?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+      const params = new URLSearchParams();
+      if (dateFrom) {
+        params.append('dateFrom', dateFrom);
+      }
+      if (dateTo) {
+        params.append('dateTo', dateTo);
+      }
+      if (params.toString()) {
+        endpoint += `?${params.toString()}`;
       }
       const data = await apiCall(endpoint);
       setAnalyticsData(data);
@@ -377,6 +384,22 @@ const SalesDashboard = () => {
               <label htmlFor="department-end-date" className="absolute -top-2 right-2 -mt-px inline-block bg-white px-1 text-xs font-medium text-gray-900">إلى تاريخ</label>
               <input type="date" id="department-end-date" value={departmentEndDate} onChange={(e) => setDepartmentEndDate(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6" />
             </div>
+            <button 
+              onClick={() => fetchAnalyticsData(departmentStartDate, departmentEndDate)}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              تطبيق الفلتر
+            </button>
+            <button 
+              onClick={() => {
+                setDepartmentStartDate('');
+                setDepartmentEndDate('');
+                fetchAnalyticsData();
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              إعادة تعيين
+            </button>
           </div>
           <div className="space-y-4 pt-4">
             {departmentData.map((item, index) => (

@@ -8,12 +8,12 @@ import API_CONFIG, { apiCall } from '../../config/api';
 
 const GeneralSettings = () => {
   const [settings, setSettings] = useState({
-    companyName: '',
-    officialEmail: '',
-    phoneNumber: '',
-    address: '',
-    currency: '',
-    timezone: ''
+    companyName: 'ماتجر - منصة التجارة الإلكترونية',
+    officialEmail: 'admin@matjer.iq',
+    phoneNumber: '+964 780 000 0000',
+    address: 'بغداد - شارع الرشيد - مجمع الأعمال',
+    currency: 'دينار عراقي (IQD)',
+    timezone: 'Asia/Baghdad (GMT+3)'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,7 +25,6 @@ const GeneralSettings = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching settings:', error);
-      // Keep default empty values instead of mock data
       setLoading(false);
     }
   };
@@ -144,7 +143,7 @@ const GeneralSettings = () => {
 
 const SystemOptions = ({ openModal }) => {
   const [systemOptions, setSystemOptions] = useState({
-    appRatio: 25,
+    appRatio: 15,
     notifications: {
       email: true,
       sms: true,
@@ -161,7 +160,6 @@ const SystemOptions = ({ openModal }) => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching system options:', error);
-      // Keep default values instead of mock data
       setLoading(false);
     }
   };
@@ -494,7 +492,6 @@ const SettingsNav = ({ activePage }) => {
   return (
     <div className="flex items-center space-x-4 rtl:space-x-reverse mb-6" dir="rtl">
       <div className="bg-white p-2 rounded-xl shadow-md flex items-center space-x-2 rtl:space-x-reverse">
-        {/* استبدال a بـ Link */}
         <Link to="/settings" className={`${linkClass} ${activePage === 'employees' ? activeClass : inactiveClass}`}>
           إعدادات الموظفين
         </Link>
@@ -520,14 +517,10 @@ const SystemSettingsPage = () => {
   return (
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans">
       <h1 className="text-2xl font-bold text-gray-800 mb-6 text-right">إعدادات النظام</h1>
-      
-      {/* New navigation added here */}
       <SettingsNav activePage="general" />
-
       <GeneralSettings />
-      <SystemOptions openModal={openModal} />
+      {/* <SystemOptions openModal={openModal} /> */}
       <SystemLog />
-
       {modal === 'appRatio' && <AppRatioModal onClose={closeModal} />}
       {modal === 'notifications' && <NotificationsModal onClose={closeModal} />}
       {modal === 'maintenance' && <MaintenanceModal onClose={closeModal} />}
