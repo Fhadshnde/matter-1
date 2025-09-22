@@ -584,13 +584,13 @@ const OrdersPage = () => {
                           >
                             <BsEye className="text-lg" />
                           </button>
-                          <button 
+                          {/* <button 
                             onClick={() => openStatusUpdateModal(order)} 
                             className="text-blue-500 hover:text-blue-700 p-1"
                             title="تحديث الحالة"
                           >
                             <FaEdit className="text-lg" />
-                          </button>
+                          </button> */}
                         </div>
                       </Td>
                     </tr>

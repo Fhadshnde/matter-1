@@ -36,7 +36,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
             });
             const transformedCategories = data.categories.map(category => ({
@@ -54,7 +54,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.SECTIONS, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
             });
             const transformedSections = data.sections.map(section => ({
@@ -73,7 +73,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.SUPPLIERS, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
             });
             const transformedSuppliers = (data.suppliers || []).map(supplier => ({
@@ -225,7 +225,7 @@ const AddProduct = () => {
                 method: 'POST',
                 body: JSON.stringify(productData),
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1Nzk4MSwiZXhwIjoxNzU4MjQ0MzgxfQ.3uQ7thMK-vElcE4gTwVLTC1A4TZE7aZLSEHvGa3FACg'}`
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
             });
 

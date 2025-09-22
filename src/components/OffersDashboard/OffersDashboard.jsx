@@ -85,11 +85,16 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
     const payload = {
       title: name,
       description: "عرض تم إنشاؤه من قبل الأدمن",
-      discountPercentage: parseFloat(value),
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
       isActive: true,
     };
+  
+    if (type === 'percentage') {
+      payload.discountPercentage = parseFloat(value);
+    } else {
+      payload.discountAmount = parseFloat(value);
+    }
   
     if (scope === 'specific_products') {
       payload.productIds = selectedProductIds;
@@ -150,7 +155,7 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
             <select value={scope} onChange={(e) => setScope(e.target.value)} required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
               <option value="all_products">جميع المنتجات</option>
-              <option value="category">فئة محددة</option>
+              {/* <option value="category">فئة محددة</option> */}
               <option value="specific_products">منتجات محددة</option>
             </select>
           </div>
@@ -214,9 +219,9 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
 
 const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
   const [name, setName] = useState(offer.offerName);
-  const [type, setType] = useState(offer.offerType);
+  const [type, setType] = useState(offer.offerType === 'نسبة مئوية' ? 'percentage' : 'fixed_amount');
   const [value, setValue] = useState(offer.value);
-  const [scope, setScope] = useState(offer.scope);
+  const [scope, setScope] = useState(offer.scope === 'جميع المنتجات' ? 'all_products' : 'specific_products');
   const [categoryId, setCategoryId] = useState(offer.categoryId || '');
   const [selectedProductIds, setSelectedProductIds] = useState(offer.productIds || []);
   const [products, setProducts] = useState([]);
@@ -268,13 +273,18 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
     const payload = {
       title: name,
       description: offer.description,
-      discountPercentage: parseFloat(value),
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
       isActive: offer.isActive,
       categoryId: categoryId || undefined,
       productIds: scope === 'specific_products' ? selectedProductIds : undefined,
     };
+    
+    if (type === 'percentage') {
+      payload.discountPercentage = parseFloat(value);
+    } else {
+      payload.discountAmount = parseFloat(value);
+    }
 
     try {
       const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/offers/${offer.offerId}`, {
