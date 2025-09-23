@@ -886,18 +886,18 @@ const EmployeeManagement = () => {
                         <button onClick={() => handleOpenModal('edit', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEdit className="ml-2" /> تعديل البيانات
                         </button>
-                        <button onClick={() => handleOpenModal('permissions', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        {/* <button onClick={() => handleOpenModal('permissions', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEdit className="ml-2" /> تعديل الصلاحيات
-                        </button>
-                        <button onClick={() => handleOpenModal('toggleStatus', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        </button> */}
+                        {/* <button onClick={() => handleOpenModal('toggleStatus', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaStore className="ml-2" /> تعليق أو تفعيل
-                        </button>
+                        </button> */}
                         <button onClick={() => handleOpenModal('changePassword', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaEdit className="ml-2" /> تغيير كلمة المرور
                         </button>
-                        <button onClick={() => handleOpenModal('addNote')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        {/* <button onClick={() => handleOpenModal('addNote')} className="flex items-center w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <FaRegComment className="ml-2" /> إضافة ملاحظة إدارية
-                        </button>
+                        </button> */}
                         <button onClick={() => handleOpenModal('closeAccount', employee)} className="flex items-center w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                           <FaTrashAlt className="ml-2" /> إغلاق
                         </button>
