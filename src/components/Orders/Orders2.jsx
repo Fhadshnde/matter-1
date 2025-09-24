@@ -12,9 +12,9 @@ const ImportProductsWithImages = () => {
   const token = localStorage.getItem("userToken"); // توكن الأدمن
 
   // ثوابت
-  const supplierId = 186;
-  const categoryId = 244;
-  const sectionId = 332;
+  const supplierId = 197;
+  const categoryId = 245;
+  const sectionId = 333;
   const stock = 1000;
 
   const handleFileChange = (e) => setFile(e.target.files[0]);

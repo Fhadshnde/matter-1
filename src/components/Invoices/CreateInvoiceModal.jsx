@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FiX, FiUser, FiDollarSign, FiCalendar, FiFileText, FiSave } from 'react-icons/fi';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4500';
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const CreateInvoiceModal = ({ isOpen, onClose, suppliers, onInvoiceCreated }) => {
   const [formData, setFormData] = useState({

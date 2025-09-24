@@ -20,7 +20,7 @@ import Pagination from '../Shared/Pagination';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailsModal from './InvoiceDetailsModal';
 
-const API_BASE_URL = 'http://localhost:4500';
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);

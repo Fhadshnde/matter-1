@@ -3,7 +3,7 @@ import { Plus, Search, Eye, Download, TrendingUp, DollarSign, Users, ShoppingBag
 import CreateDuesInvoiceModal from './CreateDuesInvoiceModal';
 import DuesDetailsModal from './DuesDetailsModal';
 
-const API_BASE_URL = 'http://localhost:4500';
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const SupplierDues = () => {
   const [suppliers, setSuppliers] = useState([]);

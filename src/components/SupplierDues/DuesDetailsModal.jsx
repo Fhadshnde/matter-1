@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, TrendingUp, DollarSign, ShoppingBag, Percent, Calendar, FileText, Download } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:4500';
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const DuesDetailsModal = ({ isOpen, onClose, supplier, dues }) => {
   const [invoices, setInvoices] = useState([]);
