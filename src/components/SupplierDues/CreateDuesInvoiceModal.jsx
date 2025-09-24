@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, DollarSign, Calendar, FileText, AlertTriangle } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:4500';
+const API_BASE_URL = 'https://products-api.cbc-apps.net';
 
 const CreateDuesInvoiceModal = ({ isOpen, onClose, supplier, availableDues, onInvoiceCreated }) => {
   const [formData, setFormData] = useState({
