@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://products-api.cbc-apps.net';
+const API_BASE_URL = 'http://localhost:4500';
 
 export const API_CONFIG = {
   BASE_URL: API_BASE_URL,
@@ -8,6 +8,10 @@ export const API_CONFIG = {
     REFRESH: '/auth/refresh'
   },
   ADMIN: {
+    OVERVIEW: '/admin/dashboard/overview',
+    STATS: '/admin/dashboard/stats',
+    ANALYTICS: '/admin/dashboard/analytics',
+    
     PRODUCTS: '/admin/dashboard/products-management',
     CARDS: '/admin/dashboard/products',
 
@@ -106,7 +110,7 @@ export const API_CONFIG = {
 };
 
 export const apiCall = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('token');
   
   const defaultOptions = {
     headers: {

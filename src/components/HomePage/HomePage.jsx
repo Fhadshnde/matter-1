@@ -160,7 +160,7 @@ const HomePage = () => {
   const openDetailsModal = useCallback(async (cardType) => {
     setIsLoading(true);
     setError(null);
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
 
     if (!token) {
       setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
@@ -208,7 +208,7 @@ const HomePage = () => {
   }, []);
 
   const fetchDashboardData = useCallback(async (start, end) => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
     if (!token) {
       setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
       setIsLoading(false);

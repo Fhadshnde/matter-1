@@ -5,6 +5,7 @@ import Dropdown from '../Shared/Dropdown';
 import Pagination from '../Shared/Pagination';
 import Modal from '../Shared/Modal';
 import { FaDownload, FaFilter, FaCalendarAlt, FaChartLine, FaChartBar, FaChartPie, FaEye, FaEdit } from 'react-icons/fa';
+import { API_CONFIG } from '../../config/api';
 
 const MerchantsModal = ({ onClose, merchants }) => {
   return (
@@ -483,14 +484,14 @@ const Profits = () => {
   const [appProfitChartType, setAppProfitChartType] = useState('profitGrowth');
   const [productCategory, setProductCategory] = useState('all');
   const [productRating, setProductRating] = useState('all');
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('token');
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/profits', {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/admin/dashboard/profits`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`, // Replace YOUR_AUTH_TOKEN_HERE with your actual token
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });

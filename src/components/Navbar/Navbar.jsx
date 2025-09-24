@@ -14,6 +14,7 @@ import {
   Globe,
   FolderOpen,
   Layers,
+  FileText,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -34,6 +35,8 @@ const Navbar = ({ onLogout }) => {
     { path: "/orders", icon: <ShoppingCart className="w-4 h-4" />, text: "الطلبات" },
     { path: "/suppliers", icon: <Store className="w-4 h-4" />, text: "الموردين" },
     { path: "/customers", icon: <Globe className="w-4 h-4" />, text: "الزبائن" },
+    { path: "/invoices", icon: <FileText className="w-4 h-4" />, text: "الفواتير" },
+    { path: "/supplier-dues", icon: <Wallet className="w-4 h-4" />, text: "مستحقات الموردين" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
 

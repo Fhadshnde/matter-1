@@ -36,7 +36,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             const transformedCategories = data.categories.map(category => ({
@@ -54,7 +54,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.SECTIONS, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             const transformedSections = data.sections.map(section => ({
@@ -73,7 +73,7 @@ const AddProduct = () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.SUPPLIERS, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             const transformedSuppliers = (data.suppliers || []).map(supplier => ({
@@ -186,7 +186,7 @@ const AddProduct = () => {
                         {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
-                                'Authorization': `Bearer ${localStorage.getItem('userToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1ODEyOSwiZXhwIjoxNzU4MjQ0NTI5fQ.j55YUdRdTRW8qq4pd4sZELJXmau-5P4rApKMlOB0Zyc'}`
+                                'Authorization': `Bearer ${localStorage.getItem('token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIwNzgwMDAwMDAwMCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc1ODE1ODEyOSwiZXhwIjoxNzU4MjQ0NTI5fQ.j55YUdRdTRW8qq4pd4sZELJXmau-5P4rApKMlOB0Zyc'}`
                             }
                         }
                     );
@@ -225,7 +225,7 @@ const AddProduct = () => {
                 method: 'POST',
                 body: JSON.stringify(productData),
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 

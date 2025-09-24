@@ -24,6 +24,8 @@ import ProfileSettingsPage from './components/Settings/ProfileSettingsPage';
 import Login from './components/Login/Login';
 import Register from './components/Login/Register';
 import Test from './components/Test/Test';
+import Invoices from './components/Invoices/Invoices';
+import SupplierDues from './components/SupplierDues/SupplierDues';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -31,7 +33,7 @@ const App = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken'); 
+    const token = localStorage.getItem('token'); 
     if (token) {
       setIsLoggedIn(true);
     }
@@ -44,7 +46,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userToken'); 
+    localStorage.removeItem('token'); 
     setIsLoggedIn(false);
     navigate('/login');
   };
@@ -83,6 +85,8 @@ const App = () => {
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/sections" element={<Sections />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/supplier-dues" element={<SupplierDues />} />
             <Route path="/test" element={<Test />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>

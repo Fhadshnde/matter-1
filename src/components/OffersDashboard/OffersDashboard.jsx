@@ -44,7 +44,7 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('token');
       try {
         const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/products?limit=1000', {
           headers: {
@@ -80,7 +80,7 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
   
     const payload = {
       title: name,
@@ -232,7 +232,7 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('token');
       try {
         const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/products?limit=1000', {
           headers: {
@@ -268,7 +268,7 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
 
     const payload = {
       title: name,
@@ -410,7 +410,7 @@ const DeleteOfferModal = ({ onClose, offerId, onOfferDeleted }) => {
   const handleDelete = async () => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
 
     try {
       const response = await fetch(`https://products-api.cbc-apps.net/admin/dashboard/offers/${offerId}`, {
@@ -513,7 +513,7 @@ const OffersDashboard = () => {
   };
 
   const handleToggleStatus = async (offerId, currentStatus) => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
     try {
       await fetch(`https://products-api.cbc-apps.net/admin/dashboard/offers/${offerId}/toggle`, {
         method: 'PUT',

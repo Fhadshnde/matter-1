@@ -25,7 +25,7 @@ const Login = ({ onLogin }) => {
       const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.LOGIN}`, formData);
       const token = response.data.access_token; 
       if (token) {
-        localStorage.setItem('userToken', token); 
+        localStorage.setItem('token', token); 
         setMessage('تم تسجيل الدخول بنجاح!');
         setIsError(false);
         onLogin(); 

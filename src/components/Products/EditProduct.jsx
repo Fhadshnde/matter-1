@@ -224,7 +224,7 @@ const EditProduct = () => {
                         {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
-                                'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
                             }
                         }
                     );
