@@ -220,41 +220,56 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const fetchProducts = async (page = 1, limit = 20) => {
+    const fetchProducts = async (page = 1, limit = 20, search = '') => {
         try {
-            setIsLoading(true);
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: limit.toString(),
-            });
-            
-            // تم إزالة معاملات البحث والتصفية من طلب الـ API
-            const data = await apiCall(API_CONFIG.ADMIN.PRODUCTS + `?${params.toString()}`);
-            
-            const mappedProducts = (data.products || []).map(product => {
-                const productStatus = product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'available';
-                return {
-                    id: product.id,
-                    name: product.name,
-                    price: product.originalPrice || product.price,
-                    stock: product.stock || 0,
-                    mainImageUrl: product.mainImageUrl,
-                    categoryName: product.category,
-                    status: productStatus,
-                    updatedAt: product.updatedAt
-                };
-            });
-
-            setProducts(mappedProducts);
-            setStats(data.cards || {});
-            setPagination(data.pagination || {});
+          setIsLoading(true);
+      
+          const params = new URLSearchParams({
+            page: page.toString(),
+            limit: limit.toString(),
+            ...(search && { search })  // إذا فيه قيمة للبحث ضيفها
+          });
+      
+          const data = await apiCall(`${API_CONFIG.ADMIN.CARDS}?${params.toString()}`);
+      
+          const mappedProducts = (data.products || []).map(product => ({
+            id: product.productId,
+            name: product.productName,
+            price: product.sellingPrice || product.wholesalePrice,
+            stock: product.quantity || 0,
+            mainImageUrl: product.imageUrl,
+            categoryName: product.categoryName,
+            merchantName: product.merchantName,
+            status: product.quantity === 0 ? 'out_of_stock' : product.quantity < 10 ? 'low_stock' : 'available',
+            updatedAt: product.lastUpdated
+          }));
+          
+      
+          setProducts(mappedProducts);
+          setPagination(data.pagination || {});
         } catch (error) {
-            console.error('Error fetching products:', error);
+          console.error('Error fetching products:', error);
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    };
-
+      };
+      
+    
+    const fetchCards = async () => {
+        try {
+          const data = await apiCall(API_CONFIG.ADMIN.CARDS); // هذا يساوي /admin/dashboard/products
+          setStats(data.cards || {});
+        } catch (err) {
+          console.error("Error fetching cards:", err);
+        }
+      };
+      
+      
+      useEffect(() => {
+        fetchCards();
+      }, []);
+      
+      
     const fetchCategories = async () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES);
@@ -395,11 +410,10 @@ const Dashboard = () => {
         }
     };
     
-    // تم تعديل useEffect ليعمل فقط عند تغير أزرار الترقيم
     useEffect(() => {
-        fetchProducts(currentPage, itemsPerPage);
-    }, [currentPage, itemsPerPage]);
-
+        fetchProducts(currentPage, itemsPerPage, searchTerm);
+      }, [currentPage, itemsPerPage, searchTerm]);
+      
     useEffect(() => {
         fetchCategories();
         fetchSections();
@@ -527,13 +541,17 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center space-x-4 rtl:space-x-reverse">
                     <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="البحث عن منتج..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <input
+  type="text"
+  placeholder="البحث عن منتج..."
+  className="..."
+  value={searchTerm}
+  onChange={(e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // رجع للصفحة الأولى عند البحث
+  }}
+/>
+
                         <IoSearchOutline className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     </div>
                     <div className="relative">

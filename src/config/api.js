@@ -9,6 +9,8 @@ export const API_CONFIG = {
   },
   ADMIN: {
     PRODUCTS: '/admin/dashboard/products-management',
+    CARDS: '/admin/dashboard/products',
+
     PRODUCT_CREATE: '/admin/products',
     PRODUCT_DETAILS: (id) => `/admin/dashboard/products/${id}`,
     PRODUCT_UPDATE: (id) => `/admin/dashboard/products-management/${id}`,

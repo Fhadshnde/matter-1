@@ -63,20 +63,20 @@ const SuppliersPage = () => {
     }
   };
 
-  // Fetch supplier details
+  // Fetch supplier details and profits
   const fetchSupplierDetails = async (supplierId) => {
     try {
       const url = API_CONFIG.ADMIN.SUPPLIER_DETAILS(supplierId);
-      const data = await apiCall(url);
-      setSupplierDetails(data);
+      const detailsData = await apiCall(url);
+      setSupplierDetails(detailsData);
       
       // Fetch profits data
       const profitsUrl = API_CONFIG.ADMIN.SUPPLIER_PROFITS(supplierId);
       const profitsData = await apiCall(profitsUrl);
       setSupplierProfits(profitsData);
     } catch (error) {
-      console.error('Error fetching supplier details:', error);
-      setError('فشل في تحميل تفاصيل المورد');
+      console.error('Error fetching supplier details or profits:', error);
+      setError('فشل في تحميل تفاصيل المورد أو أرباحه');
     }
   };
 
@@ -268,16 +268,6 @@ const SuppliersPage = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col lg:flex-row gap-4 items-center flex-1">
-            {/* <div className="relative flex-1 max-w-md">
-              <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="البحث في الموردين..."
-                value={searchText}
-                onChange={handleSearch}
-                className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div> */}
             <div className="flex gap-2">
               <select
                 value={itemsPerPage}
@@ -853,59 +843,6 @@ const SuppliersPage = () => {
               </div>
             </div>
 
-            {/* Products List */}
-            {supplierDetails.products && supplierDetails.products.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-4">منتجات المورد</h4>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          المنتج
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          السعر
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          القسم
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          الحالة
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {supplierDetails.products.map((product) => (
-                        <tr key={product.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {product.originalPrice?.toLocaleString()} د.ع
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{product.category?.name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              product.isActive 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {product.isActive ? 'نشط' : 'غير نشط'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
             {/* Profits Information */}
             {supplierProfits && (
               <div className="mt-6">
@@ -938,6 +875,50 @@ const SuppliersPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {supplierProfits.profitBreakdown && supplierProfits.profitBreakdown.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="text-sm font-semibold text-gray-700 mb-2">تفاصيل أرباح المنتجات:</h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              معرف المنتج
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              إجمالي المبيعات
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              عمولة المنصة
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              صافي أرباح المورد
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {supplierProfits.profitBreakdown.map((productProfit) => (
+                            <tr key={productProfit.productId}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {productProfit.productId}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {productProfit.totalSales.toLocaleString()} د.ع
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {productProfit.platformCommission.toLocaleString()} د.ع
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {productProfit.supplierNetProfit.toLocaleString()} د.ع
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

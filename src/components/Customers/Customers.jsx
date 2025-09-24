@@ -163,7 +163,7 @@ const Customers = () => {
       
       const formattedCards = [
         { title: 'إجمالي الزبائن', value: data.cards?.totalCustomers?.toLocaleString() || '0', icon: 'user' },
-        { title: 'زبائن نشطين', value: data.cards?.activeCustomers?.toLocaleString() || '0', icon: 'user' },
+        { title: ' معدل رفض الشراء', value: data.cards?.purchaseDeclineRate?.toLocaleString() || '0', icon: 'user' },
         { title: 'زبائن محظورين', value: data.cards?.bannedCustomers?.toLocaleString() || '0', icon: 'block' },
         { title: 'زبائن مع طلبات', value: data.cards?.customersWithOrders?.toLocaleString() || '0', icon: 'orders' },
       ];

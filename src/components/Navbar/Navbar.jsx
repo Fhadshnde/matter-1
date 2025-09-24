@@ -36,6 +36,8 @@ const Navbar = ({ onLogout }) => {
     { path: "/customers", icon: <Globe className="w-4 h-4" />, text: "الزبائن" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
+
+    { path: "/test", icon: <Plus className="w-4 h-4" />, text: " test" },
   ];
 
   const notifications = [

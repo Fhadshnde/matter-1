@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import API_CONFIG, { apiCall } from '../../config/api';
 import StatCard from '../Shared/StatCard';
 import Dropdown from '../Shared/Dropdown';
 import Pagination from '../Shared/Pagination';
@@ -76,11 +75,10 @@ const CustomProfitTooltip = ({ active, payload, label }) => {
   }
   return null;
 };
-const ChartContainer = ({ title, data, chartType }) => {
+const ChartContainer = ({ title, data, chartType, setChartType }) => {
   const yAxisTickFormatter = (value) => {
     return value.toLocaleString();
   };
-
   const renderChart = () => {
     if (!data || data.length === 0) {
       return (
@@ -89,7 +87,6 @@ const ChartContainer = ({ title, data, chartType }) => {
         </div>
       );
     }
-
     switch (chartType) {
       case 'sharedProfit':
         return (
@@ -129,7 +126,6 @@ const ChartContainer = ({ title, data, chartType }) => {
             </AreaChart>
           </ResponsiveContainer>
         );
-
       case 'profitGrowth':
         return (
           <ResponsiveContainer width="100%" height="100%">
@@ -162,7 +158,6 @@ const ChartContainer = ({ title, data, chartType }) => {
             </AreaChart>
           </ResponsiveContainer>
         );
-
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height="100%">
@@ -191,7 +186,6 @@ const ChartContainer = ({ title, data, chartType }) => {
             </BarChart>
           </ResponsiveContainer>
         );
-
       default:
         return (
           <div className="flex items-center justify-center h-80 text-gray-500">
@@ -200,7 +194,6 @@ const ChartContainer = ({ title, data, chartType }) => {
         );
     }
   };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
@@ -306,9 +299,9 @@ const ProductModal = ({ product, onClose }) => {
             <span className="font-medium text-gray-800">{product.merchantShare} د.ع</span>
           </div>
         </div>
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <button className="w-full bg-red-500 text-white font-bold py-2 rounded-lg hover:bg-red-600 transition">تعديل</button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -325,14 +318,6 @@ const MoreOptionsModal = ({ onClose, onShowDetails, onDownloadReport }) => {
           </span>
           عرض التفاصيل
         </li>
-        {/* <li className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onDownloadReport}>
-          <span className="ml-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-              <path fillRule="evenodd" d="M9 1.5H5.625c-1.036 0-1.875.84-1.875 1.875V15.75c0 1.036.84 1.875 1.875 1.875h4.5a.75.75 0 010 1.5h-4.5A3.375 3.375 0 012.25 15.75V3.375C2.25 2.339 3.09 1.5 4.125 1.5H9a.75.75 0 010 1.5zM15 1.5h3.375c1.036 0 1.875.84 1.875 1.875v12.375c0 1.036-.84 1.875-1.875 1.875h-4.5a.75.75 0 010-1.5h4.5c.276 0 .5-.224.5-.5V3.375a.5.5 0 00-.5-.5h-3.375a.75.75 0 010-1.5zM12 21a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5h-2.25a.75.75 0 01-.75-.75z" clipRule="evenodd" />
-            </svg>
-          </span>
-          تحميل التقرير
-        </li> */}
         <li className="flex items-center p-2 text-red-500 hover:bg-gray-100 rounded-md cursor-pointer" onClick={onClose}>
           <span className="ml-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -350,44 +335,20 @@ const ExportReportModal = ({ onClose }) => {
   const [reportPeriod, setReportPeriod] = useState('all');
   const [includeCharts, setIncludeCharts] = useState(true);
   const [includeDetails, setIncludeDetails] = useState(true);
-
   const handleExport = async () => {
     try {
-      console.log('Exporting report:', {
-        type: reportType,
-        period: reportPeriod,
-        includeCharts,
-        includeDetails
-      });
-
-      // Create export data
-      const exportData = {
-        title: 'تقرير الأرباح',
-        period: reportPeriod,
-        generatedAt: new Date().toLocaleString('ar-EG'),
-        data: {
-          cards: data?.cards || {},
-          products: includeDetails ? data?.productsProfit || [] : [],
-          charts: includeCharts ? {
-            profitComparison: data?.profitComparison || [],
-            appProfitEvolution: data?.appProfitEvolution || []
-          } : null
-        }
-      };
-
+      console.log('Exporting report...', { type: reportType, period: reportPeriod, includeCharts, includeDetails });
+      const exportData = { title: 'تقرير الأرباح', period: reportPeriod, generatedAt: new Date().toLocaleString('ar-EG'), data: { cards: data?.cards || {}, products: includeDetails ? data?.productsProfit || [] : [], charts: includeCharts ? { profitComparison: data?.profitComparison || [], appProfitEvolution: data?.appProfitEvolution || [] } : null } };
       if (reportType === 'pdf') {
-        // For PDF, we'll create a simple text-based report
         const reportText = generateTextReport(exportData);
         downloadTextFile(reportText, `profits-report-${Date.now()}.txt`);
       } else if (reportType === 'excel') {
-        // For Excel, we'll create a CSV file
         const csvContent = generateCSVReport(exportData);
         downloadCSVFile(csvContent, `profits-report-${Date.now()}.csv`);
       } else if (reportType === 'csv') {
         const csvContent = generateCSVReport(exportData);
         downloadCSVFile(csvContent, `profits-report-${Date.now()}.csv`);
       }
-      
       alert(`تم تصدير التقرير بنجاح كملف ${reportType.toUpperCase()}`);
       onClose();
     } catch (error) {
@@ -395,589 +356,357 @@ const ExportReportModal = ({ onClose }) => {
       alert('حدث خطأ أثناء تصدير التقرير');
     }
   };
-
   const generateTextReport = (data) => {
     let report = `تقرير الأرباح\n`;
     report += `تاريخ الإنشاء: ${data.generatedAt}\n`;
     report += `الفترة: ${data.period}\n\n`;
-    
     report += `الإحصائيات:\n`;
     report += `- متوسط حاصل الأرباح: ${data.data.cards.averageProfitMargin || 0}%\n`;
     report += `- حصة التطبيق: ${(data.data.cards.appShare || 0).toLocaleString()} د.ع\n`;
     report += `- حصة التاجر: ${(data.data.cards.merchantShare || 0).toLocaleString()} د.ع\n`;
     report += `- إجمالي المبيعات: ${(data.data.cards.totalSales || 0).toLocaleString()} د.ع\n\n`;
-    
     if (data.data.products && data.data.products.length > 0) {
       report += `تفاصيل المنتجات:\n`;
       data.data.products.forEach((product, index) => {
         report += `${index + 1}. ${product.productName}\n`;
-        report += `   - التاجر: ${product.merchantName}\n`;
-        report += `   - سعر الجملة: ${product.wholesalePrice || 0} د.ع\n`;
-        report += `   - سعر البيع: ${product.sellingPrice || 0} د.ع\n`;
-        report += `   - حصة التطبيق: ${product.appShare || 0} د.ع\n`;
-        report += `   - حصة التاجر: ${product.merchantShare || 0} د.ع\n\n`;
+        report += ` - التاجر: ${product.merchantName}\n`;
+        report += ` - سعر الجملة: ${product.wholesalePrice || 0} د.ع\n`;
+        report += ` - سعر البيع: ${product.sellingPrice || 0} د.ع\n`;
+        report += ` - حصة التطبيق: ${product.appShare || 0} د.ع\n`;
+        report += ` - حصة التاجر: ${product.merchantShare || 0} د.ع\n`;
+        report += ` - مرات البيع: ${product.timesSold || 0}\n`;
+        report += ` - التقييم: ${product.customerRating || 0}\n`;
+        report += `\n`;
       });
     }
-    
+    if (data.data.charts && data.data.charts.profitComparison) {
+      report += `مقارنة الأرباح:\n`;
+      data.data.charts.profitComparison.forEach(item => {
+        report += ` - ${item.month}: حصة التاجر: ${(item.merchantShare || 0).toLocaleString()}, حصة التطبيق: ${(item.appShare || 0).toLocaleString()}\n`;
+      });
+    }
     return report;
   };
-
   const generateCSVReport = (data) => {
-    let csv = 'نوع البيانات,القيمة,الوحدة\n';
-    
-    // Add cards data
-    csv += `متوسط حاصل الأرباح,${data.data.cards.averageProfitMargin || 0},%\n`;
-    csv += `حصة التطبيق,${data.data.cards.appShare || 0},د.ع\n`;
-    csv += `حصة التاجر,${data.data.cards.merchantShare || 0},د.ع\n`;
-    csv += `إجمالي المبيعات,${data.data.cards.totalSales || 0},د.ع\n`;
-    
-    if (data.data.products && data.data.products.length > 0) {
-      csv += '\nالمنتج,التاجر,سعر الجملة,سعر البيع,حصة التطبيق,حصة التاجر\n';
-      data.data.products.forEach(product => {
-        csv += `"${product.productName}","${product.merchantName}",${product.wholesalePrice || 0},${product.sellingPrice || 0},${product.appShare || 0},${product.merchantShare || 0}\n`;
-      });
-    }
-    
+    let csv = "تقرير الأرباح\n";
+    csv += "المعلومات العامة\n";
+    csv += "المتوسط الربحي,حصة التطبيق,حصة التاجر,إجمالي المبيعات\n";
+    csv += `${data.data.cards.averageProfitMargin},${data.data.cards.appShare},${data.data.cards.merchantShare},${data.data.cards.totalSales}\n\n`;
+    csv += "تفاصيل المنتجات\n";
+    csv += "اسم المنتج,التصنيف,التاجر,مرات البيع,سعر الجملة,سعر البيع,حصة التطبيق,حصة التاجر\n";
+    data.data.products.forEach(product => {
+      csv += `"${product.productName}",${product.categoryName},"${product.merchantName}",${product.timesSold},${product.wholesalePrice},${product.sellingPrice},${product.appShare},${product.merchantShare}\n`;
+    });
     return csv;
   };
-
-  const downloadTextFile = (content, filename) => {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const downloadTextFile = (content, fileName) => {
+    const element = document.createElement("a");
+    const file = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
-
-  const downloadCSVFile = (content, filename) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <Modal title="تصدير تقرير الأرباح" onClose={onClose}>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            نوع التقرير
-          </label>
-          <select 
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="pdf">PDF</option>
-            <option value="excel">Excel</option>
-            <option value="csv">CSV</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            الفترة الزمنية
-          </label>
-          <select 
-            value={reportPeriod}
-            onChange={(e) => setReportPeriod(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="all">جميع الفترات</option>
-            <option value="monthly">شهري</option>
-            <option value="yearly">سنوي</option>
-            <option value="custom">فترة مخصصة</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={includeCharts}
-              onChange={(e) => setIncludeCharts(e.target.checked)}
-              className="ml-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
-            />
-            <span className="text-sm text-gray-700">تضمين الرسوم البيانية</span>
-          </label>
-          
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={includeDetails}
-              onChange={(e) => setIncludeDetails(e.target.checked)}
-              className="ml-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
-            />
-            <span className="text-sm text-gray-700">تضمين تفاصيل المنتجات</span>
-          </label>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2 rtl:space-x-reverse mt-6">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          إلغاء
-        </button>
-        <button
-          onClick={handleExport}
-          className="px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-        >
-          تصدير التقرير
-        </button>
-      </div>
-    </Modal>
-  );
-};
-const ProductTable = ({ products, totalCount }) => {
-  const [activeProduct, setActiveProduct] = useState(null);
-  const [showMoreMenu, setShowMoreMenu] = useState(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const handleMoreClick = (product, index) => {
-    setActiveProduct(product);
-    setShowMoreMenu(showMoreMenu === index ? null : index);
-  };
-  const handleShowDetails = () => {
-    setShowMoreMenu(null);
-  };
-  const handleDownloadReport = () => {
-    setShowMoreMenu(null);
-    setShowExportModal(true);
+  const downloadCSVFile = (content, fileName) => {
+    const element = document.createElement("a");
+    const file = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-lg font-bold text-gray-800 mb-4">كل المنتجات</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 text-right">
-            <tr>
-              <Th>المنتج</Th>
-              <Th>سعر الجملة</Th>
-              <Th>سعر المفرد</Th>
-              <Th>الفرق</Th>
-              <Th>حصة التطبيق</Th>
-              <Th>حصة التاجر</Th>
-              <Th>النسبة للتجار</Th>
-              <Th>الإجراءات</Th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200 text-right">
-            {products.map((product, index) => (
-              <tr key={index}>
-                <Td>{product.productName}</Td>
-                <Td>{product.wholesalePrice} د.ع</Td>
-                <Td>{product.sellingPrice} د.ع</Td>
-                <Td>{product.priceDifference} د.ع</Td>
-                <Td>{product.appShare} د.ع</Td>
-                <Td>{product.merchantShare} د.ع</Td>
-                <Td>{product.merchantPercentage}%</Td>
-                <Td>
-                  <div className="relative">
-                    <button className="text-gray-500 hover:text-gray-700" onClick={() => handleMoreClick(product, index)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M4.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    {showMoreMenu === index && (
-                      <MoreOptionsModal
-                        onClose={() => setShowMoreMenu(null)}
-                        onShowDetails={handleShowDetails}
-                      />
-                    )}
-                  </div>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-4 flex justify-between items-center text-sm">
-        <span className="text-gray-700">إجمالي المنتجات: {totalCount}</span>
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-gray-500">أعرض في الصفحة 5</span>
-          <div className="flex space-x-1 rtl:space-x-reverse">
-            {[1, 2, 3, 4, 5].map(page => (
-              <button
-                key={page}
-                className={`px-3 py-1 rounded-md text-sm ${page === 1 ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border'}`}
-              >
-                {page}
-              </button>
-            ))}
+    <Modal onClose={onClose}>
+      <div className="p-4 rounded-lg shadow-xl" dir="rtl">
+        <h2 className="text-xl font-bold mb-4">تصدير التقرير</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">نوع التقرير</label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input type="radio" name="reportType" value="pdf" checked={reportType === 'pdf'} onChange={() => setReportType('pdf')} className="form-radio text-red-600" />
+                <span className="mr-2">PDF</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="reportType" value="excel" checked={reportType === 'excel'} onChange={() => setReportType('excel')} className="form-radio text-red-600" />
+                <span className="mr-2">Excel</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="reportType" value="csv" checked={reportType === 'csv'} onChange={() => setReportType('csv')} className="form-radio text-red-600" />
+                <span className="mr-2">CSV</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">الفترة</label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input type="radio" name="reportPeriod" value="all" checked={reportPeriod === 'all'} onChange={() => setReportPeriod('all')} className="form-radio text-red-600" />
+                <span className="mr-2">كامل الفترة</span>
+              </label>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center text-gray-700 font-semibold">
+              <input type="checkbox" checked={includeCharts} onChange={(e) => setIncludeCharts(e.target.checked)} className="form-checkbox text-red-600" />
+              <span className="mr-2">تضمين الرسوم البيانية</span>
+            </label>
+            <label className="flex items-center text-gray-700 font-semibold">
+              <input type="checkbox" checked={includeDetails} onChange={(e) => setIncludeDetails(e.target.checked)} className="form-checkbox text-red-600" />
+              <span className="mr-2">تضمين تفاصيل المنتجات</span>
+            </label>
           </div>
         </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button onClick={onClose} className="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition">إلغاء</button>
+          <button onClick={handleExport} className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">تصدير</button>
+        </div>
       </div>
-      {activeProduct && !showMoreMenu && (
-        <ProductModal product={activeProduct} onClose={() => setActiveProduct(null)} />
-      )}
-      {showExportModal && <ExportReportModal onClose={() => setShowExportModal(false)} />}
-    </div>
+    </Modal>
   );
 };
 const Profits = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchText, setSearchText] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [error, setError] = useState(null);
   const [showMerchantsModal, setShowMerchantsModal] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [merchantsData, setMerchantsData] = useState([]);
-  const [chartType, setChartType] = useState('area');
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      let endpoint = API_CONFIG.ADMIN.PROFITS;
-      
-      // Add query parameters based on selected period
-      const params = new URLSearchParams();
-      if (selectedPeriod === 'monthly') {
-        params.append('year', selectedYear.toString());
-        params.append('month', selectedMonth.toString());
-        params.append('period', 'monthly');
-      } else if (selectedPeriod === 'yearly') {
-        params.append('year', selectedYear.toString());
-        params.append('period', 'yearly');
-      } else {
-        params.append('period', 'all');
-      }
-      
-      if (params.toString()) {
-        endpoint += `?${params.toString()}`;
-      }
-
-      console.log('Fetching profits data from:', endpoint);
-      const result = await apiCall(endpoint);
-      console.log('Profits data received:', result);
-      setData(result);
-      
-      // Aggregate merchants data
-      const aggregatedMerchants = {};
-      if (result.productsProfit) {
-        result.productsProfit.forEach(product => {
-          if (!aggregatedMerchants[product.merchantName]) {
-            aggregatedMerchants[product.merchantName] = {
-              name: product.merchantName,
-              totalSales: 0,
-              totalOrders: 0,
-              netProfit: 0,
-            };
-          }
-          aggregatedMerchants[product.merchantName].totalSales += product.sellingPrice || 0;
-          aggregatedMerchants[product.merchantName].totalOrders += product.timesSold || 0;
-          aggregatedMerchants[product.merchantName].netProfit += product.merchantShare || 0;
-        });
-      }
-      setMerchantsData(Object.values(aggregatedMerchants));
-    } catch (error) {
-      console.error("Error fetching profits data:", error);
-      // Set default data structure to prevent crashes
-      setData({
-        cards: {
-          averageProfitMargin: 0,
-          appShare: 0,
-          merchantShare: 0,
-          totalSales: 0
-        },
-        profitComparison: [],
-        appProfitEvolution: [],
-        productsProfit: []
-      });
-    }
-    setLoading(false);
-  };
-
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [sharedProfitChartType, setSharedProfitChartType] = useState('sharedProfit');
+  const [appProfitChartType, setAppProfitChartType] = useState('profitGrowth');
+  const [productCategory, setProductCategory] = useState('all');
+  const [productRating, setProductRating] = useState('all');
+  const token = localStorage.getItem('userToken');
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://products-api.cbc-apps.net/admin/dashboard/profits', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Replace YOUR_AUTH_TOKEN_HERE with your actual token
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
-  }, [selectedPeriod, selectedYear, selectedMonth]);
-
-  const handleTotalSalesClick = () => {
-    setShowMerchantsModal(true);
-  };
-
+  }, []);
   const handleProductClick = (product) => {
     setSelectedProduct(product);
     setShowProductModal(true);
   };
-
-  const handleExportReport = () => {
-    setShowExportModal(true);
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
   };
-
-  const handlePeriodChange = (period) => {
-    setSelectedPeriod(period);
-    setCurrentPage(1);
+  const filteredProducts = data?.productsProfit?.filter(product => {
+    const matchesSearchTerm = product.productName.toLowerCase().includes(searchTerm.toLowerCase()) || product.merchantName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = productCategory === 'all' || product.categoryName === productCategory;
+    const matchesRating = productRating === 'all' || (product.customerRating >= parseFloat(productRating) && product.customerRating < parseFloat(productRating) + 1);
+    return matchesSearchTerm && matchesCategory && matchesRating;
+  }) || [];
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortConfig.key !== null) {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+    }
+    return 0;
+  });
+  const uniqueCategories = [...new Set(data?.productsProfit?.map(p => p.categoryName))] || [];
+  const totalPages = Math.ceil(sortedProducts.length / 10);
+  const paginatedProducts = sortedProducts.slice((currentPage - 1) * 10, currentPage * 10);
+  const profitComparisonData = data?.profitComparison || [];
+  const appProfitEvolutionData = data?.appProfitEvolution || [];
+  const totalSalesPieData = [
+    { name: 'حصة التطبيق', value: data?.cards?.appShare || 0 },
+    { name: 'حصة التاجر', value: data?.cards?.merchantShare || 0 },
+  ];
+  const COLORS = ['#22C55E', '#EF4444'];
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    return (
+      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
-
-  const handleYearChange = (year) => {
-    setSelectedYear(year);
-    setCurrentPage(1);
-  };
-
-  const handleMonthChange = (month) => {
-    setSelectedMonth(month);
-    setCurrentPage(1);
-  };
-
-  const filteredProducts = data?.productsProfit?.filter(product => 
-    product.productName?.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.merchantName?.toLowerCase().includes(searchText.toLowerCase())
-  ) || [];
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * 10,
-    currentPage * 10
-  );
-
   if (loading) {
     return (
-      <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
-          <span className="mr-4 text-gray-600">جاري تحميل البيانات...</span>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
       </div>
     );
   }
-
-  if (!data) {
+  if (error) {
     return (
-      <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
-        <div className="text-center py-12 text-gray-500">
-          <p>خطأ في تحميل البيانات</p>
-          <button 
-            onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            إعادة المحاولة
+      <div className="flex flex-col items-center justify-center h-screen text-red-500">
+        <p className="text-xl font-bold">حدث خطأ أثناء تحميل البيانات</p>
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="min-h-screen bg-gray-100 p-6 font-cairo" dir="rtl">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">الأرباح</h1>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setShowExportModal(true)} className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition flex items-center gap-2">
+            <FaDownload />
+            تصدير تقرير
           </button>
         </div>
       </div>
-    );
-  }
-
-  const statsCards = [
-    { 
-      title: 'متوسط حاصل الأرباح', 
-      value: `${data.cards?.averageProfitMargin || 0}%`, 
-      icon: 'chart',
-      trend: 'up',
-      percentage: 8
-    },
-    { 
-      title: 'حصة التطبيق', 
-      value: `${(data.cards?.appShare || 0).toLocaleString()} د.ع`, 
-      icon: 'wallet',
-      trend: 'up',
-      percentage: 12
-    },
-    { 
-      title: 'حصة التاجر', 
-      value: `${(data.cards?.merchantShare || 0).toLocaleString()} د.ع`, 
-      icon: 'store',
-      trend: 'up',
-      percentage: 15
-    },
-    { 
-      title: 'إجمالي المبيعات', 
-      value: `${(data.cards?.totalSales || 0).toLocaleString()} د.ع`, 
-      icon: 'orders',
-      trend: 'up',
-      percentage: 10,
-      onClick: handleTotalSalesClick
-    },
-  ];
-
-  return (
-    <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">إدارة الأرباح</h1>
-        <div className="flex gap-4">
-          {/* <button
-            onClick={handleExportReport}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
-          >
-            <FaDownload className="w-4 h-4" />
-            تصدير التقرير
-          </button> */}
-        </div>
-      </div>
-
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statsCards.map((card, index) => (
-          <StatCard
-            key={index}
-            title={card.title}
-            value={card.value}
-            icon={card.icon}
-            trend={card.trend}
-            percentage={card.percentage}
-            onClick={card.onClick}
-          />
-        ))}
+        <StatCard title="متوسط حاصل الأرباح" value={`${data?.cards?.averageProfitMargin || 0}%`} icon="profit" color="green" />
+        <StatCard title="إجمالي المبيعات" value={`${(data?.cards?.totalSales || 0).toLocaleString()} د.ع`} icon="sales" color="blue" />
+        <StatCard title="حصة التطبيق" value={`${(data?.cards?.appShare || 0).toLocaleString()} د.ع`} icon="appShare" color="red" />
+        <StatCard title="حصة التاجر" value={`${(data?.cards?.merchantShare || 0).toLocaleString()} د.ع`} icon="merchantShare" color="orange" />
       </div>
-
-      {/* Filters */}
-      {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex gap-4 w-full md:w-auto">
-            <Dropdown
-              options={[
-                { value: 'all', label: 'جميع الفترات' },
-                { value: 'monthly', label: 'شهري' },
-                { value: 'yearly', label: 'سنوي' }
-              ]}
-              value={selectedPeriod}
-              onChange={handlePeriodChange}
-              placeholder="اختر الفترة"
-            />
-            
-            {selectedPeriod === 'monthly' && (
-              <Dropdown
-                options={[
-                  { value: 1, label: 'يناير' },
-                  { value: 2, label: 'فبراير' },
-                  { value: 3, label: 'مارس' },
-                  { value: 4, label: 'أبريل' },
-                  { value: 5, label: 'مايو' },
-                  { value: 6, label: 'يونيو' },
-                  { value: 7, label: 'يوليو' },
-                  { value: 8, label: 'أغسطس' },
-                  { value: 9, label: 'سبتمبر' },
-                  { value: 10, label: 'أكتوبر' },
-                  { value: 11, label: 'نوفمبر' },
-                  { value: 12, label: 'ديسمبر' }
-                ]}
-                value={selectedMonth}
-                onChange={handleMonthChange}
-                placeholder="اختر الشهر"
-              />
-            )}
-            
-            <Dropdown
-              options={[
-                { value: 2024, label: '2024' },
-                { value: 2023, label: '2023' },
-                { value: 2022, label: '2022' }
-              ]}
-              value={selectedYear}
-              onChange={handleYearChange}
-              placeholder="اختر السنة"
-            />
+      <div className="grid  gap-6 mb-8">
+        {/* <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center h-full">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">توزيع إجمالي المبيعات</h3>
+          <div className="w-full h-80 flex-grow" style={{ direction: 'ltr' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={totalSalesPieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={renderCustomizedLabel}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {totalSalesPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ direction: 'rtl', marginTop: '20px' }}
+                  payload={[
+                    { value: 'حصة التطبيق', type: 'circle', id: 'appShare', color: '#22C55E' },
+                    { value: 'حصة التاجر', type: 'circle', id: 'merchantShare', color: '#EF4444' }
+                  ]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-
-          <div className="flex gap-4 w-full md:w-auto">
-            <div className="relative flex-1 w-full md:w-auto">
+        </div> */}
+        <ChartContainer title="مقارنة الأرباح" data={profitComparisonData} chartType={sharedProfitChartType} setChartType={setSharedProfitChartType} />
+      </div>
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <ChartContainer title="تطور أرباح التطبيق" data={appProfitEvolutionData} chartType={appProfitChartType} setChartType={setAppProfitChartType} />
+      </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-gray-800">أرباح المنتجات</h2>
+          <div className="flex items-center gap-4">
+            <div className="relative">
               <input
                 type="text"
-                placeholder="ابحث عن منتج أو تاجر..."
-                className="w-full pr-10 pl-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="البحث عن منتج..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               />
-              <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <FaFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
+            {/* <Dropdown
+              options={[{ value: 'all', label: 'جميع التصنيفات' }, ...uniqueCategories.map(cat => ({ value: cat, label: cat }))]}
+              selectedValue={productCategory}
+              onSelect={setProductCategory}
+              label="التصنيف"
+            />
+            <Dropdown
+              options={[
+                { value: 'all', label: 'جميع التقييمات' },
+                { value: '5', label: '5 نجوم' },
+                { value: '4', label: '4 نجوم' },
+                { value: '3', label: '3 نجوم' },
+                { value: '2', label: '2 نجوم' },
+                { value: '1', label: '1 نجمة' },
+                { value: '0', label: '0 نجوم' },
+              ]}
+              selectedValue={productRating}
+              onSelect={setProductRating}
+              label="التقييم"
+            /> */}
           </div>
         </div>
-      </div> */}
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <ChartContainer 
-          title="مقارنة حصة التطبيق والتاجر" 
-          data={data.profitComparison || []} 
-          chartType="sharedProfit" 
-        />
-        <ChartContainer 
-          title="تطور أرباح التطبيق" 
-          data={data.appProfitEvolution || []} 
-          chartType="profitGrowth" 
-        />
-      </div>
-
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-gray-800">تفاصيل أرباح المنتجات</h3>
-        </div>
-        
         {paginatedProducts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <p>لا توجد منتجات</p>
-            <p className="text-sm mt-2">تحقق من الفلاتر أو جرب البحث</p>
+          <div className="flex items-center justify-center h-40 text-gray-500">
+            <p>لا توجد منتجات مطابقة لعملية البحث.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 text-right">
                 <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    المنتج
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    التاجر
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    سعر الجملة
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    سعر البيع
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    الفرق
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    حصة التطبيق
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    حصة التاجر
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    الإجراءات
-                  </th>
+                  <Th>اسم المنتج</Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('wholesalePrice')}>
+                    سعر الجملة <span className="text-xs text-gray-400">{sortConfig.key === 'wholesalePrice' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('sellingPrice')}>
+                    سعر البيع <span className="text-xs text-gray-400">{sortConfig.key === 'sellingPrice' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('priceDifference')}>
+                    الفرق <span className="text-xs text-gray-400">{sortConfig.key === 'priceDifference' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('appShare')}>
+                    حصة التطبيق <span className="text-xs text-gray-400">{sortConfig.key === 'appShare' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('merchantShare')}>
+                    حصة التاجر <span className="text-xs text-gray-400">{sortConfig.key === 'merchantShare' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th className="cursor-pointer" onClick={() => handleSort('timesSold')}>
+                    عدد مرات البيع <span className="text-xs text-gray-400">{sortConfig.key === 'timesSold' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</span>
+                  </Th>
+                  <Th>الخيارات</Th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 text-right">
-                {paginatedProducts.map((product, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {product.productName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.merchantName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.wholesalePrice ? `${product.wholesalePrice.toLocaleString()} د.ع` : '0 د.ع'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.sellingPrice ? `${product.sellingPrice.toLocaleString()} د.ع` : '0 د.ع'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.priceDifference ? `${product.priceDifference.toLocaleString()} د.ع` : '0 د.ع'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.appShare ? `${product.appShare.toLocaleString()} د.ع` : '0 د.ع'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {product.merchantShare ? `${product.merchantShare.toLocaleString()} د.ع` : '0 د.ع'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                {paginatedProducts.map((product) => (
+                  <tr key={product.productId}>
+                    <Td>{product.productName}</Td>
+                    <Td>{product.wholesalePrice}</Td>
+                    <Td>{product.sellingPrice}</Td>
+                    <Td>{product.priceDifference}</Td>
+                    <Td>{product.appShare}</Td>
+                    <Td>{product.merchantShare}</Td>
+                    <Td>{product.timesSold}</Td>
+                    <Td>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleProductClick(product)}
@@ -987,15 +716,13 @@ const Profits = () => {
                           <FaEye className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-
-        {/* Pagination */}
         {filteredProducts.length > 10 && (
           <div className="px-6 py-4 border-t border-gray-200">
             <Pagination
@@ -1006,28 +733,24 @@ const Profits = () => {
           </div>
         )}
       </div>
-
-      {/* Modals */}
       {showMerchantsModal && (
-        <MerchantsModal 
-          merchants={merchantsData} 
-          onClose={() => setShowMerchantsModal(false)} 
+        <MerchantsModal
+          merchants={merchantsData}
+          onClose={() => setShowMerchantsModal(false)}
         />
       )}
-
       {showProductModal && selectedProduct && (
-        <ProductModal 
-          product={selectedProduct} 
+        <ProductModal
+          product={selectedProduct}
           onClose={() => {
             setShowProductModal(false);
             setSelectedProduct(null);
-          }} 
+          }}
         />
       )}
-
       {showExportModal && (
-        <ExportReportModal 
-          onClose={() => setShowExportModal(false)} 
+        <ExportReportModal
+          onClose={() => setShowExportModal(false)}
         />
       )}
     </div>

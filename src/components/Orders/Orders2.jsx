@@ -13,8 +13,8 @@ const ImportProductsWithImages = () => {
 
   // ثوابت
   const supplierId = 186;
-  const categoryId = 238;
-  const sectionId = 325;
+  const categoryId = 244;
+  const sectionId = 332;
   const stock = 1000;
 
   const handleFileChange = (e) => setFile(e.target.files[0]);

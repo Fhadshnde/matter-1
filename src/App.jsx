@@ -23,6 +23,7 @@ import NotificationsPage from './components/NotificationsDashboard/Notifications
 import ProfileSettingsPage from './components/Settings/ProfileSettingsPage';
 import Login from './components/Login/Login';
 import Register from './components/Login/Register';
+import Test from './components/Test/Test';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -82,6 +83,7 @@ const App = () => {
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/sections" element={<Sections />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/test" element={<Test />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}

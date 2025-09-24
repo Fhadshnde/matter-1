@@ -439,10 +439,10 @@ const HomePage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-end mb-6 relative">
           <div className="relative">
-            <button onClick={toggleNotifications} className="relative">
+            {/* <button onClick={toggleNotifications} className="relative">
               <Inbox className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700" />
               <span className="absolute -top-1 -right-1 block w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            </button> */}
             {isNotificationsOpen && (
               <div className="absolute left-0 mt-2 w-full max-w-sm sm:w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
@@ -490,7 +490,7 @@ const HomePage = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('app-revenue')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">أرباح التطبيق</p>
@@ -507,11 +507,11 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('registered-merchants')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">التجار المسجلون</p>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{cards.details}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{cards.registeredMerchants.toLocaleString()}</h3>
                 <div className="flex items-center text-green-500 text-sm">
                   <span className="mr-1">↗</span>
                   <span>+0% عن الفترة السابقة</span>
@@ -524,7 +524,7 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('total-sales')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">إجمالي المبيعات</p>
@@ -541,7 +541,7 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('return-rate')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">معدل الإرجاع</p>
@@ -558,7 +558,7 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('total-orders')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">الطلبات</p>
@@ -576,7 +576,7 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" onClick={() => openDetailsModal('avg-processing-time')}>
+          <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-1">زمن التجهيز (متوسط)</p>
