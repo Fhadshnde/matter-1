@@ -195,7 +195,7 @@ const SalesDashboard = () => {
   const [departmentEndDate, setDepartmentEndDate] = useState('');
   
   const fetchAnalyticsData = async (dateFrom = '', dateTo = '') => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
 
     if (!token) {
       setError('خطأ: لم يتم العثور على توكن المصادقة. يرجى تسجيل الدخول.');
@@ -231,7 +231,7 @@ const SalesDashboard = () => {
         setIsDetailsLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem('userToken');
+            const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Authentication token not found.');
             }
