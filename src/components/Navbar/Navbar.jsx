@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// تأكد من استقبال prop onLogout هنا
 const Navbar = ({ onLogout }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -40,7 +39,6 @@ const Navbar = ({ onLogout }) => {
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
 
-    { path: "/test", icon: <Plus className="w-4 h-4" />, text: " test" },
   ];
 
   const notifications = [
