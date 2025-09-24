@@ -527,7 +527,7 @@ const HomePage = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm cursor-pointer transition-all duration-300 active:overflow-hidden" >
             <div className="flex items-start justify-between">
               <div className="text-right">
-                <p className="text-sm text-gray-500 mb-1">إجمالي المبيعات</p>
+                <p className="text-sm text-gray-500 mb-1"> إجمالي المبيعات الواصلة</p>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{cards.totalSales.toLocaleString()} د.ع</h3>
                 <div className="flex items-center text-green-500 text-sm">
                   <span className="mr-1">↗</span>
