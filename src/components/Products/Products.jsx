@@ -227,7 +227,7 @@ const Dashboard = () => {
           const params = new URLSearchParams({
             page: page.toString(),
             limit: limit.toString(),
-            ...(search && { search })  // إذا فيه قيمة للبحث ضيفها
+            ...(search && { search })
           });
       
           const data = await apiCall(`${API_CONFIG.ADMIN.CARDS}?${params.toString()}`);
@@ -257,7 +257,7 @@ const Dashboard = () => {
     
     const fetchCards = async () => {
         try {
-          const data = await apiCall(API_CONFIG.ADMIN.CARDS); // هذا يساوي /admin/dashboard/products
+          const data = await apiCall(API_CONFIG.ADMIN.CARDS);
           setStats(data.cards || {});
         } catch (err) {
           console.error("Error fetching cards:", err);
@@ -352,13 +352,8 @@ const Dashboard = () => {
     // دالة لتصفية المنتجات بناءً على مصطلح البحث والحالة
     const filterAndSearchProducts = (productsToFilter) => {
         return productsToFilter.filter(product => {
-            const searchTermMatch = searchTerm === '' ||
-                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                product.id?.toString().includes(searchTerm);
-            
             const statusMatch = filterStatus === 'all' || product.status === filterStatus;
-            
-            return searchTermMatch && statusMatch;
+            return statusMatch;
         });
     };
     
@@ -544,7 +539,7 @@ const Dashboard = () => {
                     <input
   type="text"
   placeholder="البحث عن منتج..."
-  className="..."
+  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
   value={searchTerm}
   onChange={(e) => {
     setSearchTerm(e.target.value);
