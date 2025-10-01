@@ -122,8 +122,10 @@ const AddOfferModal = ({ onClose, onOfferAdded }) => {
   };
   
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+    onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4">
           <h2 className="text-lg font-bold">إضافة عرض جديد</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -308,8 +310,10 @@ const EditOfferModal = ({ onClose, offer, onOfferUpdated }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+    onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4">
           <h2 className="text-lg font-bold">تعديل عرض</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -432,8 +436,10 @@ const DeleteOfferModal = ({ onClose, offerId, onOfferDeleted }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+    onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center"
+      onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">حذف العرض</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><RiCloseFill size={24} /></button>
@@ -456,8 +462,10 @@ const DeleteOfferModal = ({ onClose, offerId, onOfferDeleted }) => {
 };
 
 const OfferDetailsModal = ({ onClose, offer }) => (
-  <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-    <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
+  <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+  onClick={onClose}>
+    <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full"
+    onClick={(e) => e.stopPropagation()}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">تفاصيل العرض</h2>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><RiCloseFill size={24} /></button>

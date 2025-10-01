@@ -311,7 +311,7 @@ const AddProduct = () => {
                                     name="wholesalePrice"
                                     value={formData.wholesalePrice}
                                     onChange={handleChange}
-                                    required
+                                    
                                     min="0"
                                     step="0.01"
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"

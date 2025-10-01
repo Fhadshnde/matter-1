@@ -34,8 +34,10 @@ const StatCard = ({ title, value, icon, onClick }) => {
 const Modal = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50"
+             onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative" 
+                 onClick={(e) => e.stopPropagation()}>
                 <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
                 {children}
             </div>
@@ -105,7 +107,7 @@ const EditPriceModal = ({ isOpen, onClose, product, fetchProducts }) => {
 
     useEffect(() => {
         if (product) {
-            setPriceToUpdate(product.price || '');
+            setPriceToUpdate(product.originalPrice || '');
             setWholesalePriceToUpdate(product.wholesalePrice || '');
         }
     }, [product]);
@@ -114,7 +116,7 @@ const EditPriceModal = ({ isOpen, onClose, product, fetchProducts }) => {
         try {
             await apiCall(API_CONFIG.ADMIN.PRODUCT_PRICE(product.id), {
                 method: 'PUT',
-                body: JSON.stringify({ price: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
+                body: JSON.stringify({ originalPrice: parseInt(priceToUpdate), wholesalePrice: parseInt(wholesalePriceToUpdate) })
             });
             onClose();
             fetchProducts();
@@ -230,19 +232,20 @@ const Dashboard = () => {
             ...(search && { search })
           });
       
-          const data = await apiCall(`${API_CONFIG.ADMIN.CARDS}?${params.toString()}`);
+          const data = await apiCall(`${API_CONFIG.ADMIN.PRODUCTS}?${params.toString()}`);
       
           const mappedProducts = (data.products || []).map(product => ({
-            id: product.productId,
-            name: product.productName,
-            price: product.sellingPrice || product.wholesalePrice,
-            stock: product.quantity || 0,
-            mainImageUrl: product.imageUrl,
-            categoryName: product.categoryName,
-            merchantName: product.merchantName,
-            status: product.quantity === 0 ? 'out_of_stock' : product.quantity < 10 ? 'low_stock' : 'available',
-            updatedAt: product.lastUpdated
-          }));
+            id: product.id,
+            name: product.name,
+            originalPrice: product.originalPrice,
+            stock: product.stock || 0, // إذا لديك حقل stock في بياناتك
+            mainImageUrl: product.mainImageUrl,
+            categoryName: product.category,
+            merchantName: product.supplier,
+            status: (product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'available'),
+            updatedAt: product.updatedAt
+        }));
+        
           
       
           setProducts(mappedProducts);
@@ -447,7 +450,7 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">سعر البيع</label>
-                                <p className="text-gray-900">{selectedProduct.sellingPrice} د.ع</p>
+                                <p className="text-gray-900">{selectedProduct.originalPrice} د.ع</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">سعر الجملة</label>
@@ -623,7 +626,7 @@ const Dashboard = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {product.price} د.ع
+                                        {product.originalPrice} د.ع
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {product.stock}

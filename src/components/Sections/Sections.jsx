@@ -8,6 +8,7 @@ import API_CONFIG, { apiCall } from '../../config/api';
 import StatCard from '../Shared/StatCard';
 import Modal from '../Shared/Modal';
 import Pagination from '../Shared/Pagination';
+import axios from 'axios';
 
 const Sections = () => {
   const [sectionsData, setSectionsData] = useState([]);
@@ -40,7 +41,7 @@ const Sections = () => {
   useEffect(() => {
     fetchSectionsData();
     fetchCategories();
-  }, [currentPage]); // تم إزالة searchTerm من dependencies
+  }, [currentPage]);
 
   const fetchSectionsData = async () => {
     try {
@@ -50,7 +51,6 @@ const Sections = () => {
         limit: '20'
       });
       
-      // تم إزالة searchTerm من طلب الـ API
       const url = `${API_CONFIG.ADMIN.SECTIONS}?${params.toString()}`;
       const data = await apiCall(url);
       
@@ -96,21 +96,20 @@ const Sections = () => {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    // لا حاجة لتغيير الصفحة هنا، التصفية ستتم تلقائيًا
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // دالة تصفية البيانات في الواجهة الأمامية
   const filteredSections = sectionsData.filter(section =>
     section.sectionName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Modal handlers
   const openAddModal = () => {
     setFormData({ name: '', description: '', image: '', categoryId: '' });
+    setSelectedImage(null);
+    setImagePreview(null);
     setIsAddModalOpen(true);
   };
 
@@ -156,7 +155,6 @@ const Sections = () => {
     setSelectedSection(null);
   };
 
-  // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -182,23 +180,22 @@ const Sections = () => {
     try {
       let imageUrl = '';
       
-      // رفع الصورة إذا تم اختيارها
       if (selectedImage) {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
         
-        const uploadResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-          },
-          body: formDataUpload
-        });
+        const uploadResponse = await axios.post(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`,
+          formDataUpload,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          imageUrl = uploadResult.url;
-        }
+        imageUrl = uploadResponse.data.url;
       }
       
       const result = await apiCall(API_CONFIG.ADMIN.SECTIONS, {
@@ -231,23 +228,22 @@ const Sections = () => {
     try {
       let imageUrl = formData.image;
       
-      // رفع الصورة الجديدة إذا تم اختيارها
       if (selectedImage) {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
         
-        const uploadResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-          },
-          body: formDataUpload
-        });
+        const uploadResponse = await axios.post(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`,
+          formDataUpload,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          imageUrl = uploadResult.url;
-        }
+        imageUrl = uploadResponse.data.url;
       }
       
       const result = await apiCall(API_CONFIG.ADMIN.SECTION_UPDATE(selectedSection.sectionId), {
@@ -324,7 +320,6 @@ const Sections = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statsCards.map((card, index) => (
           <div key={index} className="bg-white rounded-lg p-4 flex items-center justify-between text-right shadow-sm">
@@ -339,7 +334,6 @@ const Sections = () => {
         ))}
       </div>
 
-      {/* Search and Filters */}
       <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -357,7 +351,6 @@ const Sections = () => {
         </div>
       </div>
 
-      {/* Sections Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -457,14 +450,12 @@ const Sections = () => {
         )}
       </div>
 
-      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
       />
 
-      {/* Add Section Modal */}
       <Modal 
         isOpen={isAddModalOpen} 
         title="إضافة قسم جديد" 
@@ -557,7 +548,6 @@ const Sections = () => {
         </form>
       </Modal>
 
-      {/* Edit Section Modal */}
       <Modal 
         isOpen={isEditModalOpen && selectedSection} 
         title={selectedSection ? `تعديل القسم: ${selectedSection.sectionName}` : ''} 
@@ -650,7 +640,6 @@ const Sections = () => {
         </form>
       </Modal>
 
-      {/* Section Details Modal */}
       <Modal 
         isOpen={isDetailsModalOpen && selectedSection} 
         title={selectedSection ? `تفاصيل القسم: ${selectedSection.sectionName}` : ''} 
@@ -692,7 +681,6 @@ const Sections = () => {
         </div>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal 
         isOpen={isDeleteModalOpen && selectedSection} 
         title="تأكيد الحذف" 

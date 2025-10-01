@@ -3,6 +3,25 @@ import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaEdit, FaT
 import { apiCall } from '../../config/api';
 import API_CONFIG from '../../config/api';
 
+// New ModalContainer component to handle isOpen and onClose props
+const ModalContainer = ({ isOpen, onClose, children, maxWidth = 'max-w-md' }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div 
+        className={`bg-white p-6 rounded-lg shadow-xl w-full mx-4 ${maxWidth} max-h-[90vh] overflow-y-auto`} 
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const SuppliersPage = () => {
   // State for data
   const [suppliersData, setSuppliersData] = useState([]);
@@ -29,7 +48,7 @@ const SuppliersPage = () => {
     address: '',
     phone: '',
     password: '',
-    platformPercentage: 0.15,
+    platformPercentage: 15, // Changed to a whole number
     hasWholesalePrice: false
   });
 
@@ -104,7 +123,10 @@ const SuppliersPage = () => {
     try {
       await apiCall(API_CONFIG.ADMIN.SUPPLIER_CREATE, {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          platformPercentage: formData.platformPercentage / 100 // Convert back to decimal for API
+        })
       });
       setIsAddModalOpen(false);
       setFormData({
@@ -113,7 +135,7 @@ const SuppliersPage = () => {
         address: '',
         phone: '',
         password: '',
-        platformPercentage: 0.15,
+        platformPercentage: 15, // Reset to 15
         hasWholesalePrice: false
       });
       fetchSuppliersData();
@@ -133,7 +155,10 @@ const SuppliersPage = () => {
       const url = API_CONFIG.ADMIN.SUPPLIER_UPDATE(selectedSupplier.id);
       await apiCall(url, {
         method: 'PUT',
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          platformPercentage: formData.platformPercentage / 100 // Convert back to decimal for API
+        })
       });
       setIsEditModalOpen(false);
       setSelectedSupplier(null);
@@ -181,7 +206,7 @@ const SuppliersPage = () => {
       address: supplier.address || '',
       phone: supplier.phone,
       password: '',
-      platformPercentage: supplier.platformPercentage || 0.15,
+      platformPercentage: (supplier.platformPercentage || 0.15) * 100, // Convert to whole number for display
       hasWholesalePrice: supplier.hasWholesalePrice || false
     });
     setIsEditModalOpen(true);
@@ -479,506 +504,479 @@ const SuppliersPage = () => {
       </div>
 
       {/* Add Supplier Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">إضافة مورد جديد</h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddSupplier} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  اسم المورد *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  معلومات الاتصال *
-                </label>
-                <input
-                  type="text"
-                  name="contactInfo"
-                  value={formData.contactInfo}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  العنوان
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  رقم الهاتف *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  كلمة المرور *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  نسبة المنصة
-                </label>
-                <input
-                  type="number"
-                  name="platformPercentage"
-                  value={formData.platformPercentage}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="hasWholesalePrice"
-                  checked={formData.hasWholesalePrice}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="mr-2 block text-sm text-gray-900">
-                  لديه سعر جملة
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-2 rtl:space-x-reverse">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
-                    isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {isLoading ? 'جاري الإضافة...' : 'إضافة'}
-                </button>
-              </div>
-            </form>
-          </div>
+      <ModalContainer isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-800">إضافة مورد جديد</h3>
+          <button
+            onClick={() => setIsAddModalOpen(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <FaTimes size={20} />
+          </button>
         </div>
-      )}
+        <form onSubmit={handleAddSupplier} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              اسم المورد *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              معلومات الاتصال *
+            </label>
+            <input
+              type="text"
+              name="contactInfo"
+              value={formData.contactInfo}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              العنوان
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              رقم الهاتف *
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              كلمة المرور *
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              نسبة المنصة (%)
+            </label>
+            <input
+              type="number"
+              name="platformPercentage"
+              value={formData.platformPercentage}
+              onChange={handleInputChange}
+              min="0"
+              max="100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="hasWholesalePrice"
+              checked={formData.hasWholesalePrice}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label className="mr-2 block text-sm text-gray-900">
+              لديه سعر جملة
+            </label>
+          </div>
+          <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isLoading ? 'جاري الإضافة...' : 'إضافة'}
+            </button>
+          </div>
+        </form>
+      </ModalContainer>
 
       {/* Edit Supplier Modal */}
       {isEditModalOpen && selectedSupplier && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">تعديل المورد</h3>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSupplier} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  اسم المورد *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  اسم المتجر
-                </label>
-                <input
-                  type="text"
-                  name="storeName"
-                  value={formData.storeName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  معلومات الاتصال *
-                </label>
-                <input
-                  type="text"
-                  name="contactInfo"
-                  value={formData.contactInfo}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  العنوان
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  رقم الهاتف *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  كلمة المرور الجديدة
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  نسبة المنصة
-                </label>
-                <input
-                  type="number"
-                  name="platformPercentage"
-                  value={formData.platformPercentage}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="hasWholesalePrice"
-                  checked={formData.hasWholesalePrice}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="mr-2 block text-sm text-gray-900">
-                  لديه سعر جملة
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-2 rtl:space-x-reverse">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
-                    isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {isLoading ? 'جاري التعديل...' : 'تعديل'}
-                </button>
-              </div>
-            </form>
+        <ModalContainer isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-800">تعديل المورد</h3>
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes size={20} />
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Supplier Details Modal */}
-      {isDetailsModalOpen && selectedSupplier && supplierDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">تفاصيل المورد</h3>
-              <button
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes size={20} />
-              </button>
+          <form onSubmit={handleEditSupplier} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                اسم المورد *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Supplier Info */}
-              <div className="space-y-4">
-                <h4 className="text-md font-semibold text-gray-800">معلومات المورد</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">الاسم:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">الهاتف:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.phone}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">معلومات الاتصال:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.contactInfo}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">نوع المورد:</label>
-                      <p className="text-sm text-gray-900">
-                        {supplierDetails.hasWholesalePrice ? 'جملة ومفرد' : 'مفرد فقط'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">نسبة المنصة:</label>
-                      <p className="text-sm text-gray-900">
-                        {(supplierDetails.platformPercentage * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">تاريخ الإنشاء:</label>
-                      <p className="text-sm text-gray-900">
-                        {new Date(supplierDetails.createdAt).toLocaleDateString('ar-SA')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Statistics */}
-              <div className="space-y-4">
-                <h4 className="text-md font-semibold text-gray-800">الإحصائيات</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">إجمالي المنتجات:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.productsCount || 0}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">المنتجات النشطة:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.activeProductsCount || 0}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">إجمالي الإيرادات:</label>
-                      <p className="text-sm text-gray-900">
-                        {(supplierDetails.totalRevenue || 0).toLocaleString()} د.ع
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">إجمالي الطلبات:</label>
-                      <p className="text-sm text-gray-900">{supplierDetails.totalOrderItems || 0}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                اسم المتجر
+              </label>
+              <input
+                type="text"
+                name="storeName"
+                value={formData.storeName}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-
-            {/* Profits Information */}
-            {supplierProfits && (
-              <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-4">معلومات الأرباح</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">إجمالي أرباح المنصة:</label>
-                      <p className="text-sm text-gray-900">
-                        {(supplierProfits.profitSummary?.totalPlatformProfit || 0).toLocaleString()} د.ع
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">إجمالي أرباح المورد:</label>
-                      <p className="text-sm text-gray-900">
-                        {(supplierProfits.profitSummary?.totalSupplierProfit || 0).toLocaleString()} د.ع
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">نسبة المنصة:</label>
-                      <p className="text-sm text-gray-900">
-                        {((supplierProfits.profitSummary?.platformPercentage || 0) * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">نوع المورد:</label>
-                      <p className="text-sm text-gray-900">
-                        {supplierProfits.profitSummary?.supplierType || 'غير محدد'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {supplierProfits.profitBreakdown && supplierProfits.profitBreakdown.length > 0 && (
-                  <div className="mt-4">
-                    <h5 className="text-sm font-semibold text-gray-700 mb-2">تفاصيل أرباح المنتجات:</h5>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              معرف المنتج
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              إجمالي المبيعات
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              عمولة المنصة
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              صافي أرباح المورد
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {supplierProfits.profitBreakdown.map((productProfit) => (
-                            <tr key={productProfit.productId}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {productProfit.productId}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {productProfit.totalSales.toLocaleString()} د.ع
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {productProfit.platformCommission.toLocaleString()} د.ع
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {productProfit.supplierNetProfit.toLocaleString()} د.ع
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                إغلاق
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                معلومات الاتصال *
+              </label>
+              <input
+                type="text"
+                name="contactInfo"
+                value={formData.contactInfo}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && selectedSupplier && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">تأكيد الحذف</h3>
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes size={20} />
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                العنوان
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-
-            <p className="text-gray-600 mb-6">
-              هل أنت متأكد من حذف المورد "{selectedSupplier.name}"؟ 
-              {selectedSupplier.productsCount > 0 && (
-                <span className="block mt-2 text-red-600 text-sm">
-                  تحذير: هذا المورد لديه {selectedSupplier.productsCount} منتج. 
-                  يجب حذف أو إعادة تعيين المنتجات أولاً.
-                </span>
-              )}
-            </p>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                رقم الهاتف *
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                كلمة المرور الجديدة
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                نسبة المنصة (%)
+              </label>
+              <input
+                type="number"
+                name="platformPercentage"
+                value={formData.platformPercentage}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="hasWholesalePrice"
+                checked={formData.hasWholesalePrice}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="mr-2 block text-sm text-gray-900">
+                لديه سعر جملة
+              </label>
+            </div>
             <div className="flex justify-end space-x-2 rtl:space-x-reverse">
               <button
-                onClick={() => setIsDeleteModalOpen(false)}
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 إلغاء
               </button>
               <button
-                onClick={handleDeleteSupplier}
-                disabled={isLoading || selectedSupplier.productsCount > 0}
+                type="submit"
+                disabled={isLoading}
                 className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
-                  isLoading || selectedSupplier.productsCount > 0
-                    ? 'bg-red-400 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
+                  isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {isLoading ? 'جاري الحذف...' : 'حذف'}
+                {isLoading ? 'جاري التعديل...' : 'تعديل'}
               </button>
             </div>
+          </form>
+        </ModalContainer>
+      )}
+
+      {/* Supplier Details Modal */}
+      {isDetailsModalOpen && selectedSupplier && supplierDetails && (
+        <ModalContainer isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} maxWidth="max-w-4xl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-800">تفاصيل المورد</h3>
+            <button
+              onClick={() => setIsDetailsModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes size={20} />
+            </button>
           </div>
-        </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Supplier Info */}
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-gray-800">معلومات المورد</h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">الاسم:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">الهاتف:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.phone}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">معلومات الاتصال:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.contactInfo}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">نوع المورد:</label>
+                    <p className="text-sm text-gray-900">
+                      {supplierDetails.hasWholesalePrice ? 'جملة ومفرد' : 'مفرد فقط'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">نسبة المنصة:</label>
+                    <p className="text-sm text-gray-900">
+                      {(supplierDetails.platformPercentage * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">تاريخ الإنشاء:</label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(supplierDetails.createdAt).toLocaleDateString('ar-SA')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-gray-800">الإحصائيات</h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">إجمالي المنتجات:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.productsCount || 0}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">المنتجات النشطة:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.activeProductsCount || 0}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">إجمالي الإيرادات:</label>
+                    <p className="text-sm text-gray-900">
+                      {(supplierDetails.totalRevenue || 0).toLocaleString()} د.ع
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">إجمالي الطلبات:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.totalOrderItems || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Profits Information */}
+          {supplierProfits && (
+            <div className="mt-6">
+              <h4 className="text-md font-semibold text-gray-800 mb-4">معلومات الأرباح</h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">إجمالي أرباح المنصة:</label>
+                    <p className="text-sm text-gray-900">
+                      {(supplierProfits.profitSummary?.totalPlatformProfit || 0).toLocaleString()} د.ع
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">إجمالي أرباح المورد:</label>
+                    <p className="text-sm text-gray-900">
+                      {(supplierProfits.profitSummary?.totalSupplierProfit || 0).toLocaleString()} د.ع
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">نسبة المنصة:</label>
+                    <p className="text-sm text-gray-900">
+                      {((supplierProfits.profitSummary?.platformPercentage || 0) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">نوع المورد:</label>
+                    <p className="text-sm text-gray-900">
+                      {supplierProfits.profitSummary?.supplierType || 'غير محدد'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {supplierProfits.profitBreakdown && supplierProfits.profitBreakdown.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="text-sm font-semibold text-gray-700 mb-2">تفاصيل أرباح المنتجات:</h5>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            معرف المنتج
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            إجمالي المبيعات
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            عمولة المنصة
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            صافي أرباح المورد
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {supplierProfits.profitBreakdown.map((productProfit) => (
+                          <tr key={productProfit.productId}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {productProfit.productId}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {productProfit.totalSales.toLocaleString()} د.ع
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {productProfit.platformCommission.toLocaleString()} د.ع
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {productProfit.supplierNetProfit.toLocaleString()} د.ع
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => setIsDetailsModalOpen(false)}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              إغلاق
+            </button>
+          </div>
+        </ModalContainer>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && selectedSupplier && (
+        <ModalContainer isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-800">تأكيد الحذف</h3>
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes size={20} />
+            </button>
+          </div>
+
+          <p className="text-gray-600 mb-6">
+            هل أنت متأكد من حذف المورد "{selectedSupplier.name}"؟ 
+            {selectedSupplier.productsCount > 0 && (
+              <span className="block mt-2 text-red-600 text-sm">
+                تحذير: هذا المورد لديه {selectedSupplier.productsCount} منتج. 
+                يجب حذف أو إعادة تعيين المنتجات أولاً.
+              </span>
+            )}
+          </p>
+
+          <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleDeleteSupplier}
+              disabled={isLoading || selectedSupplier.productsCount > 0}
+              className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                isLoading || selectedSupplier.productsCount > 0
+                  ? 'bg-red-400 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              {isLoading ? 'جاري الحذف...' : 'حذف'}
+            </button>
+          </div>
+        </ModalContainer>
       )}
     </div>
   );

@@ -524,8 +524,10 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50">
-      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-3 z-50"
+      onClick={onClose}>
+      <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-bold">إضافة موظف جديد</h2>
           <button onClick={onClose}>

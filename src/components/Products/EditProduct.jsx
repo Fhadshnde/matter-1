@@ -53,7 +53,6 @@ const EditProduct = () => {
             setProduct({
                 name: data.name || '',
                 description: data.description || '',
-                price: data.sellingPrice || '',
                 originalPrice: data.originalPrice || '',
                 wholesalePrice: data.wholesalePrice || '',
                 stock: data.stock || '',
@@ -63,12 +62,17 @@ const EditProduct = () => {
                 notes: data.notes || ''
             });
             
+            
             // Set initial images from API
             if (data.media && data.media.length > 0) {
                 const initialPreviews = data.media.map(item => item.url);
                 setImagePreviews(initialPreviews);
                 const mainIndex = data.media.findIndex(item => item.isMain);
                 setMainImageIndex(mainIndex !== -1 ? mainIndex : 0);
+            } else if (data.imageUrl) {
+                // Handle the case where only a single imageUrl is returned
+                setImagePreviews([data.imageUrl]);
+                setMainImageIndex(0);
             }
         } catch (error) {
             console.error('Error fetching product details:', error);
@@ -240,8 +244,7 @@ const EditProduct = () => {
             const updateData = {
                 name: product.name,
                 description: product.description,
-                originalPrice: parseFloat(product.originalPrice),
-                price: parseFloat(product.price),
+                originalPrice: parseFloat(product.originalPrice), // هذا سعر البيع
                 wholesalePrice: parseFloat(product.wholesalePrice),
                 stock: parseInt(product.stock),
                 categoryId: parseInt(product.categoryId),
@@ -250,6 +253,7 @@ const EditProduct = () => {
                 mainImageUrl,
                 notes: product.notes
             };
+            
             
             // Step 3: Send the update request with the correct data structure
             const result = await apiCall(API_CONFIG.ADMIN.PRODUCT_UPDATE(id), {
@@ -337,16 +341,17 @@ const EditProduct = () => {
                                     سعر البيع *
                                 </label>
                                 <input
-                                    type="number"
-                                    name="price"
-                                    value={product.price}
-                                    onChange={handleInputChange}
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
-                                    placeholder="0.00"
-                                    required
-                                />
+    type="number"
+    name="originalPrice" // <- هنا
+    value={product.originalPrice}
+    onChange={handleInputChange}
+    min="0"
+    step="0.01"
+    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
+    placeholder="0.00"
+    required
+/>
+
                             </div>
 
                             <div>
@@ -362,7 +367,7 @@ const EditProduct = () => {
                                     step="0.01"
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-right"
                                     placeholder="0.00"
-                                    required
+                                    
                                 />
                             </div>
 

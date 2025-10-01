@@ -4,10 +4,11 @@ import { BiCategory } from 'react-icons/bi';
 import { MdOutlineCategory } from 'react-icons/md';
 import { HiOutlineCube } from 'react-icons/hi';
 import { TbCategory2 } from 'react-icons/tb';
-import API_CONFIG, { apiCall } from '../../config/api';
+import { API_CONFIG, apiCall } from '../../config/api';
 import StatCard from '../Shared/StatCard';
 import Modal from '../Shared/Modal';
 import Pagination from '../Shared/Pagination';
+import axios from 'axios';
 
 const Categories = () => {
   const [categoriesData, setCategoriesData] = useState([]);
@@ -93,6 +94,8 @@ const Categories = () => {
 
   const openAddModal = () => {
     setFormData({ name: '', description: '', image: '' });
+    setSelectedImage(null);
+    setImagePreview(null);
     setIsAddModalOpen(true);
   };
 
@@ -166,18 +169,18 @@ const Categories = () => {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
         
-        const uploadResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-          },
-          body: formDataUpload
-        });
+        const uploadResponse = await axios.post(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`,
+          formDataUpload,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          imageUrl = uploadResult.url;
-        }
+        imageUrl = uploadResponse.data.url;
       }
       
       const result = await apiCall(API_CONFIG.ADMIN.CATEGORIES, {
@@ -213,18 +216,18 @@ const Categories = () => {
         const formDataUpload = new FormData();
         formDataUpload.append('file', selectedImage);
         
-        const uploadResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-          },
-          body: formDataUpload
-        });
+        const uploadResponse = await axios.post(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN_UPLOAD.UPLOAD_IMAGE}`,
+          formDataUpload,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          imageUrl = uploadResult.url;
-        }
+        imageUrl = uploadResponse.data.url;
       }
       
       const result = await apiCall(API_CONFIG.ADMIN.CATEGORY_UPDATE(selectedCategory.categoryId), {

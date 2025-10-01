@@ -6,11 +6,14 @@ import Pagination from '../Shared/Pagination';
 import Modal from '../Shared/Modal';
 import { FaDownload, FaFilter, FaCalendarAlt, FaChartLine, FaChartBar, FaChartPie, FaEye, FaEdit } from 'react-icons/fa';
 import { API_CONFIG } from '../../config/api';
+import { ExternalLink,LayoutGrid ,CircleDollarSign,Percent} from 'lucide-react';
 
 const MerchantsModal = ({ onClose, merchants }) => {
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+      onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full"
+        onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">تفاصيل إجمالي المبيعات حسب التاجر</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -233,8 +236,11 @@ const ProductModal = ({ product, onClose }) => {
   const ratingStars = product.customerRating ? Math.floor(product.customerRating) : 0;
   const hasHalfStar = product.customerRating ? product.customerRating % 1 !== 0 : false;
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white p-4 rounded-lg shadow-xl max-w-sm w-full">
+    <div className="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4" dir="rtl"
+      onClick={onClose}>
+      <div className="bg-white p-4 rounded-lg shadow-xl max-w-sm w-full
+      "
+        onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">تفاصيل المنتج</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -584,10 +590,10 @@ const Profits = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="متوسط حاصل الأرباح" value={`${data?.cards?.averageProfitMargin || 0}%`} icon="profit" color="green" />
-        <StatCard title="إجمالي المبيعات" value={`${(data?.cards?.totalSales || 0).toLocaleString()} د.ع`} icon="sales" color="blue" />
-        <StatCard title="حصة التطبيق" value={`${(data?.cards?.appShare || 0).toLocaleString()} د.ع`} icon="appShare" color="red" />
-        <StatCard title="حصة التاجر" value={`${(data?.cards?.merchantShare || 0).toLocaleString()} د.ع`} icon="merchantShare" color="orange" />
+        <StatCard title="متوسط حاصل الأرباح" value={`${data?.cards?.averageProfitMargin || 0}%`} icon={<Percent />} color="green" />
+        <StatCard title="إجمالي المبيعات" value={`${(data?.cards?.totalSales || 0).toLocaleString()} د.ع`} icon={<CircleDollarSign />} color="blue" />
+        <StatCard title="حصة التطبيق" value={`${(data?.cards?.appShare || 0).toLocaleString()} د.ع`} icon={<LayoutGrid />} color="red" />
+        <StatCard title="حصة التاجر" value={`${(data?.cards?.merchantShare || 0).toLocaleString()} د.ع`} icon={<ExternalLink />} color="orange" />
       </div>
       <div className="grid  gap-6 mb-8">
         {/* <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center h-full">
