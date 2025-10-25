@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaEdit } from 'react-icons/fa';
+import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaEdit, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { RiCloseFill } from 'react-icons/ri';
 import { BsEye } from 'react-icons/bs';
 import axios from 'axios';
@@ -284,6 +284,107 @@ const GenericModal = ({ isOpen, onClose, title, data, hasProducts = true }) => {
   );
 };
 
+const DeleteConfirmationModal = ({ isOpen, onClose, order, onConfirm }) => {
+  if (!isOpen || !order) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm mx-4 text-right" dir="rtl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-800">
+            تأكيد حذف الطلب
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <RiCloseFill size={24} />
+          </button>
+        </div>
+        
+        <p className="text-gray-700 mb-6">
+          هل أنت متأكد من حذف الطلب رقم <span className="font-bold">#{order.orderId}</span> الخاص بالعميل <span className="font-bold">{order.customerName}</span>؟ لا يمكن التراجع عن هذا الإجراء.
+        </p>
+        
+        <div className="flex justify-end space-x-4 rtl:space-x-reverse">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={() => onConfirm(order.orderId)}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
+            حذف الطلب
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatusUpdateModal = ({ isOpen, onClose, orderToUpdate, newStatus, setNewStatus, handleStatusUpdate, statusOptions }) => {
+  if (!isOpen || !orderToUpdate) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4 text-right" dir="rtl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-800">
+            تحديث حالة الطلب #{orderToUpdate.orderId}
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <RiCloseFill size={24} />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              الحالة الحالية: <span className="font-bold">{orderToUpdate.status}</span>
+            </label>
+            <select
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              dir="rtl"
+            >
+              <option value="">اختر الحالة الجديدة</option>
+              {statusOptions.filter(opt => opt.value !== 'all').map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex justify-end space-x-4 rtl:space-x-reverse">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleStatusUpdate}
+              disabled={!newStatus}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              تحديث الحالة
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const OrdersPage = () => {
   const [statsCards, setStatsCards] = useState([]);
   const [ordersData, setOrdersData] = useState([]);
@@ -302,11 +403,13 @@ const OrdersPage = () => {
   const [isStatusUpdateModalOpen, setIsStatusUpdateModalOpen] = useState(false);
   const [orderToUpdate, setOrderToUpdate] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   const statusOptions = [
     { value: 'all', label: 'الكل' },
     { value: 'processing', label: 'قيد المعالجة' },
-    { value: 'shipped', label: 'جاهز للشحن' },
+    { value: 'SHIPPED', label: 'جاهز للشحن' },
     { value: 'delivering', label: 'قيد التوصيل' },
     { value: 'delivered', label: 'تم التوصيل' },
     { value: 'cancelled', label: 'ملغي' },
@@ -315,11 +418,24 @@ const OrdersPage = () => {
   const paymentOptions = ['الكل', 'دفع عند الاستلام', 'مدفوع'];
 
   const token = localStorage.getItem('token') || 'test-token';
+  
+  const getDeleteOrderUrl = (orderId) => {
+    return `/orders/admin/${orderId}`; 
+  };
+  
+  const getUpdateOrderStatusUrl = (orderId) => {
+    // المسار المطلوب لتحديث الحالة
+    return `/admin/dashboard/orders/${orderId}/status`; 
+  };
+
+  // دالة جديدة للحصول على مسار تحديث الرؤية
+  const getUpdateOrderVisibilityUrl = (orderId) => {
+    return `/orders/admin/${orderId}/visibility`;
+  };
 
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // بناء معاملات البحث
       const params = new URLSearchParams();
       params.append('page', currentPage.toString());
       params.append('limit', '20');
@@ -328,12 +444,8 @@ const OrdersPage = () => {
       if (dateTo) params.append('dateTo', dateTo);
       
       const url = `${API_CONFIG.ADMIN.ORDERS}?${params.toString()}`;
-      console.log('Fetching orders from:', url);
-      console.log('API_CONFIG.ADMIN.ORDERS:', API_CONFIG.ADMIN.ORDERS);
-      console.log('Full URL:', `${API_CONFIG.BASE_URL}${API_CONFIG.ADMIN.ORDERS}?${params.toString()}`);
       
       const data = await apiCall(url);
-      console.log('Orders data received:', data);
       const { orders, cards, pagination } = data;
 
       const formattedCards = [
@@ -347,8 +459,6 @@ const OrdersPage = () => {
       setOrdersData(orders || []);
       setPagination(pagination || {});
     } catch (error) {
-      console.error('Error fetching data:', error);
-      console.error('Error details:', error.message);
       setStatsCards([]);
       setOrdersData([]);
       setPagination({});
@@ -363,7 +473,6 @@ const OrdersPage = () => {
       setSelectedOrder(data);
       setIsModalOpen(true);
     } catch (error) {
-      console.error('Error fetching order details:', error);
     }
   };
 
@@ -396,7 +505,6 @@ const OrdersPage = () => {
   };
 
   useEffect(() => {
-    console.log('Orders component mounted, fetching data...');
     fetchDashboardData();
   }, [currentPage, selectedStatus, dateFrom, dateTo]);
 
@@ -405,29 +513,99 @@ const OrdersPage = () => {
     setSelectedOrder(null);
     setModalData([]);
   };
+  
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setOrderToDelete(null);
+  };
+
+  const openDeleteModal = (order) => {
+    setOrderToDelete(order);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    setIsLoading(true);
+    closeDeleteModal();
+    try {
+      await apiCall(getDeleteOrderUrl(orderId), { method: 'DELETE' });
+
+      alert(`تم حذف الطلب رقم ${orderId} بنجاح.`);
+      fetchDashboardData();
+    } catch (error) {
+      alert('حدث خطأ أثناء محاولة حذف الطلب.');
+      setIsLoading(false);
+    }
+  };
+  
+  const closeStatusUpdateModal = () => {
+    setIsStatusUpdateModalOpen(false);
+    setOrderToUpdate(null);
+    setNewStatus('');
+  }
 
   const handleStatusUpdate = async () => {
     if (!orderToUpdate || !newStatus) return;
     
+    closeStatusUpdateModal();
+    setIsLoading(true);
+    
     try {
-      // ملاحظة: لا يوجد endpoint محدد لتحديث حالة الطلب في الباك-إند الحالي
-      // يمكن إضافة هذا لاحقاً
-      console.log('Updating order status:', orderToUpdate.orderId, 'to', newStatus);
+      const url = getUpdateOrderStatusUrl(orderToUpdate.orderId);
+      const payload = { status: newStatus }; 
+      
+      await apiCall(url, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
       alert('تم تحديث حالة الطلب بنجاح');
-      setIsStatusUpdateModalOpen(false);
-      setOrderToUpdate(null);
-      setNewStatus('');
-      fetchDashboardData();
+      
+      if (selectedStatus !== 'all' && selectedStatus !== newStatus) {
+        setSelectedStatus('all');
+        setCurrentPage(1);
+      } else {
+        fetchDashboardData();
+      }
     } catch (error) {
-      console.error('Error updating order status:', error);
       alert('حدث خطأ في تحديث حالة الطلب');
+      setIsLoading(false);
     }
   };
 
   const openStatusUpdateModal = (order) => {
     setOrderToUpdate(order);
+    const currentStatusValue = statusOptions.find(opt => opt.label === order.status)?.value || '';
+    setNewStatus(currentStatusValue); 
     setIsStatusUpdateModalOpen(true);
   };
+
+  // دالة جديدة لتبديل رؤية الطلب
+  const handleVisibilityToggle = async (orderId, currentVisibility) => {
+    const newVisibility = !currentVisibility;
+    setIsLoading(true);
+    
+    try {
+      const url = getUpdateOrderVisibilityUrl(orderId);
+      // استخدام 'isVisibleToSupplier' كما هو مطلوب في الـ curl
+      const payload = { isVisibleToSupplier: newVisibility }; 
+      
+      await apiCall(url, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      alert(`تم ${newVisibility ? 'إظهار' : 'إخفاء'} الطلب رقم ${orderId} للتاجر بنجاح.`);
+      // تحديث البيانات لسحب الحالة الجديدة للرؤية
+      fetchDashboardData();
+    } catch (error) {
+      alert('حدث خطأ في تحديث رؤية الطلب.');
+      setIsLoading(false);
+    }
+  };
+
 
   const filteredOrders = ordersData.filter(order => {
     const paymentMatch = selectedPayment === 'الكل' || (selectedPayment === 'مدفوع' ? order.paymentMethod !== 'دفع عند الاستلام' : order.paymentMethod === selectedPayment);
@@ -448,10 +626,6 @@ const OrdersPage = () => {
     }
     return null;
   };
-  
-  console.log('Orders component rendering, statsCards:', statsCards);
-  console.log('Orders component rendering, ordersData:', ordersData);
-  console.log('Orders component rendering, isLoading:', isLoading);
   
   return (
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
@@ -543,6 +717,7 @@ const OrdersPage = () => {
                   <Th>الحالة</Th>
                   <Th>الدفع</Th>
                   <Th>تاريخ الطلب</Th>
+                  <Th>رؤية التاجر</Th> {/* عمود جديد لرؤية التاجر */}
                   <Th>الإجراءات</Th>
                 </tr>
               </thead>
@@ -577,6 +752,15 @@ const OrdersPage = () => {
                         </span>
                       </Td>
                       <Td>{order.orderDate ? new Date(order.orderDate).toLocaleDateString('ar-EG') : 'غير محدد'}</Td>
+                      <Td> {/* محتوى عمود رؤية التاجر */}
+                          <button
+                              onClick={() => handleVisibilityToggle(order.orderId, order.isVisibleToSupplier)}
+                              className={`p-1 rounded-full transition-colors ${order.isVisibleToSupplier ? 'text-green-600 hover:bg-green-100' : 'text-red-600 hover:bg-red-100'}`}
+                              title={order.isVisibleToSupplier ? 'إخفاء عن التاجر' : 'إظهار للتاجر'}
+                          >
+                              {order.isVisibleToSupplier ? <FaEye className="text-lg" /> : <FaEyeSlash className="text-lg" />}
+                          </button>
+                      </Td>
                       <Td>
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
                           <button 
@@ -586,13 +770,20 @@ const OrdersPage = () => {
                           >
                             <BsEye className="text-lg" />
                           </button>
-                          {/* <button 
-                            onClick={() => openStatusUpdateModal(order)} 
+                          <button 
+                            onClick={() => openStatusUpdateModal(order)}
                             className="text-blue-500 hover:text-blue-700 p-1"
                             title="تحديث الحالة"
                           >
-                            <FaEdit className="text-lg" />
-                          </button> */}
+                            <FaEdit className="text-lg" /> 
+                          </button>
+                          <button 
+                            onClick={() => openDeleteModal(order)} 
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="حذف الطلب"
+                          >
+                            <FaTrash className="text-lg" />
+                          </button>
                         </div>
                       </Td>
                     </tr>
@@ -627,60 +818,22 @@ const OrdersPage = () => {
       </div>
       {getModalComponent()}
       
-      {/* Status Update Modal */}
-      {isStatusUpdateModalOpen && orderToUpdate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">
-                تحديث حالة الطلب #{orderToUpdate.orderId}
-              </h3>
-              <button 
-                onClick={() => setIsStatusUpdateModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <RiCloseFill size={24} />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  الحالة الحالية: {orderToUpdate.status}
-                </label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">اختر الحالة الجديدة</option>
-                  {statusOptions.filter(opt => opt.value !== 'all').map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex justify-end space-x-4 rtl:space-x-reverse">
-                <button
-                  onClick={() => setIsStatusUpdateModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={handleStatusUpdate}
-                  disabled={!newStatus}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                >
-                  تحديث الحالة
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusUpdateModal 
+        isOpen={isStatusUpdateModalOpen}
+        onClose={closeStatusUpdateModal}
+        orderToUpdate={orderToUpdate}
+        newStatus={newStatus}
+        setNewStatus={setNewStatus}
+        handleStatusUpdate={handleStatusUpdate}
+        statusOptions={statusOptions}
+      />
+
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        order={orderToDelete}
+        onConfirm={handleDeleteOrder}
+      />
     </div>
   );
 };

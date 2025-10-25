@@ -26,6 +26,7 @@ import Register from './components/Login/Register';
 import Test from './components/Test/Test';
 import Invoices from './components/Invoices/Invoices';
 import SupplierDues from './components/SupplierDues/SupplierDues';
+import DeliverySettings from './components/DeliverySettings/DeliverySettings';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -89,6 +90,7 @@ const App = () => {
             <Route path="/supplier-dues" element={<SupplierDues />} />
             <Route path="/test" element={<Test />} />
             <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/delivery-settings" element={<DeliverySettings />} />
           </>
         )}
       </Routes>

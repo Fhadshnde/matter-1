@@ -46,6 +46,7 @@ const Navbar = ({ onLogout }) => {
     { path: "/invoices", icon: <FileText className="w-4 h-4" />, text: "الفواتير" },
     { path: "/supplier-dues", icon: <Wallet className="w-4 h-4" />, text: "مستحقات الموردين" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
+    { path: "/delivery-settings", icon: <Inbox className="w-4 h-4" />, text: "التقارير" },
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
   ];
 

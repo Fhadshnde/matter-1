@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Star } from 'lucide-react';
 import { API_CONFIG, apiCall } from '../../config/api';
 import axios from 'axios';
+import { SketchPicker } from 'react-color';
 
 const AddProduct = () => {
     const navigate = useNavigate();
@@ -25,6 +26,7 @@ const AddProduct = () => {
     const [categories, setCategories] = useState([]);
     const [sections, setSections] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
+    const [productColors, setProductColors] = useState([]);
 
     useEffect(() => {
         fetchCategories();
@@ -94,9 +96,44 @@ const AddProduct = () => {
         setFormData(prev => ({
             ...prev,
             [name]: value,
-            // إعادة تعيين القسم عند تغيير الفئة
             ...(name === 'categoryId' && { sectionId: '' })
         }));
+    };
+
+    const handleColorChange = (index, field, value) => {
+        const newColors = [...productColors];
+        newColors[index][field] = value;
+        setProductColors(newColors);
+    };
+
+    const handleSizeChange = (colorIndex, sizeIndex, field, value) => {
+        const newColors = [...productColors];
+        newColors[colorIndex].sizes[sizeIndex][field] = field === 'stock' ? Number(value) : value;
+        setProductColors(newColors);
+    };
+
+    const addColor = () => {
+        setProductColors(prev => [
+            ...prev,
+            { name: '', code: '#ffffff', stock: 0, sizes: [{ size: '', stock: 0 }] }
+        ]);
+    };
+
+    const addSize = (colorIndex) => {
+        const newColors = [...productColors];
+        newColors[colorIndex].sizes.push({ size: '', stock: 0 });
+        setProductColors(newColors);
+    };
+
+    const deleteColor = (colorIndex) => {
+        const newColors = productColors.filter((_, i) => i !== colorIndex);
+        setProductColors(newColors);
+    };
+
+    const deleteSize = (colorIndex, sizeIndex) => {
+        const newColors = [...productColors];
+        newColors[colorIndex].sizes = newColors[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
+        setProductColors(newColors);
     };
 
     const compressImage = (file, maxWidth = 800, quality = 0.8) => {
@@ -218,7 +255,12 @@ const AddProduct = () => {
                 sectionId: parseInt(formData.sectionId),
                 supplierId: parseInt(formData.supplierId),
                 mainImageUrl,
-                media
+                media,
+                colors: productColors.map(c => ({
+                    ...c,
+                    stock: Number(c.stock),
+                    sizes: c.sizes.map(s => ({ size: s.size, stock: Number(s.stock) }))
+                }))
             };
 
             const result = await apiCall(API_CONFIG.ADMIN.PRODUCT_CREATE, {
@@ -410,6 +452,86 @@ const AddProduct = () => {
                                 placeholder="أدخل وصف المنتج"
                             />
                         </div>
+
+                        {/* Colors and Sizes */}
+                        <div className="space-y-4 mb-8">
+                            <h2 className="text-xl font-bold mb-6 pb-2 border-b border-gray-200">الألوان والمقاسات</h2>
+                            {productColors.map((color, colorIndex) => (
+                                <div key={colorIndex} className="border border-gray-300 p-4 rounded-lg space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <input
+                                            type="text"
+                                            placeholder="اسم اللون"
+                                            value={color.name}
+                                            onChange={(e) => handleColorChange(colorIndex, 'name', e.target.value)}
+                                            className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-right"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-10 h-10 border rounded"
+                                                style={{ backgroundColor: color.code }}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="كود اللون"
+                                                value={color.code}
+                                                onChange={(e) => handleColorChange(colorIndex, 'code', e.target.value)}
+                                                className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-full text-right"
+                                            />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            placeholder="المخزون الكلي للون"
+                                            value={color.stock}
+                                            onChange={(e) => handleColorChange(colorIndex, 'stock', Number(e.target.value))}
+                                            className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-right"
+                                        />
+                                    </div>
+                                    <SketchPicker
+                                        color={color.code}
+                                        onChange={(updatedColor) => handleColorChange(colorIndex, 'code', updatedColor.hex)}
+                                    />
+                                    <div className="space-y-2">
+                                        <h3 className="font-medium text-gray-700 flex justify-between items-center">
+                                            <span>المقاسات</span>
+                                            <button type="button" onClick={() => addSize(colorIndex)} className="text-blue-500 hover:text-blue-700 transition-colors text-sm font-normal">
+                                                + إضافة مقاس
+                                            </button>
+                                        </h3>
+                                        {color.sizes.map((size, sizeIndex) => (
+                                            <div key={sizeIndex} className="flex items-center gap-4">
+                                                <input
+                                                    type="text"
+                                                    placeholder="المقاس (مثل: S, M, L)"
+                                                    value={size.size}
+                                                    onChange={(e) => handleSizeChange(colorIndex, sizeIndex, 'size', e.target.value)}
+                                                    className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-1/2 text-right"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="الكمية في المخزون"
+                                                    value={size.stock}
+                                                    onChange={(e) => handleSizeChange(colorIndex, sizeIndex, 'stock', e.target.value)}
+                                                    className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-1/2 text-right"
+                                                />
+                                                <button type="button" onClick={() => deleteSize(colorIndex, sizeIndex)} className="text-red-500 hover:text-red-700 transition-colors">
+                                                    <X className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button type="button" onClick={() => deleteColor(colorIndex)} className="text-red-500 hover:text-red-700 transition-colors text-sm">
+                                            حذف هذا اللون
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            <button type="button" onClick={addColor} className="text-red-600 font-bold hover:text-red-800 transition-colors">
+                                + إضافة لون
+                            </button>
+                        </div>
+
 
                         {/* Image Upload */}
                         <div>
