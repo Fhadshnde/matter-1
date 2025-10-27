@@ -4,17 +4,25 @@ import { RiCloseFill } from 'react-icons/ri';
 import { BsEye } from 'react-icons/bs';
 import axios from 'axios';
 import API_CONFIG, { apiCall } from '../../config/api';
+import * as XLSX from 'xlsx';
 
 const getStatusClass = (status) => {
   switch (status) {
     case 'مدفوع':
     case 'مكتمل':
+    case 'تم التوصيل':
+    case 'DELIVERED':
       return 'bg-green-100 text-green-800';
     case 'بانتظار الشحن':
     case 'قيد المعالجة':
+    case 'PROCESSING':
+    case 'جاهز للشحن':
+    case 'SHIPPED':
       return 'bg-yellow-100 text-yellow-800';
     case 'ملغي':
     case 'مسترد':
+    case 'CANCELLED':
+    case 'RETURNED':
       return 'bg-red-100 text-red-800';
     default:
       return 'bg-gray-100 text-gray-800';
@@ -355,7 +363,7 @@ const StatusUpdateModal = ({ isOpen, onClose, orderToUpdate, newStatus, setNewSt
               dir="rtl"
             >
               <option value="">اختر الحالة الجديدة</option>
-              {statusOptions.filter(opt => opt.value !== 'all').map(option => (
+              {statusOptions.filter(opt => opt.value !== 'ALL').map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -389,7 +397,7 @@ const OrdersPage = () => {
   const [statsCards, setStatsCards] = useState([]);
   const [ordersData, setOrdersData] = useState([]);
   const [pagination, setPagination] = useState({});
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedPayment, setSelectedPayment] = useState('الكل');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -407,13 +415,13 @@ const OrdersPage = () => {
   const [orderToDelete, setOrderToDelete] = useState(null);
 
   const statusOptions = [
-    { value: 'all', label: 'الكل' },
-    { value: 'processing', label: 'قيد المعالجة' },
+    { value: 'ALL', label: 'الكل' },
+    { value: 'PROCESSING', label: 'قيد المعالجة' },
     { value: 'SHIPPED', label: 'جاهز للشحن' },
-    { value: 'delivering', label: 'قيد التوصيل' },
-    { value: 'delivered', label: 'تم التوصيل' },
-    { value: 'cancelled', label: 'ملغي' },
-    { value: 'returned', label: 'مسترد' }
+    { value: 'DELIVERING', label: 'قيد التوصيل' },
+    { value: 'DELIVERED', label: 'تم التوصيل' },
+    { value: 'CANCELLED', label: 'ملغي' },
+    { value: 'RETURNED', label: 'مسترد' }
   ];
   const paymentOptions = ['الكل', 'دفع عند الاستلام', 'مدفوع'];
 
@@ -424,11 +432,9 @@ const OrdersPage = () => {
   };
   
   const getUpdateOrderStatusUrl = (orderId) => {
-    // المسار المطلوب لتحديث الحالة
     return `/admin/dashboard/orders/${orderId}/status`; 
   };
 
-  // دالة جديدة للحصول على مسار تحديث الرؤية
   const getUpdateOrderVisibilityUrl = (orderId) => {
     return `/orders/admin/${orderId}/visibility`;
   };
@@ -439,7 +445,7 @@ const OrdersPage = () => {
       const params = new URLSearchParams();
       params.append('page', currentPage.toString());
       params.append('limit', '20');
-      if (selectedStatus !== 'all') params.append('status', selectedStatus);
+      if (selectedStatus !== 'ALL') params.append('status', selectedStatus);
       if (dateFrom) params.append('dateFrom', dateFrom);
       if (dateTo) params.append('dateTo', dateTo);
       
@@ -562,8 +568,8 @@ const OrdersPage = () => {
 
       alert('تم تحديث حالة الطلب بنجاح');
       
-      if (selectedStatus !== 'all' && selectedStatus !== newStatus) {
-        setSelectedStatus('all');
+      if (selectedStatus !== 'ALL' && selectedStatus !== newStatus) {
+        setSelectedStatus('ALL');
         setCurrentPage(1);
       } else {
         fetchDashboardData();
@@ -581,14 +587,12 @@ const OrdersPage = () => {
     setIsStatusUpdateModalOpen(true);
   };
 
-  // دالة جديدة لتبديل رؤية الطلب
   const handleVisibilityToggle = async (orderId, currentVisibility) => {
     const newVisibility = !currentVisibility;
     setIsLoading(true);
     
     try {
       const url = getUpdateOrderVisibilityUrl(orderId);
-      // استخدام 'isVisibleToSupplier' كما هو مطلوب في الـ curl
       const payload = { isVisibleToSupplier: newVisibility }; 
       
       await apiCall(url, {
@@ -598,7 +602,6 @@ const OrdersPage = () => {
       });
 
       alert(`تم ${newVisibility ? 'إظهار' : 'إخفاء'} الطلب رقم ${orderId} للتاجر بنجاح.`);
-      // تحديث البيانات لسحب الحالة الجديدة للرؤية
       fetchDashboardData();
     } catch (error) {
       alert('حدث خطأ في تحديث رؤية الطلب.');
@@ -626,6 +629,46 @@ const OrdersPage = () => {
     }
     return null;
   };
+
+  const exportToExcel = () => {
+    if (ordersData.length === 0) {
+      alert('لا توجد بيانات لتصديرها.');
+      return;
+    }
+
+    const exportData = ordersData.map(order => ({
+      'رقم الطلب': order.orderId,
+      'العميل': order.customerName,
+      'هاتف العميل': order.customerPhone || 'لا يوجد',
+      'التاجر': order.merchantName,
+      'ملخص المنتجات': order.productsSummary || 'لا يوجد',
+      'الإجمالي (د.ع)': order.totalAmount?.toLocaleString() || '0',
+      'حالة الطلب': order.status,
+      'طريقة الدفع': order.paymentMethod,
+      'تاريخ الطلب': order.orderDate ? new Date(order.orderDate).toLocaleDateString('ar-EG') : 'غير محدد',
+      'مرئي للتاجر': order.isVisibleToSupplier ? 'نعم' : 'لا',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    
+    worksheet['!cols'] = [
+      { wch: 15 }, 
+      { wch: 25 }, 
+      { wch: 20 }, 
+      { wch: 25 }, 
+      { wch: 40 }, 
+      { wch: 20 }, 
+      { wch: 15 }, 
+      { wch: 15 }, 
+      { wch: 20 }, 
+      { wch: 15 }, 
+    ];
+    
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'الطلبات');
+
+    XLSX.writeFile(workbook, 'Orders_Report.xlsx');
+  };
   
   return (
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
@@ -638,13 +681,13 @@ const OrdersPage = () => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 space-y-4 md:space-y-0">
           <div className="flex items-center space-x-2 rtl:space-x-reverse flex-wrap">
-            <h3 className="text-lg font-bold">إدارة الطلبات</h3>
+            <h3 className="text-lg font-bold ml-4">إدارة الطلبات</h3>
             <Dropdown
               options={statusOptions.map(opt => opt.label)}
               selected={statusOptions.find(opt => opt.value === selectedStatus)?.label || 'الكل'}
               onSelect={(label) => {
                 const option = statusOptions.find(opt => opt.label === label);
-                setSelectedStatus(option ? option.value : 'all');
+                setSelectedStatus(option ? option.value : 'ALL');
                 setCurrentPage(1);
               }}
               placeholder="الكل"
@@ -681,17 +724,27 @@ const OrdersPage = () => {
               />
             </div>
           </div>
-          <div className="relative w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="ابحث برقم الطلب / العميل / المنتج"
-              className="w-full md:w-80 px-4 py-2 text-sm bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-800 placeholder-gray-400"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-            <svg className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
+          <div className="flex items-center space-x-4 rtl:space-x-reverse">
+            <button
+              onClick={exportToExcel}
+              className="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              disabled={isLoading || ordersData.length === 0}
+            >
+              <FaBox className="ml-2" />
+              تصدير إلى الإكسل
+            </button>
+            <div className="relative w-full md:w-auto">
+              <input
+                type="text"
+                placeholder="ابحث برقم الطلب / العميل / المنتج"
+                className="w-full md:w-80 px-4 py-2 text-sm bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-800 placeholder-gray-400"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <svg className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
           </div>
         </div>
         {isLoading ? (
@@ -717,7 +770,7 @@ const OrdersPage = () => {
                   <Th>الحالة</Th>
                   <Th>الدفع</Th>
                   <Th>تاريخ الطلب</Th>
-                  <Th>رؤية التاجر</Th> {/* عمود جديد لرؤية التاجر */}
+                  <Th>رؤية التاجر</Th>
                   <Th>الإجراءات</Th>
                 </tr>
               </thead>
@@ -752,7 +805,7 @@ const OrdersPage = () => {
                         </span>
                       </Td>
                       <Td>{order.orderDate ? new Date(order.orderDate).toLocaleDateString('ar-EG') : 'غير محدد'}</Td>
-                      <Td> {/* محتوى عمود رؤية التاجر */}
+                      <Td>
                           <button
                               onClick={() => handleVisibilityToggle(order.orderId, order.isVisibleToSupplier)}
                               className={`p-1 rounded-full transition-colors ${order.isVisibleToSupplier ? 'text-green-600 hover:bg-green-100' : 'text-red-600 hover:bg-red-100'}`}
