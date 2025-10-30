@@ -11,13 +11,16 @@ const DeliverySettings = () => {
     isActive: true,
   });
   const [deliveryNote, setDeliveryNote] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
   const token = localStorage.getItem("token");
   const api = "https://products-api.cbc-apps.net/cities";
   const noteApi = "https://products-api.cbc-apps.net/cities/admin/delivery-note";
+  const messageApi = "https://products-api.cbc-apps.net/cities/admin/success-message";
 
-  // Function to fetch the list of cities and the delivery note (FIXED)
+  // Function to fetch the list of cities, the delivery note, and the success message
   const fetchCities = async () => {
     try {
       const res = await axios.get(api);
@@ -35,10 +38,14 @@ const DeliverySettings = () => {
         setDeliveryNote(data.deliveryNote);
       }
       
+      // NEW: Fetch success message. Assuming it's nested under the 'successMessage' key.
+      if (data && typeof data.successMessage === 'string') {
+        setSuccessMessage(data.successMessage);
+      }
+      
     } catch (err) {
-      console.error("Error fetching cities and note:", err);
+      console.error("Error fetching cities, note, and message:", err);
       setCities([]);
-      // Do not reset the note here, as the user might be editing it.
     }
   };
 
@@ -60,13 +67,37 @@ const DeliverySettings = () => {
         }
       );
       alert("تم حفظ ملاحظة التوصيل بنجاح!");
-      // Optionally re-fetch the cities list if updating the note might affect the list view (e.g. if the API returns a full payload on patch)
-      // fetchCities(); 
     } catch (err) {
       console.error("Error updating delivery note:", err);
       alert("حدث خطأ أثناء حفظ ملاحظة التوصيل");
     } finally {
       setNoteLoading(false);
+    }
+  };
+
+  // NEW: Function to update the success message
+  const updateSuccessMessage = async () => {
+    if (!token) {
+      alert("لم يتم العثور على التوكن في LocalStorage");
+      return;
+    }
+    setMessageLoading(true);
+    try {
+      await axios.patch(
+        messageApi,
+        {
+          successMessage: successMessage,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("تم حفظ رسالة النجاح بنجاح!");
+    } catch (err) {
+      console.error("Error updating success message:", err);
+      alert("حدث خطأ أثناء حفظ رسالة النجاح");
+    } finally {
+      setMessageLoading(false);
     }
   };
 
@@ -80,6 +111,11 @@ const DeliverySettings = () => {
 
   const handleNoteChange = (e) => {
     setDeliveryNote(e.target.value);
+  };
+  
+  // NEW: Handle change for the success message
+  const handleMessageChange = (e) => {
+    setSuccessMessage(e.target.value);
   };
 
   const handleSubmit = async (e) => {
@@ -156,14 +192,13 @@ const DeliverySettings = () => {
   };
 
   useEffect(() => {
-    // The previous structure had two separate fetches, but since the full API response
-    // contains both cities and the note, we only need to call fetchCities once.
     fetchCities();
   }, []);
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        
         {/* Delivery Note Section */}
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
           <div className="mb-6 text-right">
@@ -195,6 +230,38 @@ const DeliverySettings = () => {
           </div>
         </div>
         {/* End Delivery Note Section */}
+
+        {/* Success Message Section (NEW) */}
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+          <div className="mb-6 text-right">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">رسالة نجاح الطلب</h2>
+            <p className="text-gray-600">تظهر هذه الرسالة للعميل بعد إتمام عملية الشراء بنجاح.</p>
+          </div>
+          <div className="flex flex-col space-y-4">
+            <textarea
+              name="successMessage"
+              value={successMessage}
+              onChange={handleMessageChange}
+              rows="3"
+              className="border border-gray-300 rounded-xl p-3 w-full focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+              placeholder="اكتب رسالة النجاح هنا..."
+            />
+            <div className="text-left">
+              <button
+                onClick={updateSuccessMessage}
+                disabled={messageLoading}
+                className={`px-8 py-3 rounded-xl text-white font-semibold shadow-md ${
+                  messageLoading
+                    ? "bg-gray-400"
+                    : "bg-purple-600 hover:bg-purple-700 transition-transform transform hover:scale-105"
+                }`}
+              >
+                {messageLoading ? "جارٍ الحفظ..." : "حفظ الرسالة"}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* End Success Message Section */}
 
         {/* City Management Section */}
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
