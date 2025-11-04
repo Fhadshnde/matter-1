@@ -12,39 +12,48 @@ const DeliverySettings = () => {
   });
   const [deliveryNote, setDeliveryNote] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showSuppliers, setShowSuppliers] = useState(false); // الحالة الجديدة لعرض الموردين
   const [loading, setLoading] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [suppliersLoading, setSuppliersLoading] = useState(false); // حالة التحميل الجديدة لعرض الموردين
   const token = localStorage.getItem("token");
   const api = "https://products-api.cbc-apps.net/cities";
   const noteApi = "https://products-api.cbc-apps.net/cities/admin/delivery-note";
   const messageApi = "https://products-api.cbc-apps.net/cities/admin/success-message";
+  const suppliersApi = "https://products-api.cbc-apps.net/cities/messages"; // نقطة نهاية API لعرض الموردين
 
-  // Function to fetch the list of cities, the delivery note, and the success message
+  // Function to fetch the list of cities, the delivery note, the success message, and showSuppliers
   const fetchCities = async () => {
     try {
+      // Fetch city data and general settings from the main API
       const res = await axios.get(api);
       const data = res.data;
 
-      // FIX for "cities.map is not a function": The array is nested under the 'cities' key.
       if (data && Array.isArray(data.cities)) {
         setCities(data.cities);
       } else {
         setCities([]);
       }
 
-      // FIX for delivery note: The note is nested under the 'deliveryNote' key.
       if (data && typeof data.deliveryNote === 'string') {
         setDeliveryNote(data.deliveryNote);
       }
       
-      // NEW: Fetch success message. Assuming it's nested under the 'successMessage' key.
       if (data && typeof data.successMessage === 'string') {
         setSuccessMessage(data.successMessage);
       }
       
+      // Fetch the showSuppliers setting from the dedicated API
+      const suppliersRes = await axios.get(suppliersApi);
+      const suppliersData = suppliersRes.data;
+      
+      if (suppliersData && typeof suppliersData.showSuppliers === 'boolean') {
+        setShowSuppliers(suppliersData.showSuppliers);
+      }
+      
     } catch (err) {
-      console.error("Error fetching cities, note, and message:", err);
+      console.error("Error fetching data:", err);
       setCities([]);
     }
   };
@@ -75,7 +84,7 @@ const DeliverySettings = () => {
     }
   };
 
-  // NEW: Function to update the success message
+  // Function to update the success message
   const updateSuccessMessage = async () => {
     if (!token) {
       alert("لم يتم العثور على التوكن في LocalStorage");
@@ -100,6 +109,32 @@ const DeliverySettings = () => {
       setMessageLoading(false);
     }
   };
+  
+  // Function to update the showSuppliers setting (uses PUT as requested/implied by the API structure)
+  const updateShowSuppliers = async () => {
+    if (!token) {
+      alert("لم يتم العثور على التوكن في LocalStorage");
+      return;
+    }
+    setSuppliersLoading(true);
+    try {
+      await axios.put(
+        suppliersApi,
+        {
+          showSuppliers: showSuppliers,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("تم حفظ إعداد عرض الموردين بنجاح!");
+    } catch (err) {
+      console.error("Error updating showSuppliers setting:", err);
+      alert("حدث خطأ أثناء حفظ إعداد عرض الموردين");
+    } finally {
+      setSuppliersLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -113,9 +148,12 @@ const DeliverySettings = () => {
     setDeliveryNote(e.target.value);
   };
   
-  // NEW: Handle change for the success message
   const handleMessageChange = (e) => {
     setSuccessMessage(e.target.value);
+  };
+  
+  const handleShowSuppliersChange = (e) => {
+    setShowSuppliers(e.target.checked);
   };
 
   const handleSubmit = async (e) => {
@@ -231,7 +269,7 @@ const DeliverySettings = () => {
         </div>
         {/* End Delivery Note Section */}
 
-        {/* Success Message Section (NEW) */}
+        {/* Success Message Section */}
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
           <div className="mb-6 text-right">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">رسالة نجاح الطلب</h2>
@@ -262,6 +300,40 @@ const DeliverySettings = () => {
           </div>
         </div>
         {/* End Success Message Section */}
+        
+        {/* Show Suppliers Setting */}
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+          <div className="mb-6 text-right">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">إعداد عرض الموردين</h2>
+            <p className="text-gray-600">التحكم في عرض معلومات الموردين على صفحات المنتجات.</p>
+          </div>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                name="showSuppliers"
+                checked={showSuppliers}
+                onChange={handleShowSuppliersChange}
+                className="w-5 h-5 rounded-md border-gray-300 focus:ring-orange-500"
+              />
+              <label className="text-gray-700">عرض الموردين</label>
+            </div>
+            <div className="text-left">
+              <button
+                onClick={updateShowSuppliers}
+                disabled={suppliersLoading}
+                className={`px-8 py-3 rounded-xl text-white font-semibold shadow-md ${
+                  suppliersLoading
+                    ? "bg-gray-400"
+                    : "bg-orange-600 hover:bg-orange-700 transition-transform transform hover:scale-105"
+                }`}
+              >
+                {suppliersLoading ? "جارٍ الحفظ..." : "حفظ الإعداد"}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* End Show Suppliers Setting */}
 
         {/* City Management Section */}
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">

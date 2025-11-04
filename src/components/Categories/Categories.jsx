@@ -27,11 +27,16 @@ const Categories = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    image: ''
+    image: '',
+    displayOrder: 0
   });
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  const [isTogglingStatus, setIsTogglingStatus] = useState(null); 
+  // حالة جديدة لتتبع التغييرات المؤقتة في حقل displayOrder داخل الجدول
+  const [tempDisplayOrders, setTempDisplayOrders] = useState({});
 
   useEffect(() => {
     fetchCategoriesData();
@@ -72,6 +77,12 @@ const Categories = () => {
         }
       ]);
       setTotalPages(data.pagination?.totalPages || 1);
+      // تهيئة حالة الترتيب المؤقتة
+      const initialDisplayOrders = {};
+      (data.categories || []).forEach(cat => {
+        initialDisplayOrders[cat.categoryId] = cat.displayOrder || 0;
+      });
+      setTempDisplayOrders(initialDisplayOrders);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -93,7 +104,7 @@ const Categories = () => {
   );
 
   const openAddModal = () => {
-    setFormData({ name: '', description: '', image: '' });
+    setFormData({ name: '', description: '', image: '', displayOrder: 0 });
     setSelectedImage(null);
     setImagePreview(null);
     setIsAddModalOpen(true);
@@ -108,7 +119,8 @@ const Categories = () => {
     setFormData({
       name: category.categoryName,
       description: category.description,
-      image: category.image
+      image: category.image,
+      displayOrder: category.displayOrder || 0
     });
     setImagePreview(category.image || null);
     setSelectedImage(null);
@@ -141,10 +153,10 @@ const Categories = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : (name === 'displayOrder' ? parseInt(value) : value)
     }));
   };
 
@@ -186,8 +198,11 @@ const Categories = () => {
       const result = await apiCall(API_CONFIG.ADMIN.CATEGORIES, {
         method: 'POST',
         body: JSON.stringify({
-          ...formData,
-          image: imageUrl
+          name: formData.name,
+          description: formData.description,
+          image: imageUrl,
+          active: true,
+          displayOrder: parseInt(formData.displayOrder)
         })
       });
       
@@ -195,7 +210,7 @@ const Categories = () => {
         alert(result.message || 'تم إنشاء الفئة بنجاح');
         fetchCategoriesData();
         closeAddModal();
-        setFormData({ name: '', description: '', image: '' });
+        setFormData({ name: '', description: '', image: '', displayOrder: 0 });
         setSelectedImage(null);
         setImagePreview(null);
       } else {
@@ -230,12 +245,18 @@ const Categories = () => {
         imageUrl = uploadResponse.data.url;
       }
       
+      const updateData = {
+        name: formData.name,
+        description: formData.description,
+        image: imageUrl,
+        displayOrder: parseInt(formData.displayOrder)
+      };
+
+     
+
       const result = await apiCall(API_CONFIG.ADMIN.CATEGORY_UPDATE(selectedCategory.categoryId), {
         method: 'PUT',
-        body: JSON.stringify({
-          ...formData,
-          image: imageUrl
-        })
+        body: JSON.stringify(updateData)
       });
       
       if (result.success) {
@@ -251,6 +272,102 @@ const Categories = () => {
       console.error('Error updating category:', error);
       alert('حدث خطأ أثناء تحديث الفئة');
     }
+  };
+
+  const handleToggleCategoryStatus = async (category) => {
+    const newStatus = !category.active;
+    const categoryId = category.categoryId;
+
+    if (isTogglingStatus === categoryId) return;
+
+    setIsTogglingStatus(categoryId);
+
+    try {
+      const updateData = {
+        active: newStatus,
+      };
+
+      const result = await apiCall(API_CONFIG.ADMIN.CATEGORY_UPDATE(categoryId), {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
+      
+      if (result.success) {
+        alert(result.message || `تم ${newStatus ? 'تفعيل' : 'تعطيل'} الفئة بنجاح`);
+        setCategoriesData(prevData => 
+          prevData.map(c => 
+            c.categoryId === categoryId ? { ...c, active: newStatus } : c
+          )
+        );
+      } else {
+        alert(result.message || `حدث خطأ أثناء ${newStatus ? 'تفعيل' : 'تعطيل'} الفئة`);
+      }
+    } catch (error) {
+      console.error(`Error toggling category status:`, error);
+      alert(`حدث خطأ أثناء ${newStatus ? 'تفعيل' : 'تعطيل'} الفئة`);
+    } finally {
+      setIsTogglingStatus(null);
+    }
+  };
+
+  // الدالة الجديدة لتحديث قيمة displayOrder من الجدول
+  const handleUpdateDisplayOrder = async (categoryId, newValue) => {
+    const order = parseInt(newValue);
+    if (isNaN(order) || order < 0) {
+      alert('الرجاء إدخال رقم صحيح غير سالب للترتيب.');
+      // إعادة القيمة الأصلية للواجهة
+      setTempDisplayOrders(prev => ({
+        ...prev,
+        [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
+      }));
+      return;
+    }
+    
+    // تطبيق القيمة الجديدة على الحالة المؤقتة مباشرة
+    setTempDisplayOrders(prev => ({ ...prev, [categoryId]: order }));
+
+    try {
+      const updateData = {
+        displayOrder: order
+      };
+
+      const result = await apiCall(API_CONFIG.ADMIN.CATEGORY_UPDATE(categoryId), {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
+      
+      if (result.success) {
+        // تحديث البيانات في حالة categoriesData لتعكس التغيير الدائم
+        setCategoriesData(prevData => 
+          prevData.map(c => 
+            c.categoryId === categoryId ? { ...c, displayOrder: order } : c
+          )
+        );
+        alert(result.message || 'تم تحديث ترتيب العرض بنجاح');
+      } else {
+        alert(result.message || 'حدث خطأ أثناء تحديث ترتيب العرض');
+        // في حالة الفشل، التراجع عن التغيير في الواجهة
+        setTempDisplayOrders(prev => ({
+            ...prev,
+            [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating display order:', error);
+      alert('حدث خطأ أثناء تحديث ترتيب العرض');
+       // في حالة الفشل، التراجع عن التغيير في الواجهة
+      setTempDisplayOrders(prev => ({
+          ...prev,
+          [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
+      }));
+    }
+  };
+
+  const handleDisplayOrderChange = (categoryId, value) => {
+    setTempDisplayOrders(prev => ({
+      ...prev,
+      [categoryId]: value
+    }));
   };
 
   const handleDeleteCategory = async () => {
@@ -280,6 +397,25 @@ const Categories = () => {
       case 'average': return <TbCategory2 />;
       default: return <BiCategory />;
     }
+  };
+
+  const ToggleSwitch = ({ category }) => {
+    return (
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input 
+          type="checkbox" 
+          value="" 
+          checked={category.active}
+          onChange={() => handleToggleCategoryStatus(category)}
+          className="sr-only peer" 
+          disabled={isTogglingStatus === category.categoryId}
+        />
+        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-500"></div>
+        <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+          {isTogglingStatus === category.categoryId ? 'جارٍ التحديث...' : (category.active ? 'مفعلة' : 'معطلة')}
+        </span>
+      </label>
+    );
   };
 
   if (isLoading) {
@@ -343,6 +479,12 @@ const Categories = () => {
                   الفئة
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  الترتيب
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  الحالة
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   عدد الأقسام
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -380,6 +522,25 @@ const Categories = () => {
                         <div className="text-sm text-gray-500">ID: {category.categoryId}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {/* حقل إدخال لتعديل ترتيب العرض مباشرة */}
+                    <input
+                      type="number"
+                      min="0"
+                      value={tempDisplayOrders[category.categoryId] !== undefined ? tempDisplayOrders[category.categoryId] : category.displayOrder || 0}
+                      onChange={(e) => handleDisplayOrderChange(category.categoryId, e.target.value)}
+                      onBlur={(e) => handleUpdateDisplayOrder(category.categoryId, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.target.blur(); // تطبيق التحديث عند الضغط على Enter
+                        }
+                      }}
+                      className="w-20 text-center border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 p-1"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <ToggleSwitch category={category} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {category.sectionsCount}
@@ -493,6 +654,22 @@ const Categories = () => {
                 </div>
               )}
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ترتيب العرض
+              </label>
+              <input
+                type="number"
+                name="displayOrder"
+                value={formData.displayOrder}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="أدخل رقم الترتيب"
+              />
+            </div>
+
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button
@@ -566,6 +743,21 @@ const Categories = () => {
                 </div>
               )}
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ترتيب العرض
+              </label>
+              <input
+                type="number"
+                name="displayOrder"
+                value={formData.displayOrder}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="أدخل رقم الترتيب"
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button
@@ -594,16 +786,28 @@ const Categories = () => {
           <div className="space-y-4 text-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p><strong>ID:</strong> {selectedCategory.categoryId}</p>
-                <p><strong>اسم الفئة:</strong> {selectedCategory.categoryName}</p>
-                <p><strong>عدد الأقسام:</strong> {selectedCategory.sectionsCount}</p>
-                <p><strong>الوصف:</strong> {selectedCategory.description || 'لا يوجد وصف'}</p>
+                <p><strong>ID:</strong> {selectedCategory.categoryId || selectedCategory.id}</p>
+                <p><strong>اسم الفئة:</strong> {selectedCategory.categoryName || selectedCategory.name}</p>
+                <p><strong>الحالة:</strong> {selectedCategory.active ? 'مفعلة' : 'معطلة'}</p>
+                <p><strong>ترتيب العرض:</strong> {selectedCategory.displayOrder || 0}</p>
               </div>
               <div>
-                <p><strong>عدد المنتجات:</strong> {selectedCategory.productsCount}</p>
+                <p><strong>الحد الأدنى للطلب:</strong> {selectedCategory.minimumOrderAmount || 'غير محدد'}</p>
+                <p><strong>معرّف المورد:</strong> {selectedCategory.supplierId || 'غير محدد'}</p>
+                <p><strong>عدد الأقسام:</strong> {selectedCategory.sectionsCount || 0}</p>
+                <p><strong>عدد المنتجات:</strong> {selectedCategory.productsCount || 0}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <p><strong>تاريخ الإنشاء:</strong> {new Date(selectedCategory.createdAt).toLocaleDateString('ar-EG')}</p>
+              </div>
+              <div>
                 <p><strong>تاريخ التحديث:</strong> {new Date(selectedCategory.updatedAt).toLocaleDateString('ar-EG')}</p>
               </div>
+            </div>
+            <div>
+              <p><strong>الوصف:</strong> {selectedCategory.description || 'لا يوجد وصف'}</p>
             </div>
             {selectedCategory.image && (
               <div>

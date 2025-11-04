@@ -44,11 +44,13 @@ const SuppliersPage = () => {
   // State for forms
   const [formData, setFormData] = useState({
     name: '',
+    storeName: '', 
     contactInfo: '',
     address: '',
     phone: '',
     password: '',
-    platformPercentage: 15, // Changed to a whole number
+    isActive: true, // تم الإضافة: لتتبع حالة النشاط
+    platformPercentage: 15, 
     hasWholesalePrice: false
   });
 
@@ -129,13 +131,16 @@ const SuppliersPage = () => {
         })
       });
       setIsAddModalOpen(false);
+      // Reset form data after successful addition
       setFormData({
         name: '',
+        storeName: '', 
         contactInfo: '',
         address: '',
         phone: '',
         password: '',
-        platformPercentage: 15, // Reset to 15
+        isActive: true,
+        platformPercentage: 15, 
         hasWholesalePrice: false
       });
       fetchSuppliersData();
@@ -153,11 +158,19 @@ const SuppliersPage = () => {
     setIsLoading(true);
     try {
       const url = API_CONFIG.ADMIN.SUPPLIER_UPDATE(selectedSupplier.id);
+      // Construct the body with storeName and isActive included
       await apiCall(url, {
-        method: 'PUT',
+        method: 'PUT', // Assuming PUT/PATCH is used for update
         body: JSON.stringify({
-          ...formData,
-          platformPercentage: formData.platformPercentage / 100 // Convert back to decimal for API
+          name: formData.name,
+          storeName: formData.storeName, 
+          contactInfo: formData.contactInfo,
+          address: formData.address,
+          phone: formData.phone,
+          isActive: formData.isActive, // تم الإضافة: تضمين حالة النشاط
+          ...(formData.password && { password: formData.password }),
+          platformPercentage: formData.platformPercentage / 100, 
+          hasWholesalePrice: formData.hasWholesalePrice,
         })
       });
       setIsEditModalOpen(false);
@@ -202,11 +215,13 @@ const SuppliersPage = () => {
     setSelectedSupplier(supplier);
     setFormData({
       name: supplier.name,
+      storeName: supplier.storeName || '', 
       contactInfo: supplier.contactInfo,
       address: supplier.address || '',
       phone: supplier.phone,
       password: '',
-      platformPercentage: (supplier.platformPercentage || 0.15) * 100, // Convert to whole number for display
+      isActive: supplier.isActive, // تم التعديل: قراءة حالة النشاط
+      platformPercentage: (supplier.platformPercentage || 0.15) * 100, 
       hasWholesalePrice: supplier.hasWholesalePrice || false
     });
     setIsEditModalOpen(true);
@@ -234,7 +249,7 @@ const SuppliersPage = () => {
 
   // Calculate statistics
   const totalSuppliers = pagination.totalItems || 0;
-  const activeSuppliers = suppliersData.filter(s => s.productsCount > 0).length;
+  const activeSuppliers = suppliersData.filter(s => s.productsCount > 0).length; // Simplified active count logic
   const totalProducts = suppliersData.reduce((sum, s) => sum + (s.productsCount || 0), 0);
   const totalValue = suppliersData.reduce((sum, s) => sum + (s.totalProductsValue || 0), 0);
 
@@ -350,7 +365,7 @@ const SuppliersPage = () => {
                     المنتجات
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    نوع المورد
+                    الحالة
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     تاريخ الإنشاء
@@ -396,11 +411,11 @@ const SuppliersPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        supplier.hasWholesalePrice 
+                        supplier.isActive 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
+                          : 'bg-red-100 text-red-800'
                       }`}>
-                        {supplier.hasWholesalePrice ? 'جملة ومفرد' : 'مفرد فقط'}
+                        {supplier.isActive ? 'نشط' : 'غير نشط'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -525,6 +540,18 @@ const SuppliersPage = () => {
               value={formData.name}
               onChange={handleInputChange}
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              اسم المتجر
+            </label>
+            <input
+              type="text"
+              name="storeName"
+              value={formData.storeName}
+              onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -658,10 +685,9 @@ const SuppliersPage = () => {
               </label>
               <input
                 type="text"
-                name="storeName"
+                name="storeName" 
                 value={formData.storeName}
                 onChange={handleInputChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -715,6 +741,18 @@ const SuppliersPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="isActive"
+                checked={formData.isActive} // تم الإضافة
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="mr-2 block text-sm text-gray-900">
+                الحالة: نشط
+              </label>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 نسبة المنصة (%)
@@ -763,7 +801,7 @@ const SuppliersPage = () => {
         </ModalContainer>
       )}
 
-      {/* Supplier Details Modal */}
+      {/* Supplier Details Modal (No change needed here for display) */}
       {isDetailsModalOpen && selectedSupplier && supplierDetails && (
         <ModalContainer isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} maxWidth="max-w-4xl">
           <div className="flex justify-between items-center mb-4">
@@ -795,9 +833,9 @@ const SuppliersPage = () => {
                     <p className="text-sm text-gray-900">{supplierDetails.contactInfo}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">نوع المورد:</label>
+                    <label className="text-sm font-medium text-gray-600">الحالة:</label>
                     <p className="text-sm text-gray-900">
-                      {supplierDetails.hasWholesalePrice ? 'جملة ومفرد' : 'مفرد فقط'}
+                      {supplierDetails.isActive ? 'نشط' : 'غير نشط'}
                     </p>
                   </div>
                   <div>
