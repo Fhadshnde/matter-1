@@ -27,7 +27,9 @@ import Test from './components/Test/Test';
 import Invoices from './components/Invoices/Invoices';
 import SupplierDues from './components/SupplierDues/SupplierDues';
 import DeliverySettings from './components/DeliverySettings/DeliverySettings';
-
+import CommissionManager from './components/CommissionManager/CommissionManager';
+import BestUsersPage from './components/BestUsers/BestUsers';
+import BlacklistUsers from './components/BlacklistUsers/BlacklistUsers';
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true); // ✅ إضافة حالة انتظار
@@ -91,6 +93,9 @@ const App = () => {
             <Route path="/test" element={<Test />} />
             <Route path="*" element={<Navigate to="/" replace />} />
             <Route path="/delivery-settings" element={<DeliverySettings />} />
+            <Route path="/commission-manager" element={<CommissionManager />} />
+            <Route path="/best-users" element={<BestUsersPage />} />
+            <Route path="/blacklist-users" element={<BlacklistUsers />} />
           </>
         )}
       </Routes>

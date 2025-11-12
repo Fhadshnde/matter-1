@@ -47,6 +47,13 @@ const Navbar = ({ onLogout }) => {
     { path: "/supplier-dues", icon: <Wallet className="w-4 h-4" />, text: "مستحقات الموردين" },
     { path: "/profits", icon: <Wallet className="w-4 h-4" />, text: "الارباح" },
     { path: "/delivery-settings", icon: <Inbox className="w-4 h-4" />, text: "التقارير" },
+
+    { path: "/best-users", icon: <Inbox className="w-4 h-4" />, text: "المستخدمين المميزين" },
+    { path: "/blacklist-users", icon: <Inbox className="w-4 h-4" />, text: "blacklist" },
+
+    { path: "/commission-manager", icon: <Inbox className="w-4 h-4" />, text: "مدير العمولات" },
+
+
     { path: "/settings", icon: <Tag className="w-4 h-4" />, text: "الإعدادات" },
   ];
 

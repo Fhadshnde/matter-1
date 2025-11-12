@@ -90,6 +90,7 @@ export const API_CONFIG = {
     SUPPLIER_CREATE: '/admin/dashboard/suppliers',
     SUPPLIER_UPDATE: (id) => `/admin/dashboard/suppliers/${id}`,
     SUPPLIER_DELETE: (id) => `/admin/dashboard/suppliers/${id}`,
+    SUPPLIER_OREDERS: (id) => `/suppliers/${id}`,
     SUPPLIER_PROFITS: (id) => `/admin/dashboard/suppliers/${id}/profits`,
     
     // Analytics

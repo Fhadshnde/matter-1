@@ -35,9 +35,9 @@ const Modal = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50"
-             onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative" 
-                 onClick={(e) => e.stopPropagation()}>
+            onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative"
+                onClick={(e) => e.stopPropagation()}>
                 <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
                 {children}
             </div>
@@ -224,55 +224,55 @@ const Dashboard = () => {
 
     const fetchProducts = async (page = 1, limit = 20, search = '') => {
         try {
-          setIsLoading(true);
-      
-          const params = new URLSearchParams({
-            page: page.toString(),
-            limit: limit.toString(),
-            ...(search && { search })
-          });
-      
-          const data = await apiCall(`${API_CONFIG.ADMIN.PRODUCTS}?${params.toString()}`);
-      
-          const mappedProducts = (data.products || []).map(product => ({
-            id: product.id,
-            name: product.name,
-            originalPrice: product.originalPrice,
-            stock: product.stock || 0, // إذا لديك حقل stock في بياناتك
-            mainImageUrl: product.mainImageUrl,
-            categoryName: product.category,
-            merchantName: product.supplier,
-            status: (product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'available'),
-            updatedAt: product.updatedAt
-        }));
-        
-          
-      
-          setProducts(mappedProducts);
-          setPagination(data.pagination || {});
+            setIsLoading(true);
+
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                ...(search && { search })
+            });
+
+            const data = await apiCall(`${API_CONFIG.ADMIN.PRODUCTS}?${params.toString()}`);
+
+            const mappedProducts = (data.products || []).map(product => ({
+                id: product.id,
+                name: product.name,
+                originalPrice: product.originalPrice,
+                stock: product.stock || 0, // إذا لديك حقل stock في بياناتك
+                mainImageUrl: product.mainImageUrl,
+                categoryName: product.category,
+                merchantName: product.supplier,
+                status: (product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'available'),
+                updatedAt: product.updatedAt
+            }));
+
+
+
+            setProducts(mappedProducts);
+            setPagination(data.pagination || {});
         } catch (error) {
-          console.error('Error fetching products:', error);
+            console.error('Error fetching products:', error);
         } finally {
-          setIsLoading(false);
+            setIsLoading(false);
         }
-      };
-      
-    
+    };
+
+
     const fetchCards = async () => {
         try {
-          const data = await apiCall(API_CONFIG.ADMIN.CARDS);
-          setStats(data.cards || {});
+            const data = await apiCall(API_CONFIG.ADMIN.CARDS);
+            setStats(data.cards || {});
         } catch (err) {
-          console.error("Error fetching cards:", err);
+            console.error("Error fetching cards:", err);
         }
-      };
-      
-      
-      useEffect(() => {
+    };
+
+
+    useEffect(() => {
         fetchCards();
-      }, []);
-      
-      
+    }, []);
+
+
     const fetchCategories = async () => {
         try {
             const data = await apiCall(API_CONFIG.ADMIN.CATEGORIES);
@@ -359,7 +359,7 @@ const Dashboard = () => {
             return statusMatch;
         });
     };
-    
+
     // المنتجات التي سيتم عرضها في الجدول بعد التصفية
     const displayedProducts = filterAndSearchProducts(products);
 
@@ -407,11 +407,11 @@ const Dashboard = () => {
                 return status;
         }
     };
-    
+
     useEffect(() => {
         fetchProducts(currentPage, itemsPerPage, searchTerm);
-      }, [currentPage, itemsPerPage, searchTerm]);
-      
+    }, [currentPage, itemsPerPage, searchTerm]);
+
     useEffect(() => {
         fetchCategories();
         fetchSections();
@@ -539,16 +539,16 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center space-x-4 rtl:space-x-reverse">
                     <div className="relative">
-                    <input
-  type="text"
-  placeholder="البحث عن منتج..."
-  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
-  value={searchTerm}
-  onChange={(e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // رجع للصفحة الأولى عند البحث
-  }}
-/>
+                        <input
+                            type="text"
+                            placeholder="البحث عن منتج..."
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 pr-10"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1); // رجع للصفحة الأولى عند البحث
+                            }}
+                        />
 
                         <IoSearchOutline className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     </div>

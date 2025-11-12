@@ -248,7 +248,7 @@ const AddProduct = () => {
                 name: formData.productName,
                 description: formData.description,
                 price: parseFloat(formData.sellingPrice),
-                originalPrice: parseFloat(formData.sellingPrice) * 1.2, // 20% markup
+                originalPrice: parseFloat(formData.sellingPrice),
                 wholesalePrice: parseFloat(formData.wholesalePrice),
                 stock: parseInt(formData.stock),
                 categoryId: parseInt(formData.categoryId),

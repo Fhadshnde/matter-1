@@ -13,6 +13,7 @@ import axios from 'axios';
 const Categories = () => {
   const [categoriesData, setCategoriesData] = useState([]);
   const [statsCards, setStatsCards] = useState([]);
+  const [suppliers, setSuppliers] = useState([]); // حالة جديدة لتخزين بيانات الموردين
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -24,22 +25,25 @@ const Categories = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
+  // تحديث حالة النموذج لإضافة حقلي minimumOrderAmount و supplierId
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     image: '',
-    displayOrder: 0
+    displayOrder: 0,
+    minimumOrderAmount: '',
+    supplierId: ''
   });
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
   const [isTogglingStatus, setIsTogglingStatus] = useState(null); 
-  // حالة جديدة لتتبع التغييرات المؤقتة في حقل displayOrder داخل الجدول
   const [tempDisplayOrders, setTempDisplayOrders] = useState({});
 
   useEffect(() => {
     fetchCategoriesData();
+    fetchSuppliers(); // جلب بيانات الموردين
   }, [currentPage]);
 
   const fetchCategoriesData = async () => {
@@ -77,7 +81,6 @@ const Categories = () => {
         }
       ]);
       setTotalPages(data.pagination?.totalPages || 1);
-      // تهيئة حالة الترتيب المؤقتة
       const initialDisplayOrders = {};
       (data.categories || []).forEach(cat => {
         initialDisplayOrders[cat.categoryId] = cat.displayOrder || 0;
@@ -87,6 +90,25 @@ const Categories = () => {
       console.error('Error fetching categories:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // دالة جديدة لجلب بيانات الموردين
+  const fetchSuppliers = async () => {
+    try {
+      // استخدام API_CONFIG.ADMIN.SUPPLIERS أو بناء URL مناسب لـ 'admin/dashboard/suppliers'
+      const data = await apiCall(API_CONFIG.ADMIN.SUPPLIERS); // نفترض وجود هذا الثابت في API_CONFIG
+      setSuppliers(data.suppliers || []);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      // في حالة عدم توفر الثابت، نستخدم المسار المباشر لضمان العمل
+      try {
+        const directUrl = 'https://products-api.cbc-apps.net/admin/dashboard/suppliers';
+        const data = await apiCall(directUrl);
+        setSuppliers(data.suppliers || []);
+      } catch (e) {
+        console.error('Error fetching suppliers from direct URL:', e);
+      }
     }
   };
 
@@ -104,7 +126,15 @@ const Categories = () => {
   );
 
   const openAddModal = () => {
-    setFormData({ name: '', description: '', image: '', displayOrder: 0 });
+    // تحديث تهيئة النموذج عند الفتح
+    setFormData({ 
+      name: '', 
+      description: '', 
+      image: '', 
+      displayOrder: 0,
+      minimumOrderAmount: '',
+      supplierId: '' 
+    });
     setSelectedImage(null);
     setImagePreview(null);
     setIsAddModalOpen(true);
@@ -116,11 +146,14 @@ const Categories = () => {
 
   const openEditModal = (category) => {
     setSelectedCategory(category);
+    // تحديث تهيئة النموذج عند التعديل
     setFormData({
       name: category.categoryName,
       description: category.description,
       image: category.image,
-      displayOrder: category.displayOrder || 0
+      displayOrder: category.displayOrder || 0,
+      minimumOrderAmount: category.minimumOrderAmount?.toString() || '',
+      supplierId: category.supplierId?.toString() || ''
     });
     setImagePreview(category.image || null);
     setSelectedImage(null);
@@ -156,7 +189,8 @@ const Categories = () => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (name === 'displayOrder' ? parseInt(value) : value)
+      // تحويل minimumOrderAmount إلى رقم صحيح
+      [name]: type === 'checkbox' ? checked : (name === 'displayOrder' || name === 'minimumOrderAmount' || name === 'supplierId' ? (value === '' ? '' : parseInt(value)) : value)
     }));
   };
 
@@ -202,7 +236,9 @@ const Categories = () => {
           description: formData.description,
           image: imageUrl,
           active: true,
-          displayOrder: parseInt(formData.displayOrder)
+          displayOrder: parseInt(formData.displayOrder),
+          minimumOrderAmount: parseInt(formData.minimumOrderAmount), // إرسال الحد الأدنى للطلب
+          supplierId: parseInt(formData.supplierId) // إرسال معرّف المورد
         })
       });
       
@@ -210,7 +246,7 @@ const Categories = () => {
         alert(result.message || 'تم إنشاء الفئة بنجاح');
         fetchCategoriesData();
         closeAddModal();
-        setFormData({ name: '', description: '', image: '', displayOrder: 0 });
+        setFormData({ name: '', description: '', image: '', displayOrder: 0, minimumOrderAmount: '', supplierId: '' });
         setSelectedImage(null);
         setImagePreview(null);
       } else {
@@ -249,7 +285,9 @@ const Categories = () => {
         name: formData.name,
         description: formData.description,
         image: imageUrl,
-        displayOrder: parseInt(formData.displayOrder)
+        displayOrder: parseInt(formData.displayOrder),
+        minimumOrderAmount: parseInt(formData.minimumOrderAmount), // إرسال الحد الأدنى للطلب
+        supplierId: parseInt(formData.supplierId) // إرسال معرّف المورد
       };
 
      
@@ -310,12 +348,10 @@ const Categories = () => {
     }
   };
 
-  // الدالة الجديدة لتحديث قيمة displayOrder من الجدول
   const handleUpdateDisplayOrder = async (categoryId, newValue) => {
     const order = parseInt(newValue);
     if (isNaN(order) || order < 0) {
       alert('الرجاء إدخال رقم صحيح غير سالب للترتيب.');
-      // إعادة القيمة الأصلية للواجهة
       setTempDisplayOrders(prev => ({
         ...prev,
         [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
@@ -323,7 +359,6 @@ const Categories = () => {
       return;
     }
     
-    // تطبيق القيمة الجديدة على الحالة المؤقتة مباشرة
     setTempDisplayOrders(prev => ({ ...prev, [categoryId]: order }));
 
     try {
@@ -337,7 +372,6 @@ const Categories = () => {
       });
       
       if (result.success) {
-        // تحديث البيانات في حالة categoriesData لتعكس التغيير الدائم
         setCategoriesData(prevData => 
           prevData.map(c => 
             c.categoryId === categoryId ? { ...c, displayOrder: order } : c
@@ -346,7 +380,6 @@ const Categories = () => {
         alert(result.message || 'تم تحديث ترتيب العرض بنجاح');
       } else {
         alert(result.message || 'حدث خطأ أثناء تحديث ترتيب العرض');
-        // في حالة الفشل، التراجع عن التغيير في الواجهة
         setTempDisplayOrders(prev => ({
             ...prev,
             [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
@@ -355,7 +388,6 @@ const Categories = () => {
     } catch (error) {
       console.error('Error updating display order:', error);
       alert('حدث خطأ أثناء تحديث ترتيب العرض');
-       // في حالة الفشل، التراجع عن التغيير في الواجهة
       setTempDisplayOrders(prev => ({
           ...prev,
           [categoryId]: categoriesData.find(c => c.categoryId === categoryId)?.displayOrder || 0
@@ -524,7 +556,6 @@ const Categories = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {/* حقل إدخال لتعديل ترتيب العرض مباشرة */}
                     <input
                       type="number"
                       min="0"
@@ -533,7 +564,7 @@ const Categories = () => {
                       onBlur={(e) => handleUpdateDisplayOrder(category.categoryId, e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          e.target.blur(); // تطبيق التحديث عند الضغط على Enter
+                          e.target.blur();
                         }
                       }}
                       className="w-20 text-center border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 p-1"
@@ -670,6 +701,45 @@ const Categories = () => {
               />
             </div>
 
+            {/* حقل الحد الأدنى للطلب - جديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                الحد الأدنى للطلب (بالدينار العراقي) *
+              </label>
+              <input
+                type="number"
+                name="minimumOrderAmount"
+                value={formData.minimumOrderAmount}
+                onChange={handleInputChange}
+                required
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="أدخل الحد الأدنى لقيمة الطلب"
+              />
+            </div>
+            
+            {/* حقل اختيار المورد - جديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                المورد *
+              </label>
+              <select
+                name="supplierId"
+                value={formData.supplierId}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="">اختر المورد</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name} (ID: {supplier.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button
@@ -758,6 +828,44 @@ const Categories = () => {
                 placeholder="أدخل رقم الترتيب"
               />
             </div>
+
+            {/* حقل الحد الأدنى للطلب - جديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                الحد الأدنى للطلب (بالدينار العراقي) *
+              </label>
+              <input
+                type="number"
+                name="minimumOrderAmount"
+                value={formData.minimumOrderAmount}
+                onChange={handleInputChange}
+                required
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="أدخل الحد الأدنى لقيمة الطلب"
+              />
+            </div>
+            
+            {/* حقل اختيار المورد - جديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                المورد *
+              </label>
+              <select
+                name="supplierId"
+                value={formData.supplierId}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="">اختر المورد</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name} (ID: {supplier.id})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button
@@ -794,6 +902,7 @@ const Categories = () => {
               <div>
                 <p><strong>الحد الأدنى للطلب:</strong> {selectedCategory.minimumOrderAmount || 'غير محدد'}</p>
                 <p><strong>معرّف المورد:</strong> {selectedCategory.supplierId || 'غير محدد'}</p>
+                <p><strong>اسم المورد:</strong> {suppliers.find(s => s.id === selectedCategory.supplierId)?.name || 'غير محدد'}</p>
                 <p><strong>عدد الأقسام:</strong> {selectedCategory.sectionsCount || 0}</p>
                 <p><strong>عدد المنتجات:</strong> {selectedCategory.productsCount || 0}</p>
               </div>

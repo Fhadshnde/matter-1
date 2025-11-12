@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaEdit, FaTrash, FaEye, FaPlus, FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
+import { FaChevronDown, FaStore, FaChartBar, FaUser, FaBox, FaTruck, FaEdit, FaTrash, FaEye, FaPlus, FaSearch, FaFilter, FaTimes, FaSortNumericUpAlt } from 'react-icons/fa';
 import { apiCall } from '../../config/api';
 import API_CONFIG from '../../config/api';
 
-// New ModalContainer component to handle isOpen and onClose props
 const ModalContainer = ({ isOpen, onClose, children, maxWidth = 'max-w-md' }) => {
   if (!isOpen) return null;
 
@@ -23,25 +22,22 @@ const ModalContainer = ({ isOpen, onClose, children, maxWidth = 'max-w-md' }) =>
 };
 
 const SuppliersPage = () => {
-  // State for data
   const [suppliersData, setSuppliersData] = useState([]);
   const [pagination, setPagination] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // State for filters and search
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
 
-  // State for modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false); // حالة جديدة لنموذج الترتيب
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 
-  // State for forms
   const [formData, setFormData] = useState({
     name: '',
     storeName: '', 
@@ -49,16 +45,20 @@ const SuppliersPage = () => {
     address: '',
     phone: '',
     password: '',
-    isActive: true, // تم الإضافة: لتتبع حالة النشاط
+    isActive: true, 
     platformPercentage: 15, 
-    hasWholesalePrice: false
+    hasWholesalePrice: false,
+    order: 0, // إضافة حقل الترتيب
   });
 
-  // State for supplier details
+  const [orderFormData, setOrderFormData] = useState({ 
+    supplierId: null, 
+    order: 0 
+  }); // حالة لنموذج ترتيب منفصل
+
   const [supplierDetails, setSupplierDetails] = useState(null);
   const [supplierProfits, setSupplierProfits] = useState(null);
 
-  // Fetch suppliers data
   const fetchSuppliersData = async () => {
     setIsLoading(true);
     setError(null);
@@ -69,10 +69,8 @@ const SuppliersPage = () => {
       if (searchText) params.append('search', searchText);
 
       const url = `${API_CONFIG.ADMIN.SUPPLIERS}?${params.toString()}`;
-      console.log('Fetching suppliers from:', url);
       
       const data = await apiCall(url);
-      console.log('Suppliers data received:', data);
       
       setSuppliersData(data.suppliers || []);
       setPagination(data.pagination || {});
@@ -84,14 +82,12 @@ const SuppliersPage = () => {
     }
   };
 
-  // Fetch supplier details and profits
   const fetchSupplierDetails = async (supplierId) => {
     try {
       const url = API_CONFIG.ADMIN.SUPPLIER_DETAILS(supplierId);
       const detailsData = await apiCall(url);
       setSupplierDetails(detailsData);
       
-      // Fetch profits data
       const profitsUrl = API_CONFIG.ADMIN.SUPPLIER_PROFITS(supplierId);
       const profitsData = await apiCall(profitsUrl);
       setSupplierProfits(profitsData);
@@ -101,24 +97,20 @@ const SuppliersPage = () => {
     }
   };
 
-  // Handle search
   const handleSearch = (e) => {
     setSearchText(e.target.value);
     setCurrentPage(1);
   };
 
-  // Handle page change
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  // Handle items per page change
   const handleItemsPerPageChange = (newLimit) => {
     setItemsPerPage(newLimit);
     setCurrentPage(1);
   };
 
-  // Handle add supplier
   const handleAddSupplier = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -127,11 +119,10 @@ const SuppliersPage = () => {
         method: 'POST',
         body: JSON.stringify({
           ...formData,
-          platformPercentage: formData.platformPercentage / 100 // Convert back to decimal for API
+          platformPercentage: formData.platformPercentage / 100 
         })
       });
       setIsAddModalOpen(false);
-      // Reset form data after successful addition
       setFormData({
         name: '',
         storeName: '', 
@@ -141,7 +132,8 @@ const SuppliersPage = () => {
         password: '',
         isActive: true,
         platformPercentage: 15, 
-        hasWholesalePrice: false
+        hasWholesalePrice: false,
+        order: 0,
       });
       fetchSuppliersData();
     } catch (error) {
@@ -152,25 +144,24 @@ const SuppliersPage = () => {
     }
   };
 
-  // Handle edit supplier
   const handleEditSupplier = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const url = API_CONFIG.ADMIN.SUPPLIER_UPDATE(selectedSupplier.id);
-      // Construct the body with storeName and isActive included
+      const url = API_CONFIG.ADMIN.SUPPLIER_OREDERS(selectedSupplier.id);
       await apiCall(url, {
-        method: 'PUT', // Assuming PUT/PATCH is used for update
+        method: 'PATCH', // تغيير إلى PATCH
         body: JSON.stringify({
           name: formData.name,
           storeName: formData.storeName, 
           contactInfo: formData.contactInfo,
           address: formData.address,
           phone: formData.phone,
-          isActive: formData.isActive, // تم الإضافة: تضمين حالة النشاط
+          isActive: formData.isActive, 
           ...(formData.password && { password: formData.password }),
           platformPercentage: formData.platformPercentage / 100, 
           hasWholesalePrice: formData.hasWholesalePrice,
+          order: parseInt(formData.order, 10), // تضمين حقل الترتيب
         })
       });
       setIsEditModalOpen(false);
@@ -184,7 +175,29 @@ const SuppliersPage = () => {
     }
   };
 
-  // Handle delete supplier
+  // الإجراء المنفصل لتعديل الترتيب فقط
+  const handleUpdateOrder = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const url = API_CONFIG.ADMIN.SUPPLIER_OREDERS(orderFormData.supplierId);
+      await apiCall(url, {
+        method: 'PATCH', 
+        body: JSON.stringify({
+          order: parseInt(orderFormData.order, 10),
+        })
+      });
+      setIsOrderModalOpen(false);
+      setOrderFormData({ supplierId: null, order: 0 });
+      fetchSuppliersData();
+    } catch (error) {
+      console.error('Error updating supplier order:', error);
+      setError('فشل في تعديل ترتيب المورد');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteSupplier = async () => {
     setIsLoading(true);
     try {
@@ -203,14 +216,12 @@ const SuppliersPage = () => {
     }
   };
 
-  // Handle view details
   const handleViewDetails = (supplier) => {
     setSelectedSupplier(supplier);
     fetchSupplierDetails(supplier.id);
     setIsDetailsModalOpen(true);
   };
 
-  // Handle edit
   const handleEdit = (supplier) => {
     setSelectedSupplier(supplier);
     setFormData({
@@ -220,20 +231,29 @@ const SuppliersPage = () => {
       address: supplier.address || '',
       phone: supplier.phone,
       password: '',
-      isActive: supplier.isActive, // تم التعديل: قراءة حالة النشاط
+      isActive: supplier.isActive, 
       platformPercentage: (supplier.platformPercentage || 0.15) * 100, 
-      hasWholesalePrice: supplier.hasWholesalePrice || false
+      hasWholesalePrice: supplier.hasWholesalePrice || false,
+      order: supplier.order || 0, // قراءة قيمة الترتيب
     });
     setIsEditModalOpen(true);
   };
+  
+  // لفتح نموذج تعديل الترتيب
+  const handleOpenOrderModal = (supplier) => {
+    setSelectedSupplier(supplier);
+    setOrderFormData({
+      supplierId: supplier.id,
+      order: supplier.order || 0,
+    });
+    setIsOrderModalOpen(true);
+  };
 
-  // Handle delete
   const handleDelete = (supplier) => {
     setSelectedSupplier(supplier);
     setIsDeleteModalOpen(true);
   };
 
-  // Handle form input change
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -241,15 +261,22 @@ const SuppliersPage = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+  
+  // معالجة إدخال نموذج الترتيب
+  const handleOrderInputChange = (e) => {
+    const { name, value } = e.target;
+    setOrderFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  // Effects
   useEffect(() => {
     fetchSuppliersData();
   }, [currentPage, itemsPerPage, searchText]);
 
-  // Calculate statistics
   const totalSuppliers = pagination.totalItems || 0;
-  const activeSuppliers = suppliersData.filter(s => s.productsCount > 0).length; // Simplified active count logic
+  const activeSuppliers = suppliersData.filter(s => s.productsCount > 0).length;
   const totalProducts = suppliersData.reduce((sum, s) => sum + (s.productsCount || 0), 0);
   const totalValue = suppliersData.reduce((sum, s) => sum + (s.totalProductsValue || 0), 0);
 
@@ -284,7 +311,6 @@ const SuppliersPage = () => {
     <div dir="rtl" className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
       <h1 className="text-2xl font-bold mb-6 text-right">إدارة الموردين</h1>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statsCards.map((card, index) => (
           <div key={index} className="bg-white rounded-lg shadow-md p-6">
@@ -304,7 +330,6 @@ const SuppliersPage = () => {
         ))}
       </div>
 
-      {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col lg:flex-row gap-4 items-center flex-1">
@@ -331,14 +356,12 @@ const SuppliersPage = () => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
 
-      {/* Suppliers Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
@@ -357,6 +380,9 @@ const SuppliersPage = () => {
                 <tr>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     المورد
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الترتيب
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     معلومات الاتصال
@@ -397,6 +423,9 @@ const SuppliersPage = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {supplier.order || 0}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{supplier.contactInfo}</div>
                       <div className="text-sm text-gray-500">{supplier.phone}</div>
@@ -433,9 +462,16 @@ const SuppliersPage = () => {
                         <button
                           onClick={() => handleEdit(supplier)}
                           className="text-yellow-600 hover:text-yellow-900"
-                          title="تعديل"
+                          title="تعديل عام"
                         >
                           <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleOpenOrderModal(supplier)}
+                          className="text-purple-600 hover:text-purple-900"
+                          title="تعديل الترتيب"
+                        >
+                          <FaSortNumericUpAlt />
                         </button>
                         <button
                           onClick={() => handleDelete(supplier)}
@@ -453,7 +489,6 @@ const SuppliersPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
@@ -518,7 +553,6 @@ const SuppliersPage = () => {
         )}
       </div>
 
-      {/* Add Supplier Modal */}
       <ModalContainer isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-gray-800">إضافة مورد جديد</h3>
@@ -620,6 +654,19 @@ const SuppliersPage = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              ترتيب العرض (Order)
+            </label>
+            <input
+              type="number"
+              name="order"
+              value={formData.order}
+              onChange={handleInputChange}
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -653,7 +700,6 @@ const SuppliersPage = () => {
         </form>
       </ModalContainer>
 
-      {/* Edit Supplier Modal */}
       {isEditModalOpen && selectedSupplier && (
         <ModalContainer isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
           <div className="flex justify-between items-center mb-4">
@@ -745,7 +791,7 @@ const SuppliersPage = () => {
               <input
                 type="checkbox"
                 name="isActive"
-                checked={formData.isActive} // تم الإضافة
+                checked={formData.isActive} 
                 onChange={handleInputChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -764,6 +810,19 @@ const SuppliersPage = () => {
                 onChange={handleInputChange}
                 min="0"
                 max="100"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                ترتيب العرض (Order)
+              </label>
+              <input
+                type="number"
+                name="order"
+                value={formData.order}
+                onChange={handleInputChange}
+                min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -800,8 +859,55 @@ const SuppliersPage = () => {
           </form>
         </ModalContainer>
       )}
+      
+      {/* Order Update Modal */}
+      {isOrderModalOpen && selectedSupplier && (
+        <ModalContainer isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-800">تعديل ترتيب المورد: {selectedSupplier.name}</h3>
+            <button
+              onClick={() => setIsOrderModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes size={20} />
+            </button>
+          </div>
+          <form onSubmit={handleUpdateOrder} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                ترتيب العرض الجديد (Order)
+              </label>
+              <input
+                type="number"
+                name="order"
+                value={orderFormData.order}
+                onChange={handleOrderInputChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+              <button
+                type="button"
+                onClick={() => setIsOrderModalOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                  isLoading ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'
+                }`}
+              >
+                {isLoading ? 'جاري التعديل...' : 'تعديل الترتيب'}
+              </button>
+            </div>
+          </form>
+        </ModalContainer>
+      )}
 
-      {/* Supplier Details Modal (No change needed here for display) */}
       {isDetailsModalOpen && selectedSupplier && supplierDetails && (
         <ModalContainer isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} maxWidth="max-w-4xl">
           <div className="flex justify-between items-center mb-4">
@@ -815,7 +921,6 @@ const SuppliersPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Supplier Info */}
             <div className="space-y-4">
               <h4 className="text-md font-semibold text-gray-800">معلومات المورد</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
@@ -850,11 +955,14 @@ const SuppliersPage = () => {
                       {new Date(supplierDetails.createdAt).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">ترتيب العرض:</label>
+                    <p className="text-sm text-gray-900">{supplierDetails.order || 0}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Statistics */}
             <div className="space-y-4">
               <h4 className="text-md font-semibold text-gray-800">الإحصائيات</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
@@ -882,7 +990,6 @@ const SuppliersPage = () => {
             </div>
           </div>
 
-          {/* Profits Information */}
           {supplierProfits && (
             <div className="mt-6">
               <h4 className="text-md font-semibold text-gray-800 mb-4">معلومات الأرباح</h4>
@@ -972,7 +1079,6 @@ const SuppliersPage = () => {
         </ModalContainer>
       )}
 
-      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && selectedSupplier && (
         <ModalContainer isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
           <div className="flex justify-between items-center mb-4">
