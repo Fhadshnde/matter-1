@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import AdminShippingRewardConfig from "../AdminShippingRewardConfig/AdminShippingRewardConfig";
 const DeliverySettings = () => {
   const [cities, setCities] = useState([]);
   const [form, setForm] = useState({
@@ -12,21 +12,19 @@ const DeliverySettings = () => {
   });
   const [deliveryNote, setDeliveryNote] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [showSuppliers, setShowSuppliers] = useState(false); // الحالة الجديدة لعرض الموردين
+  const [showSuppliers, setShowSuppliers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
-  const [suppliersLoading, setSuppliersLoading] = useState(false); // حالة التحميل الجديدة لعرض الموردين
+  const [suppliersLoading, setSuppliersLoading] = useState(false); 
   const token = localStorage.getItem("token");
   const api = "https://products-api.cbc-apps.net/cities";
   const noteApi = "https://products-api.cbc-apps.net/cities/admin/delivery-note";
   const messageApi = "https://products-api.cbc-apps.net/cities/admin/success-message";
-  const suppliersApi = "https://products-api.cbc-apps.net/cities/messages"; // نقطة نهاية API لعرض الموردين
+  const suppliersApi = "https://products-api.cbc-apps.net/cities/messages"; 
 
-  // Function to fetch the list of cities, the delivery note, the success message, and showSuppliers
   const fetchCities = async () => {
     try {
-      // Fetch city data and general settings from the main API
       const res = await axios.get(api);
       const data = res.data;
 
@@ -490,7 +488,10 @@ const DeliverySettings = () => {
         </div>
         {/* End Cities List Section */}
       </div>
+      <AdminShippingRewardConfig />
+
     </div>
+
   );
 };
 

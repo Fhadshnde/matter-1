@@ -9,6 +9,7 @@ import StatCard from '../Shared/StatCard';
 import Modal from '../Shared/Modal';
 import Pagination from '../Shared/Pagination';
 import axios from 'axios';
+import PriceAdjustment from '../PriceAdjustment/PriceAdjustment';
 
 const Categories = () => {
   const [categoriesData, setCategoriesData] = useState([]);
@@ -617,6 +618,7 @@ const Categories = () => {
             </tbody>
           </table>
         </div>
+        <PriceAdjustment />
 
         {filteredCategories.length === 0 && (
           <div className="text-center py-8 text-gray-500">

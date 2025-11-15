@@ -50,6 +50,9 @@ const Navbar = ({ onLogout }) => {
 
     { path: "/best-users", icon: <Inbox className="w-4 h-4" />, text: "المستخدمين المميزين" },
     { path: "/blacklist-users", icon: <Inbox className="w-4 h-4" />, text: "blacklist" },
+    { path: "/price-logs", icon: <Inbox className="w-4 h-4" />, text: "price-logs" },
+    { path: "/excel-product-upload", icon: <Inbox className="w-4 h-4" />, text: "excel-product-upload" },
+
 
     { path: "/commission-manager", icon: <Inbox className="w-4 h-4" />, text: "مدير العمولات" },
 

@@ -30,9 +30,11 @@ import DeliverySettings from './components/DeliverySettings/DeliverySettings';
 import CommissionManager from './components/CommissionManager/CommissionManager';
 import BestUsersPage from './components/BestUsers/BestUsers';
 import BlacklistUsers from './components/BlacklistUsers/BlacklistUsers';
+import PriceLogs from './components/PriceLogs/PriceLogs';
+import ExcelProductUploadForm from './components/ExcelProductUploadForm/ExcelProductUploadForm';  
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true); // ✅ إضافة حالة انتظار
+  const [loading, setLoading] = useState(true); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const App = () => {
     if (token) {
       setIsLoggedIn(true);
     }
-    setLoading(false); // ✅ بعد الفحص نوقف الانتظار
+    setLoading(false); 
   }, []);
 
   const handleLogin = () => {
@@ -96,6 +98,8 @@ const App = () => {
             <Route path="/commission-manager" element={<CommissionManager />} />
             <Route path="/best-users" element={<BestUsersPage />} />
             <Route path="/blacklist-users" element={<BlacklistUsers />} />
+            <Route path="/price-logs" element={<PriceLogs />} />
+            <Route path="/excel-product-upload" element={<ExcelProductUploadForm />} />
           </>
         )}
       </Routes>
