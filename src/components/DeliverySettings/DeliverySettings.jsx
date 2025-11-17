@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminShippingRewardConfig from "../AdminShippingRewardConfig/AdminShippingRewardConfig";
+import AdminShippingConfig from "../AdminShippingConfig/AdminShippingConfig";
 const DeliverySettings = () => {
   const [cities, setCities] = useState([]);
   const [form, setForm] = useState({
@@ -489,6 +490,7 @@ const DeliverySettings = () => {
         {/* End Cities List Section */}
       </div>
       <AdminShippingRewardConfig />
+      <AdminShippingConfig />
 
     </div>
 
