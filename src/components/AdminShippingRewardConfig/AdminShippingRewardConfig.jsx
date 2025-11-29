@@ -69,7 +69,6 @@ export default function ShippingRewardConfig() {
   return (
     <div className="min-h-screen p-6 bg-gray-100 flex flex-col gap-8">
 
-      {/* إعدادات الشحن */}
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">إعدادات الشحن</h2>
 
@@ -104,7 +103,6 @@ export default function ShippingRewardConfig() {
         </button>
       </div>
 
-      {/* notCardHas */}
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">notCardHas</h2>
 
