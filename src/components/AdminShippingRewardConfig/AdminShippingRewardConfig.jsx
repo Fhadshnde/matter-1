@@ -10,6 +10,8 @@ export default function ShippingRewardConfig() {
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [loadingReward, setLoadingReward] = useState(false);
 
+  const [notCardHas, setNotCardHas] = useState("");
+
   const api = axios.create({
     baseURL: "https://products-api.cbc-apps.net",
     headers: { Authorization: `Bearer ${token}` },
@@ -52,8 +54,22 @@ export default function ShippingRewardConfig() {
     }
   };
 
+  const sendNotCardHas = async () => {
+    try {
+      await api.patch("/cities/admin/not-card-has", {
+        notCardHas: notCardHas,
+      });
+      alert("تم الإرسال بنجاح");
+    } catch (err) {
+      console.error(err);
+      alert("حصل خطأ أثناء الإرسال");
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gray-100 flex flex-col gap-8">
+
+      {/* إعدادات الشحن */}
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">إعدادات الشحن</h2>
 
@@ -88,6 +104,27 @@ export default function ShippingRewardConfig() {
         </button>
       </div>
 
+      {/* notCardHas */}
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4">notCardHas</h2>
+
+        <label className="font-semibold">النص</label>
+        <input
+          type="text"
+          className="w-full mt-2 p-2 border rounded-lg"
+          value={notCardHas}
+          onChange={(e) => setNotCardHas(e.target.value)}
+        />
+
+        <button
+          onClick={sendNotCardHas}
+          className="w-full mt-4 bg-purple-600 text-white p-3 rounded-xl text-lg hover:bg-purple-700"
+        >
+          إرسال
+        </button>
+      </div>
+
+      {/* إعدادات المكافآت */}
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">إعدادات نقاط المكافأة</h2>
 

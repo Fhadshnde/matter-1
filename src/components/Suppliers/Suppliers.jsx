@@ -35,7 +35,7 @@ const SuppliersPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false); // حالة جديدة لنموذج الترتيب
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false); 
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -175,7 +175,6 @@ const SuppliersPage = () => {
     }
   };
 
-  // الإجراء المنفصل لتعديل الترتيب فقط
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
     setIsLoading(true);

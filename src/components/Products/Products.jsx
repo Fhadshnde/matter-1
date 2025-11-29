@@ -673,7 +673,6 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {/* Pagination */}
             {pagination.totalPages > 1 && (
                 <div className="mt-4 flex justify-between items-center text-sm">
                     <span className="text-gray-700">إجمالي المنتجات: {pagination.total}</span>
